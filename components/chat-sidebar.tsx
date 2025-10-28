@@ -1,0 +1,164 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { useTheme } from "./theme-provider"
+import {
+  MessageSquarePlus,
+  Search,
+  Library,
+  Code2,
+  Sparkles,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  Sun,
+  Moon,
+  Settings,
+  LogOut,
+} from "lucide-react"
+
+interface ChatSidebarProps {
+  isOpen: boolean
+  onToggle: () => void
+}
+
+export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
+  const { theme, toggleTheme } = useTheme()
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  const chats = [
+    "Job Search for Senior Fullstack Developers",
+    "Search Jobs: AI Engineers",
+    "Refine resume for skills",
+    "Mock interviews for C# .NET",
+    "Coding challenge for C# .NET",
+    "Browse open tech roles",
+    "Track all my applications",
+    "Why are you reading this?",
+  ]
+
+  return (
+    <div
+      className={`relative flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300 ${
+        isOpen ? "w-[280px]" : "w-[72px]"
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+        {isOpen && (
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-[#A16AE8]" />
+            <span className="font-semibold text-sidebar-foreground">Teamified AI</span>
+          </div>
+        )}
+        <button
+          onClick={onToggle}
+          className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors"
+          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {isOpen ? (
+            <ChevronLeft className="w-5 h-5 text-sidebar-foreground" />
+          ) : (
+            <ChevronRight className="w-5 h-5 text-sidebar-foreground" />
+          )}
+        </button>
+      </div>
+
+      {/* Main Navigation */}
+      <div className="flex-1 overflow-y-auto p-3">
+        <nav className="space-y-1">
+          <SidebarButton icon={MessageSquarePlus} label="New chat" isOpen={isOpen} />
+          <SidebarButton icon={Search} label="Search chats" isOpen={isOpen} />
+          <SidebarButton icon={Library} label="Library" isOpen={isOpen} />
+          <SidebarButton icon={Code2} label="Codex" isOpen={isOpen} />
+        </nav>
+
+        {/* Chats Section */}
+        {isOpen && (
+          <div className="mt-6">
+            <div className="px-3 mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Chats</span>
+            </div>
+            <nav className="space-y-1">
+              {chats.map((chat) => (
+                <SidebarButton key={chat} icon={MessageSquare} label={chat} isOpen={isOpen} />
+              ))}
+            </nav>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-sidebar-border p-3">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent transition-colors mb-2"
+          aria-label="Toggle theme"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-5 h-5 text-sidebar-foreground" />
+          ) : (
+            <Moon className="w-5 h-5 text-sidebar-foreground" />
+          )}
+          {isOpen && (
+            <span className="text-sm text-sidebar-foreground">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+          )}
+        </button>
+
+        {/* User Profile */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent transition-colors"
+            aria-label="User menu"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#A16AE8] flex items-center justify-center">
+              <span className="text-sm font-semibold text-white">CD</span>
+            </div>
+            {isOpen && (
+              <div className="flex-1 text-left">
+                <div className="text-sm font-medium text-sidebar-foreground">Czar Dy</div>
+                <div className="text-xs text-muted-foreground">Personal account</div>
+              </div>
+            )}
+          </button>
+
+          {/* User Menu Dropdown */}
+          {showUserMenu && isOpen && (
+            <div className="absolute bottom-full left-0 right-0 mb-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+              <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors">
+                <Settings className="w-4 h-4" />
+                <span className="text-sm">Settings</span>
+              </button>
+              <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors">
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm">Log out</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface SidebarButtonProps {
+  icon: React.ElementType
+  label: string
+  isOpen: boolean
+}
+
+function SidebarButton({ icon: Icon, label, isOpen }: SidebarButtonProps) {
+  return (
+    <button
+      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent transition-colors group"
+      aria-label={label}
+    >
+      <Icon className="w-5 h-5 text-sidebar-foreground flex-shrink-0" />
+      {isOpen && <span className="text-sm text-sidebar-foreground truncate text-left flex-1">{label}</span>}
+    </button>
+  )
+}
