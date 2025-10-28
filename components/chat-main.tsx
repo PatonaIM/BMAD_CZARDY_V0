@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { Menu, Plus, Mic, ArrowUp, Copy, Download, FileText, ChevronDown } from "lucide-react"
+import { AI_AGENTS, type AIAgent } from "@/types/agents"
 
 interface ChatMainProps {
   isSidebarOpen: boolean
@@ -17,6 +18,7 @@ interface Message {
   responseType?: "text" | "code" | "table" | "file"
   thinking?: boolean
   thinkingTime?: number
+  agentId?: string
 }
 
 const welcomeQuestions = [
@@ -50,7 +52,7 @@ const loremBullets = [
   "Duis aute irure dolor in reprehenderit in voluptate velit",
   "Excepteur sint occaecat cupidatat non proident",
   "Sunt in culpa qui officia deserunt mollit anim id est laborum",
-  "Nemo enim ipsam voluptatem quia voluptas sit aspernatur",
+  "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit",
   "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet",
 ]
 
@@ -142,8 +144,11 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
   const [welcomeQuestion, setWelcomeQuestion] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isThinking, setIsThinking] = useState(false)
+  const [activeAgent, setActiveAgent] = useState<AIAgent>(AI_AGENTS[0])
+  const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
+  const agentDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
@@ -151,7 +156,6 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
   }, [])
 
   useEffect(() => {
-    // Small delay to ensure DOM has updated
     const timer = setTimeout(() => {
       if (lastUserMessageRef.current) {
         lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -160,6 +164,22 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
 
     return () => clearTimeout(timer)
   }, [messages, isThinking])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (agentDropdownRef.current && !agentDropdownRef.current.contains(event.target as Node)) {
+        setIsAgentDropdownOpen(false)
+      }
+    }
+
+    if (isAgentDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isAgentDropdownOpen])
 
   const simulateAIResponse = (userMessage: string) => {
     const lowerMessage = userMessage.toLowerCase().trim()
@@ -186,7 +206,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
     }
 
     setIsThinking(true)
-    const thinkingTime = Math.floor(Math.random() * 20) + 15 // 15-35 seconds
+    const thinkingTime = Math.floor(Math.random() * 20) + 15
 
     setTimeout(() => {
       setIsThinking(false)
@@ -196,6 +216,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
         content,
         responseType,
         thinkingTime,
+        agentId: activeAgent.id,
       }
       setMessages((prev) => [...prev, aiMessage])
     }, 2000)
@@ -224,23 +245,37 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
     navigator.clipboard.writeText(codeSnippet)
   }
 
+  const handleAgentChange = (agent: AIAgent) => {
+    setActiveAgent(agent)
+    setIsAgentDropdownOpen(false)
+    const systemMessage: Message = {
+      id: Date.now().toString(),
+      type: "ai",
+      content: `Switched to **${agent.name}**. ${agent.description}`,
+      agentId: agent.id,
+    }
+    setMessages((prev) => [...prev, systemMessage])
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border">
         {!isSidebarOpen && (
           <button
             onClick={onToggleSidebar}
-            className="p-2 rounded-lg hover:bg-accent transition-colors"
+            className="p-2 rounded-lg hover:bg-accent transition-colors flex-shrink-0"
             aria-label="Open sidebar"
           >
             <Menu className="w-5 h-5" />
           </button>
         )}
         <div className="flex-1 text-center">
-          <span className="text-sm font-medium">Teamified AI</span>
+          <h2 className="text-lg font-semibold bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
+            Teamified AI
+          </h2>
         </div>
-        <div className="w-10" />
+        <div className="w-10 flex-shrink-0" />
       </header>
 
       {/* Main Content */}
@@ -249,12 +284,18 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
           <div className="h-full flex items-center justify-center">
             <div className="w-full max-w-3xl">
               <div className="text-center mb-12">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-[#A16AE8] to-[#8096FD] mb-6 shadow-lg">
-                  <span className="text-3xl font-bold text-white">T</span>
+                <div
+                  className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-lg"
+                  style={{
+                    background: `linear-gradient(135deg, ${activeAgent.color}, ${activeAgent.color}dd)`,
+                  }}
+                >
+                  <span className="text-4xl">{activeAgent.icon}</span>
                 </div>
-                <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
+                <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
                   Teamified AI
                 </h1>
+                <p className="text-lg text-muted-foreground mb-4">{activeAgent.name}</p>
                 <p className="text-2xl text-muted-foreground mb-8">{welcomeQuestion}</p>
               </div>
 
@@ -281,6 +322,8 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
           <div className="max-w-3xl mx-auto py-8 space-y-6">
             {messages.map((msg, index) => {
               const isLastUserMessage = msg.type === "user" && index === messages.map((m) => m.type).lastIndexOf("user")
+              const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
+
               return (
                 <div key={msg.id} ref={isLastUserMessage ? lastUserMessageRef : null}>
                   {msg.type === "user" ? (
@@ -291,6 +334,16 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
                     </div>
                   ) : (
                     <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                          style={{ backgroundColor: messageAgent?.color }}
+                        >
+                          <span className="text-lg">{messageAgent?.icon}</span>
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{messageAgent?.name}</span>
+                      </div>
+
                       {msg.thinkingTime && (
                         <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
                           <span className="font-medium">Thought for {msg.thinkingTime}s</span>
@@ -380,6 +433,15 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
 
             {isThinking && (
               <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                    style={{ backgroundColor: activeAgent.color }}
+                  >
+                    <span className="text-lg">{activeAgent.icon}</span>
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{activeAgent.name}</span>
+                </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="flex gap-1">
                     <div
@@ -409,20 +471,79 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
         <div className="max-w-3xl mx-auto">
           <form onSubmit={handleSubmit} className="relative">
             <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
-              <button
-                type="button"
-                className="absolute left-4 p-2 rounded-lg hover:bg-accent transition-colors"
-                aria-label="Add attachment"
-              >
-                <Plus className="w-5 h-5 text-muted-foreground" />
-              </button>
+              <div className="absolute left-4 flex items-center gap-1">
+                <button
+                  type="button"
+                  className="p-2 rounded-lg hover:bg-accent transition-colors"
+                  aria-label="Add attachment"
+                >
+                  <Plus className="w-5 h-5 text-muted-foreground" />
+                </button>
+
+                {/* Agent Selector Dropdown */}
+                <div className="relative" ref={agentDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+                    className="p-1.5 rounded-lg hover:bg-accent transition-all group"
+                    aria-label="Select AI Agent"
+                    title={activeAgent.name}
+                  >
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
+                      style={{ backgroundColor: activeAgent.color }}
+                    >
+                      <span className="text-base">{activeAgent.icon}</span>
+                    </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isAgentDropdownOpen && (
+                    <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      <div className="p-3 border-b border-border bg-muted">
+                        <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto">
+                        {AI_AGENTS.map((agent) => (
+                          <button
+                            key={agent.id}
+                            type="button"
+                            onClick={() => handleAgentChange(agent)}
+                            className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${
+                              activeAgent.id === agent.id ? "bg-accent/50" : ""
+                            }`}
+                          >
+                            <div
+                              className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                              style={{ backgroundColor: agent.color }}
+                            >
+                              <span className="text-xl">{agent.icon}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                                {activeAgent.id === agent.id && (
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                    Active
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Ask anything"
-                className="flex-1 px-14 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
               />
 
               <div className="flex items-center gap-2 pr-2">
