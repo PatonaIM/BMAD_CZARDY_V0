@@ -295,7 +295,6 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
                 <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
                   Teamified AI
                 </h1>
-                <p className="text-lg text-muted-foreground mb-4">{activeAgent.name}</p>
                 <p className="text-2xl text-muted-foreground mb-8">{welcomeQuestion}</p>
               </div>
 
@@ -499,7 +498,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
 
                   {/* Dropdown Menu */}
                   {isAgentDropdownOpen && (
-                    <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 opacity-100 transition-opacity duration-200">
                       <div className="p-3 border-b border-border bg-muted">
                         <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
                       </div>
