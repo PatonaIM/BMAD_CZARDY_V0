@@ -150,6 +150,8 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
   const agentDropdownRef = useRef<HTMLDivElement>(null)
 
+  const [hasStartedChat, setHasStartedChat] = useState(false)
+
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
     setWelcomeQuestion(welcomeQuestions[randomIndex])
@@ -225,6 +227,10 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (message.trim()) {
+      if (messages.length === 0) {
+        setHasStartedChat(true)
+      }
+
       const userMessage: Message = {
         id: Date.now().toString(),
         type: "user",
@@ -257,6 +263,8 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
     setMessages((prev) => [...prev, systemMessage])
   }
 
+  const isCentered = messages.length === 0
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
@@ -278,9 +286,8 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
         <div className="w-10 flex-shrink-0" />
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto px-6">
-        {messages.length === 0 ? (
+      <main className="flex-1 overflow-y-auto px-6 relative">
+        {isCentered ? (
           <div className="h-full flex items-center justify-center">
             <div className="w-full max-w-3xl">
               <div className="text-center mb-12">
@@ -298,22 +305,130 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
                 <p className="text-2xl text-muted-foreground mb-8">{welcomeQuestion}</p>
               </div>
 
-              <div className="mt-8 grid grid-cols-2 gap-3">
-                {[
-                  { text: "Help me land a job offer for an open role", emoji: "💼" },
-                  { text: "Calculate sample quotation for me", emoji: "💰" },
-                  { text: "Open a job for my company", emoji: "📢" },
-                  { text: "Tell me more about Teamified AI", emoji: "🤖" },
-                ].map((suggestion) => (
-                  <button
-                    key={suggestion.text}
-                    onClick={() => handleSuggestionClick(suggestion.text)}
-                    className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
-                  >
-                    <span className="mr-2">{suggestion.emoji}</span>
-                    {suggestion.text}
-                  </button>
-                ))}
+              <div className="animate-in fade-in duration-500">
+                <form onSubmit={handleSubmit} className="relative">
+                  <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="absolute left-4 flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="p-2 rounded-lg hover:bg-accent transition-colors"
+                        aria-label="Add attachment"
+                      >
+                        <Plus className="w-5 h-5 text-muted-foreground" />
+                      </button>
+
+                      {/* Agent Selector Dropdown */}
+                      <div className="relative" ref={agentDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+                          className="p-1.5 rounded-lg hover:bg-accent transition-all group"
+                          aria-label="Select AI Agent"
+                          title={activeAgent.name}
+                        >
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
+                            style={{ backgroundColor: activeAgent.color }}
+                          >
+                            <span className="text-base">{activeAgent.icon}</span>
+                          </div>
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {isAgentDropdownOpen && (
+                          <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 opacity-100 transition-opacity duration-200">
+                            <div className="p-3 border-b border-border bg-muted">
+                              <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                            </div>
+                            <div className="max-h-96 overflow-y-auto">
+                              {AI_AGENTS.map((agent) => (
+                                <button
+                                  key={agent.id}
+                                  type="button"
+                                  onClick={() => handleAgentChange(agent)}
+                                  className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${
+                                    activeAgent.id === agent.id ? "bg-accent/50" : ""
+                                  }`}
+                                >
+                                  <div
+                                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                                    style={{ backgroundColor: agent.color }}
+                                  >
+                                    <span className="text-xl">{agent.icon}</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                                      {activeAgent.id === agent.id && (
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                          Active
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Ask anything"
+                      className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                    />
+
+                    <div className="flex items-center gap-2 pr-2">
+                      <button
+                        type="button"
+                        className="p-2 rounded-lg hover:bg-accent transition-colors"
+                        aria-label="Voice input"
+                      >
+                        <Mic className="w-5 h-5 text-muted-foreground" />
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={!message.trim()}
+                        className={`p-2.5 rounded-full transition-all ${
+                          message.trim()
+                            ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105"
+                            : "bg-muted"
+                        }`}
+                        aria-label="Send message"
+                      >
+                        <ArrowUp className={`w-5 h-5 ${message.trim() ? "text-white" : "text-muted-foreground"}`} />
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  {[
+                    { text: "Help me land a job offer for an open role", emoji: "💼" },
+                    { text: "Calculate sample quotation for me", emoji: "💰" },
+                    { text: "Open a job for my company", emoji: "📢" },
+                    { text: "Tell me more about Teamified AI", emoji: "🤖" },
+                  ].map((suggestion) => (
+                    <button
+                      key={suggestion.text}
+                      onClick={() => handleSuggestionClick(suggestion.text)}
+                      className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
+                    >
+                      <span className="mr-2">{suggestion.emoji}</span>
+                      {suggestion.text}
+                    </button>
+                  ))}
+                </div>
+
+                <footer className="mt-4 text-center">
+                  <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
+                </footer>
               </div>
             </div>
           </div>
@@ -465,116 +580,135 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar }: ChatMainProps) {
         )}
       </main>
 
-      {/* Input Area */}
-      <div className="px-6 pb-6">
-        <div className="max-w-3xl mx-auto">
-          <form onSubmit={handleSubmit} className="relative">
-            <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
-              <div className="absolute left-4 flex items-center gap-1">
-                <button
-                  type="button"
-                  className="p-2 rounded-lg hover:bg-accent transition-colors"
-                  aria-label="Add attachment"
-                >
-                  <Plus className="w-5 h-5 text-muted-foreground" />
-                </button>
-
-                {/* Agent Selector Dropdown */}
-                <div className="relative" ref={agentDropdownRef}>
+      {!isCentered && (
+        <div className="px-6 pb-6 animate-in slide-in-from-top duration-500">
+          <div className="max-w-3xl mx-auto">
+            <form onSubmit={handleSubmit} className="relative">
+              <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="absolute left-4 flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
-                    className="p-1.5 rounded-lg hover:bg-accent transition-all group"
-                    aria-label="Select AI Agent"
-                    title={activeAgent.name}
+                    className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    aria-label="Add attachment"
                   >
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
-                      style={{ backgroundColor: activeAgent.color }}
-                    >
-                      <span className="text-base">{activeAgent.icon}</span>
-                    </div>
+                    <Plus className="w-5 h-5 text-muted-foreground" />
                   </button>
 
-                  {/* Dropdown Menu */}
-                  {isAgentDropdownOpen && (
-                    <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 opacity-100 transition-opacity duration-200">
-                      <div className="p-3 border-b border-border bg-muted">
-                        <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                  {/* Agent Selector Dropdown */}
+                  <div className="relative" ref={agentDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+                      className="p-1.5 rounded-lg hover:bg-accent transition-all group"
+                      aria-label="Select AI Agent"
+                      title={activeAgent.name}
+                    >
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
+                        style={{ backgroundColor: activeAgent.color }}
+                      >
+                        <span className="text-base">{activeAgent.icon}</span>
                       </div>
-                      <div className="max-h-96 overflow-y-auto">
-                        {AI_AGENTS.map((agent) => (
-                          <button
-                            key={agent.id}
-                            type="button"
-                            onClick={() => handleAgentChange(agent)}
-                            className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${
-                              activeAgent.id === agent.id ? "bg-accent/50" : ""
-                            }`}
-                          >
-                            <div
-                              className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-                              style={{ backgroundColor: agent.color }}
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isAgentDropdownOpen && (
+                      <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 opacity-100 transition-opacity duration-200">
+                        <div className="p-3 border-b border-border bg-muted">
+                          <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          {AI_AGENTS.map((agent) => (
+                            <button
+                              key={agent.id}
+                              type="button"
+                              onClick={() => handleAgentChange(agent)}
+                              className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${
+                                activeAgent.id === agent.id ? "bg-accent/50" : ""
+                              }`}
                             >
-                              <span className="text-xl">{agent.icon}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
-                                {activeAgent.id === agent.id && (
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                    Active
-                                  </span>
-                                )}
+                              <div
+                                className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                                style={{ backgroundColor: agent.color }}
+                              >
+                                <span className="text-xl">{agent.icon}</span>
                               </div>
-                              <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
-                            </div>
-                          </button>
-                        ))}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                                  {activeAgent.id === agent.id && (
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                      Active
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                </div>
+
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Ask anything"
+                  className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                />
+
+                <div className="flex items-center gap-2 pr-2">
+                  <button
+                    type="button"
+                    className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    aria-label="Voice input"
+                  >
+                    <Mic className="w-5 h-5 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={!message.trim()}
+                    className={`p-2.5 rounded-full transition-all ${
+                      message.trim()
+                        ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105"
+                        : "bg-muted"
+                    }`}
+                    aria-label="Send message"
+                  >
+                    <ArrowUp className={`w-5 h-5 ${message.trim() ? "text-white" : "text-muted-foreground"}`} />
+                  </button>
                 </div>
               </div>
+            </form>
 
-              <input
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ask anything"
-                className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-              />
-
-              <div className="flex items-center gap-2 pr-2">
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              {[
+                { text: "Help me land a job offer for an open role", emoji: "💼" },
+                { text: "Calculate sample quotation for me", emoji: "💰" },
+                { text: "Open a job for my company", emoji: "📢" },
+                { text: "Tell me more about Teamified AI", emoji: "🤖" },
+              ].map((suggestion) => (
                 <button
-                  type="button"
-                  className="p-2 rounded-lg hover:bg-accent transition-colors"
-                  aria-label="Voice input"
+                  key={suggestion.text}
+                  onClick={() => handleSuggestionClick(suggestion.text)}
+                  className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
                 >
-                  <Mic className="w-5 h-5 text-muted-foreground" />
+                  <span className="mr-2">{suggestion.emoji}</span>
+                  {suggestion.text}
                 </button>
-
-                <button
-                  type="submit"
-                  disabled={!message.trim()}
-                  className={`p-2.5 rounded-full transition-all ${
-                    message.trim()
-                      ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105"
-                      : "bg-muted"
-                  }`}
-                  aria-label="Send message"
-                >
-                  <ArrowUp className={`w-5 h-5 ${message.trim() ? "text-white" : "text-muted-foreground"}`} />
-                </button>
-              </div>
+              ))}
             </div>
-          </form>
 
-          <footer className="mt-4 text-center">
-            <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
-          </footer>
+            <footer className="mt-4 text-center">
+              <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
+            </footer>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
