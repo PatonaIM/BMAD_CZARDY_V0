@@ -8,6 +8,7 @@ export type WorkspaceContentType =
   | "job-description"
   | "table"
   | "analytics"
+  | "candidate-profile" // Added candidate profile workspace type
   | null
 
 export interface WorkspaceContent {

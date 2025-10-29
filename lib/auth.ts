@@ -8,6 +8,7 @@ export interface User {
   provider: "google" | "github" | "email"
   role: "candidate" | "hiring_manager"
   company?: string
+  isNewSignup?: boolean
 }
 
 export const mockUsers = {
@@ -53,7 +54,7 @@ export async function mockSignIn(provider: "google" | "github"): Promise<User> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
-  const user = mockUsers[provider]
+  const user = { ...mockUsers[provider], isNewSignup: true }
   setCurrentUser(user)
   return user
 }
@@ -80,6 +81,7 @@ export async function mockSignUp(
       .slice(0, 2),
     provider: "email",
     role: role,
+    isNewSignup: true,
     ...(role === "hiring_manager" && { company: "Your Company" }),
   }
 
@@ -117,5 +119,13 @@ export function ensureAnonymousStart(): void {
   if (typeof window !== "undefined") {
     // Clear any existing auth state for demo purposes
     clearCurrentUser()
+  }
+}
+
+export function clearNewSignupFlag(): void {
+  const user = getCurrentUser()
+  if (user && user.isNewSignup) {
+    const updatedUser = { ...user, isNewSignup: false }
+    setCurrentUser(updatedUser)
   }
 }

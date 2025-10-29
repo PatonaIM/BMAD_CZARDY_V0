@@ -1,15 +1,37 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ChatSidebar } from "@/components/chat-sidebar"
 import { ChatMain } from "@/components/chat-main"
 import { WorkspacePane } from "@/components/workspace-pane"
 import { ThemeProvider } from "@/components/theme-provider"
 import type { WorkspaceContent } from "@/types/workspace"
+import { getCurrentUser, clearNewSignupFlag } from "@/lib/auth"
+import { AI_AGENTS } from "@/types/agents"
 
 export default function ChatPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [workspaceContent, setWorkspaceContent] = useState<WorkspaceContent>({ type: null })
+  const [initialAgent, setInitialAgent] = useState<string | null>(null)
+  const [shouldShowWelcome, setShouldShowWelcome] = useState(false)
+
+  useEffect(() => {
+    const user = getCurrentUser()
+    if (user?.isNewSignup && user.role === "candidate") {
+      // Set the Technical Recruiter as the initial agent
+      const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+      if (technicalRecruiter) {
+        setInitialAgent(technicalRecruiter.id)
+        setShouldShowWelcome(true)
+        // Open the candidate profile form in workspace
+        setTimeout(() => {
+          setWorkspaceContent({ type: "candidate-profile", title: "Candidate Profile" })
+        }, 1000)
+        // Clear the new signup flag
+        clearNewSignupFlag()
+      }
+    }
+  }, [])
 
   return (
     <ThemeProvider>
@@ -21,6 +43,8 @@ export default function ChatPage() {
               isSidebarOpen={isSidebarOpen}
               onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
               onOpenWorkspace={setWorkspaceContent}
+              initialAgentId={initialAgent}
+              shouldShowWelcome={shouldShowWelcome}
             />
           </div>
           {workspaceContent.type && (

@@ -27,6 +27,8 @@ interface ChatMainProps {
   isSidebarOpen: boolean
   onToggleSidebar: () => void
   onOpenWorkspace: (content: WorkspaceContent) => void
+  initialAgentId?: string | null
+  shouldShowWelcome?: boolean
 }
 
 interface Message {
@@ -199,12 +201,43 @@ const categoryTabs: Array<{ id: SuggestionCategory; label: string; icon: React.R
   { id: "about-us", label: "About Us", icon: <Info className="w-4 h-4" /> },
 ]
 
-export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: ChatMainProps) {
+const generateCandidateWelcome = (): string => {
+  return `Hello! Welcome to Teamified AI! I'm **Danny**, your **Technical Recruiter** AI Agent. 🎯
+
+I'm excited to help you find your next great opportunity! To get started, I've opened a Candidate Profile form in the workspace on the right where you can share your information with me.
+
+${loremParagraphs[0]}
+
+${loremParagraphs[1]}
+
+## Here's what I can help you with:
+
+${loremParagraphs[2]}
+
+${loremParagraphs[3]}
+
+Please take a moment to complete your profile, and then we can start exploring opportunities that match your skills and experience!
+
+What would you like to know about the opportunities we have available?`
+}
+
+export function ChatMain({
+  isSidebarOpen,
+  onToggleSidebar,
+  onOpenWorkspace,
+  initialAgentId,
+  shouldShowWelcome,
+}: ChatMainProps) {
   const [message, setMessage] = useState("")
   const [welcomeQuestion, setWelcomeQuestion] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isThinking, setIsThinking] = useState(false)
-  const [activeAgent, setActiveAgent] = useState<AIAgent>(AI_AGENTS[0])
+  const [activeAgent, setActiveAgent] = useState<AIAgent>(() => {
+    if (initialAgentId) {
+      return AI_AGENTS.find((agent) => agent.id === initialAgentId) || AI_AGENTS[0]
+    }
+    return AI_AGENTS[0]
+  })
   const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
   const [activeSuggestionTab, setActiveSuggestionTab] = useState<SuggestionCategory>("suggested")
   const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
@@ -218,6 +251,23 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
     const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
     setWelcomeQuestion(welcomeQuestions[randomIndex])
   }, [])
+
+  useEffect(() => {
+    if (shouldShowWelcome && initialAgentId) {
+      const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
+      if (agent) {
+        setMessages([
+          {
+            id: Date.now().toString(),
+            type: "ai",
+            content: generateCandidateWelcome(),
+            agentId: agent.id,
+            isAgentSwitch: false,
+          },
+        ])
+      }
+    }
+  }, [shouldShowWelcome, initialAgentId])
 
   useEffect(() => {
     if (messages.length > 0 && messagesContainerRef.current) {

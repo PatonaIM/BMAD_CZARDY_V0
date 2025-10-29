@@ -37,6 +37,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
+import { CandidateProfileForm } from "./candidate-profile-form"
 
 interface WorkspacePaneProps {
   isOpen: boolean
@@ -468,6 +469,9 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
 
   const renderContent = () => {
     switch (content.type) {
+      case "candidate-profile":
+        return <CandidateProfileForm />
+
       case "pdf":
         return (
           <div className="h-full flex flex-col">
