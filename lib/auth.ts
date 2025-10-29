@@ -50,11 +50,33 @@ export function clearCurrentUser(): void {
   localStorage.removeItem("teamified_user")
 }
 
+function hasOAuthUserLoggedInBefore(provider: "google" | "github"): boolean {
+  if (typeof window === "undefined") return false
+  const registeredUsers = JSON.parse(localStorage.getItem("teamified_oauth_users") || "[]")
+  return registeredUsers.includes(provider)
+}
+
+function markOAuthUserAsRegistered(provider: "google" | "github"): void {
+  if (typeof window === "undefined") return
+  const registeredUsers = JSON.parse(localStorage.getItem("teamified_oauth_users") || "[]")
+  if (!registeredUsers.includes(provider)) {
+    registeredUsers.push(provider)
+    localStorage.setItem("teamified_oauth_users", JSON.stringify(registeredUsers))
+  }
+}
+
 export async function mockSignIn(provider: "google" | "github"): Promise<User> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
-  const user = { ...mockUsers[provider], isNewSignup: true }
+  const isReturningUser = hasOAuthUserLoggedInBefore(provider)
+
+  const user = { ...mockUsers[provider], isNewSignup: !isReturningUser }
+
+  if (!isReturningUser) {
+    markOAuthUserAsRegistered(provider)
+  }
+
   setCurrentUser(user)
   return user
 }
@@ -106,7 +128,7 @@ export async function mockLogin(email: string, password: string): Promise<User> 
     throw new Error("Invalid email or password")
   }
 
-  const user = storedCredential.user
+  const user = { ...storedCredential.user, isNewSignup: false }
   setCurrentUser(user)
   return user
 }
