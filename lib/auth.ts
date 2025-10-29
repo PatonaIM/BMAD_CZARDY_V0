@@ -6,6 +6,7 @@ export interface User {
   email: string
   avatar: string
   provider: "google" | "github" | "email"
+  role: "candidate" | "hiring_manager"
 }
 
 export const mockUsers = {
@@ -15,6 +16,7 @@ export const mockUsers = {
     email: "czar@example.com",
     avatar: "CD",
     provider: "google" as const,
+    role: "candidate" as const,
   },
   github: {
     id: "github-user-1",
@@ -22,6 +24,7 @@ export const mockUsers = {
     email: "czar@github.com",
     avatar: "CD",
     provider: "github" as const,
+    role: "candidate" as const,
   },
 }
 
@@ -53,7 +56,12 @@ export async function mockSignIn(provider: "google" | "github"): Promise<User> {
   return user
 }
 
-export async function mockSignUp(email: string, password: string, name: string): Promise<User> {
+export async function mockSignUp(
+  email: string,
+  password: string,
+  name: string,
+  role: "candidate" | "hiring_manager",
+): Promise<User> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
@@ -69,6 +77,7 @@ export async function mockSignUp(email: string, password: string, name: string):
       .toUpperCase()
       .slice(0, 2),
     provider: "email",
+    role: role,
   }
 
   // Store the credentials for mock login

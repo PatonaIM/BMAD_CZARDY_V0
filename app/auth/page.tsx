@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Sparkles, Loader2, Mail, Lock, User } from "lucide-react"
+import { Sparkles, Loader2, Mail, Lock, User, Briefcase, UserCircle } from "lucide-react"
 import { mockSignIn, mockSignUp, mockLogin } from "@/lib/auth"
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -14,6 +14,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+  const [role, setRole] = useState<"candidate" | "hiring_manager">("candidate")
   const [error, setError] = useState("")
   const router = useRouter()
 
@@ -43,7 +44,7 @@ export default function AuthPage() {
           setIsLoading(null)
           return
         }
-        await mockSignUp(email, password, name)
+        await mockSignUp(email, password, name, role)
       } else {
         await mockLogin(email, password)
       }
@@ -105,6 +106,50 @@ export default function AuthPage() {
             </div>
 
             <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+              {mode === "signup" && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-3">I am signing up as a</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setRole("candidate")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        role === "candidate"
+                          ? "border-[#A16AE8] bg-[#A16AE8]/5"
+                          : "border-border hover:border-[#A16AE8]/50"
+                      }`}
+                    >
+                      <UserCircle
+                        className={`w-8 h-8 ${role === "candidate" ? "text-[#A16AE8]" : "text-muted-foreground"}`}
+                      />
+                      <span
+                        className={`text-sm font-medium ${role === "candidate" ? "text-foreground" : "text-muted-foreground"}`}
+                      >
+                        Candidate
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRole("hiring_manager")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        role === "hiring_manager"
+                          ? "border-[#A16AE8] bg-[#A16AE8]/5"
+                          : "border-border hover:border-[#A16AE8]/50"
+                      }`}
+                    >
+                      <Briefcase
+                        className={`w-8 h-8 ${role === "hiring_manager" ? "text-[#A16AE8]" : "text-muted-foreground"}`}
+                      />
+                      <span
+                        className={`text-sm font-medium ${role === "hiring_manager" ? "text-foreground" : "text-muted-foreground"}`}
+                      >
+                        Hiring Manager
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {mode === "signup" && (
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
