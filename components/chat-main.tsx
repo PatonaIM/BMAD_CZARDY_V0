@@ -2,7 +2,23 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { Menu, Plus, Mic, ArrowUp, Copy, Download, FileText, ChevronDown } from "lucide-react"
+import {
+  Menu,
+  Plus,
+  Mic,
+  ArrowUp,
+  Copy,
+  Download,
+  FileText,
+  ChevronDown,
+  Sparkles,
+  Briefcase,
+  Building2,
+  Calculator,
+  Scale,
+  Info,
+  PanelRight,
+} from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
 import { MarkdownRenderer } from "./markdown-renderer"
@@ -133,6 +149,56 @@ Simply type any command (e.g., \`*service-overview\`) or just ask your questions
 ${agent.callToAction}`
 }
 
+type SuggestionCategory = "suggested" | "apply-to-jobs" | "hiring" | "quote-me" | "legal" | "about-us"
+
+const suggestionsByCategory: Record<SuggestionCategory, Array<{ text: string; emoji: string }>> = {
+  suggested: [
+    { text: "Tell me more about Teamified AI", emoji: "🤖" },
+    { text: "Show me available AI agents", emoji: "👥" },
+    { text: "What can you help me with?", emoji: "💡" },
+    { text: "Explain your capabilities", emoji: "✨" },
+  ],
+  "apply-to-jobs": [
+    { text: "Help me land a job offer for an open role", emoji: "💼" },
+    { text: "Show me open positions matching my skills", emoji: "🎯" },
+    { text: "Review my resume and suggest improvements", emoji: "📄" },
+    { text: "Prepare me for upcoming interviews", emoji: "🎤" },
+  ],
+  hiring: [
+    { text: "Open a job for my company", emoji: "📢" },
+    { text: "Show me qualified candidates for my role", emoji: "👔" },
+    { text: "Help me write a job description", emoji: "✍️" },
+    { text: "Schedule interviews with shortlisted candidates", emoji: "📅" },
+  ],
+  "quote-me": [
+    { text: "Calculate sample quotation for me", emoji: "💰" },
+    { text: "Show me pricing for recruitment services", emoji: "💵" },
+    { text: "Generate an employment contract", emoji: "📋" },
+    { text: "Explain your service packages", emoji: "📦" },
+  ],
+  legal: [
+    { text: "Show me your privacy policy", emoji: "🔒" },
+    { text: "Explain your terms and conditions", emoji: "📜" },
+    { text: "What are your data protection policies?", emoji: "🛡️" },
+    { text: "Generate a non-disclosure agreement", emoji: "🤝" },
+  ],
+  "about-us": [
+    { text: "Tell me about Teamified's mission and values", emoji: "🎯" },
+    { text: "Who are the people behind Teamified?", emoji: "👥" },
+    { text: "What services does Teamified offer?", emoji: "🚀" },
+    { text: "How can I contact Teamified?", emoji: "📞" },
+  ],
+}
+
+const categoryTabs: Array<{ id: SuggestionCategory; label: string; icon: React.ReactNode }> = [
+  { id: "suggested", label: "Suggested", icon: <Sparkles className="w-4 h-4" /> },
+  { id: "apply-to-jobs", label: "Apply to Jobs", icon: <Briefcase className="w-4 h-4" /> },
+  { id: "hiring", label: "Hiring", icon: <Building2 className="w-4 h-4" /> },
+  { id: "quote-me", label: "Pricing", icon: <Calculator className="w-4 h-4" /> },
+  { id: "legal", label: "Legal", icon: <Scale className="w-4 h-4" /> },
+  { id: "about-us", label: "About Us", icon: <Info className="w-4 h-4" /> },
+]
+
 export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: ChatMainProps) {
   const [message, setMessage] = useState("")
   const [welcomeQuestion, setWelcomeQuestion] = useState("")
@@ -140,8 +206,11 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
   const [isThinking, setIsThinking] = useState(false)
   const [activeAgent, setActiveAgent] = useState<AIAgent>(AI_AGENTS[0])
   const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
+  const [activeSuggestionTab, setActiveSuggestionTab] = useState<SuggestionCategory>("suggested")
+  const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
+  const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
-  const lastMessageRef = useRef<HTMLDivElement>(null) // Added ref for last message (any type)
+  const lastMessageRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const agentDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -160,7 +229,6 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
         })
       } else {
         const timer = setTimeout(() => {
-          // Check if last message is a user message, scroll to it
           if (lastUserMessageRef.current) {
             lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
           } else if (lastMessageRef.current && messagesContainerRef.current) {
@@ -194,7 +262,6 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
     let shouldOpenWorkspace = false
     let workspaceContent: WorkspaceContent | null = null
 
-    // Command routing
     if (lowerMessage === "*help") {
       content = generateHelpMessage(activeAgent)
     } else if (lowerMessage === "large text") {
@@ -242,7 +309,6 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
       shouldOpenWorkspace = true
       workspaceContent = { type: "analytics", title: "Recruitment Analytics" }
     } else {
-      // Default: simple text response
       content = generateShortResponse()
     }
 
@@ -263,8 +329,9 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
         },
       ])
 
-      // Open workspace if needed
       if (shouldOpenWorkspace && workspaceContent) {
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent(workspaceContent)
         setTimeout(() => onOpenWorkspace(workspaceContent), 100)
       }
     }, 2000)
@@ -272,6 +339,12 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
 
   const handlePreviewClick = (fileType: string) => {
     onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
+  }
+
+  const handleReopenWorkspace = () => {
+    if (lastWorkspaceContent) {
+      onOpenWorkspace(lastWorkspaceContent)
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -311,6 +384,39 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
 
   const isCentered = messages.length === 0
 
+  const renderSuggestions = () => (
+    <>
+      <div className="flex items-center justify-center gap-2 mb-4 overflow-x-auto pb-2">
+        {categoryTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveSuggestionTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              activeSuggestionTab === tab.id
+                ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-md"
+                : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {suggestionsByCategory[activeSuggestionTab].map((suggestion) => (
+          <button
+            key={suggestion.text}
+            onClick={() => handleSuggestionClick(suggestion.text)}
+            className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
+          >
+            <span className="mr-2">{suggestion.emoji}</span>
+            {suggestion.text}
+          </button>
+        ))}
+      </div>
+    </>
+  )
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden h-full">
       <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border">
@@ -328,7 +434,18 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
             Teamified AI
           </h2>
         </div>
-        <div className="w-10 flex-shrink-0" />
+        <div className="flex-shrink-0">
+          {hasOpenedWorkspace && (
+            <button
+              onClick={handleReopenWorkspace}
+              className="p-2 rounded-lg hover:bg-accent transition-colors group"
+              aria-label="Reopen workspace"
+              title="Reopen workspace"
+            >
+              <PanelRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            </button>
+          )}
+        </div>
       </header>
 
       <main
@@ -440,23 +557,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                 </div>
               </form>
 
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                {[
-                  { text: "Help me land a job offer for an open role", emoji: "💼" },
-                  { text: "Calculate sample quotation for me", emoji: "💰" },
-                  { text: "Open a job for my company", emoji: "📢" },
-                  { text: "Tell me more about Teamified AI", emoji: "🤖" },
-                ].map((suggestion) => (
-                  <button
-                    key={suggestion.text}
-                    onClick={() => handleSuggestionClick(suggestion.text)}
-                    className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
-                  >
-                    <span className="mr-2">{suggestion.emoji}</span>
-                    {suggestion.text}
-                  </button>
-                ))}
-              </div>
+              <div className="mt-6">{renderSuggestions()}</div>
 
               <footer className="mt-4 text-center">
                 <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
@@ -735,24 +836,6 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                 </div>
               </div>
             </form>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              {[
-                { text: "Help me land a job offer for an open role", emoji: "💼" },
-                { text: "Calculate sample quotation for me", emoji: "💰" },
-                { text: "Open a job for my company", emoji: "📢" },
-                { text: "Tell me more about Teamified AI", emoji: "🤖" },
-              ].map((suggestion) => (
-                <button
-                  key={suggestion.text}
-                  onClick={() => handleSuggestionClick(suggestion.text)}
-                  className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
-                >
-                  <span className="mr-2">{suggestion.emoji}</span>
-                  {suggestion.text}
-                </button>
-              ))}
-            </div>
 
             <footer className="mt-4 text-center">
               <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
