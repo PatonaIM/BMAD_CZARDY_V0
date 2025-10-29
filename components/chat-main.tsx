@@ -98,6 +98,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
   const [activeAgent, setActiveAgent] = useState<AIAgent>(AI_AGENTS[0])
   const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const agentDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -106,12 +107,20 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (lastUserMessageRef.current) {
-        lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+    if (messages.length > 0 && messagesContainerRef.current) {
+      // For the first message, scroll to top immediately
+      if (messages.length === 1) {
+        messagesContainerRef.current.scrollTop = 0
+      } else {
+        // For subsequent messages, smooth scroll to show latest user message
+        const timer = setTimeout(() => {
+          if (lastUserMessageRef.current) {
+            lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+        }, 100)
+        return () => clearTimeout(timer)
       }
-    }, 100)
-    return () => clearTimeout(timer)
+    }
   }, [messages, isThinking])
 
   useEffect(() => {
@@ -268,6 +277,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
       </header>
 
       <main
+        ref={messagesContainerRef}
         className={`flex-1 min-h-0 px-6 relative ${isCentered ? "flex items-center justify-center" : "flex flex-col overflow-y-auto"}`}
       >
         {isCentered ? (
@@ -404,7 +414,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
               const isLastUserMessage = msg.type === "user" && index === messages.map((m) => m.type).lastIndexOf("user")
               const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
               return (
-                <div key={msg.id} ref={isLastUserMessage ? lastUserMessageRef : null}>
+                <div key={msg.id} ref={isLastUserMessage ? lastUserMessageRef : null} className="message-enter">
                   {msg.type === "user" ? (
                     <div className="flex justify-end mb-6">
                       <div className="max-w-[80%] px-5 py-3 rounded-3xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg">
@@ -521,6 +531,37 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                 </div>
               )
             })}
+
+            {isThinking && (
+              <div className="mb-6 message-enter">
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                    style={{ backgroundColor: activeAgent.color }}
+                  >
+                    <span className="text-lg">{activeAgent.icon}</span>
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{activeAgent.name}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Thinking</span>
+                  <div className="flex gap-1">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] animate-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-[#8096FD] animate-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] animate-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
