@@ -7,6 +7,7 @@ export interface User {
   avatar: string
   provider: "google" | "github" | "email"
   role: "candidate" | "hiring_manager"
+  company?: string
 }
 
 export const mockUsers = {
@@ -24,7 +25,8 @@ export const mockUsers = {
     email: "czar@github.com",
     avatar: "CD",
     provider: "github" as const,
-    role: "candidate" as const,
+    role: "hiring_manager" as const,
+    company: "TechCorp",
   },
 }
 
@@ -78,6 +80,7 @@ export async function mockSignUp(
       .slice(0, 2),
     provider: "email",
     role: role,
+    ...(role === "hiring_manager" && { company: "Your Company" }),
   }
 
   // Store the credentials for mock login

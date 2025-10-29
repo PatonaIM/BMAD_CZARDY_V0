@@ -58,6 +58,17 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
     router.push("/auth")
   }
 
+  const getRoleDisplay = (user: ReturnType<typeof getCurrentUser>) => {
+    if (!user) return ""
+    if (user.role === "candidate") {
+      return "Candidate"
+    }
+    if (user.role === "hiring_manager") {
+      return `Hiring Manager for ${user.company || "Company"}`
+    }
+    return "User"
+  }
+
   return (
     <div
       className={`relative flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300 ${
@@ -156,9 +167,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
               {isOpen && (
                 <div className="flex-1 text-left">
                   <div className="text-sm font-medium text-sidebar-foreground">{user.name || "User"}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {user.provider ? `${user.provider} account` : "Personal account"}
-                  </div>
+                  <div className="text-xs text-muted-foreground">{getRoleDisplay(user)}</div>
                 </div>
               )}
             </button>
