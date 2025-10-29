@@ -38,6 +38,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { CandidateProfileForm } from "./candidate-profile-form"
+import { HiringManagerProfileForm } from "./hiring-manager-profile-form"
 
 interface WorkspacePaneProps {
   isOpen: boolean
@@ -472,6 +473,9 @@ export function WorkspacePane({ isOpen, onClose, content, onProfileSave }: Works
     switch (content.type) {
       case "candidate-profile":
         return <CandidateProfileForm onSave={onProfileSave} onClose={onClose} />
+
+      case "hiring-manager-profile":
+        return <HiringManagerProfileForm onSave={onProfileSave} onClose={onClose} />
 
       case "pdf":
         return (

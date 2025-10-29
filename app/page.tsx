@@ -18,18 +18,33 @@ export default function ChatPage() {
 
   useEffect(() => {
     const user = getCurrentUser()
-    if (user?.isNewSignup && user.role === "candidate") {
-      // Set the Technical Recruiter as the initial agent
-      const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-      if (technicalRecruiter) {
-        setInitialAgent(technicalRecruiter.id)
-        setShouldShowWelcome(true)
-        // Open the candidate profile form in workspace
-        setTimeout(() => {
-          setWorkspaceContent({ type: "candidate-profile", title: "Candidate Profile" })
-        }, 1000)
-        // Clear the new signup flag
-        clearNewSignupFlag()
+    if (user?.isNewSignup) {
+      if (user.role === "candidate") {
+        // Set the Technical Recruiter as the initial agent
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+        if (technicalRecruiter) {
+          setInitialAgent(technicalRecruiter.id)
+          setShouldShowWelcome(true)
+          // Open the candidate profile form in workspace
+          setTimeout(() => {
+            setWorkspaceContent({ type: "candidate-profile", title: "Candidate Profile" })
+          }, 1000)
+          // Clear the new signup flag
+          clearNewSignupFlag()
+        }
+      } else if (user.role === "hiring-manager") {
+        // Set the Sales & Marketing agent as the initial agent
+        const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
+        if (salesAgent) {
+          setInitialAgent(salesAgent.id)
+          setShouldShowWelcome(true)
+          // Open the hiring manager profile form in workspace
+          setTimeout(() => {
+            setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
+          }, 1000)
+          // Clear the new signup flag
+          clearNewSignupFlag()
+        }
       }
     }
   }, [])
