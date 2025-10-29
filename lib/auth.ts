@@ -13,17 +13,17 @@ export interface User {
 export const mockUsers = {
   google: {
     id: "google-user-1",
-    name: "Czar Dy",
-    email: "czar@example.com",
-    avatar: "CD",
+    name: "Robert Downey Jr.",
+    email: "robert@example.com",
+    avatar: "RD",
     provider: "google" as const,
     role: "candidate" as const,
   },
   github: {
     id: "github-user-1",
-    name: "Czar Dy",
-    email: "czar@github.com",
-    avatar: "CD",
+    name: "Steve Rogers",
+    email: "steve@github.com",
+    avatar: "SR",
     provider: "github" as const,
     role: "hiring_manager" as const,
     company: "TechCorp",
