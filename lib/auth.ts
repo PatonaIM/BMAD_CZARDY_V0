@@ -72,19 +72,19 @@ export async function mockSignIn(
 ): Promise<User> {
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
-  const isReturningUser = !isSignup && hasOAuthUserLoggedInBefore(provider)
-
   const baseUser = mockUsers[provider]
   const userRole = role || baseUser.role
 
   const user: User = {
     ...baseUser,
     role: userRole,
-    isNewSignup: isSignup || !isReturningUser,
+    // If isSignup is true, this is a new signup. If false, this is a login (no onboarding)
+    isNewSignup: isSignup,
     ...(userRole === "hiring_manager" && { company: baseUser.company || "Your Company" }),
   }
 
-  if (!isReturningUser) {
+  // Mark user as registered for future reference
+  if (isSignup) {
     markOAuthUserAsRegistered(provider)
   }
 
