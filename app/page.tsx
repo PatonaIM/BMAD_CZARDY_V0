@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { ChatSidebar } from "@/components/chat-sidebar"
 import { ChatMain } from "@/components/chat-main"
 import { WorkspacePane } from "@/components/workspace-pane"
@@ -14,6 +14,7 @@ export default function ChatPage() {
   const [workspaceContent, setWorkspaceContent] = useState<WorkspaceContent>({ type: null })
   const [initialAgent, setInitialAgent] = useState<string | null>(null)
   const [shouldShowWelcome, setShouldShowWelcome] = useState(false)
+  const chatMainRef = useRef<{ handleProfileSaved: () => void } | null>(null)
 
   useEffect(() => {
     const user = getCurrentUser()
@@ -33,6 +34,12 @@ export default function ChatPage() {
     }
   }, [])
 
+  const handleProfileSave = () => {
+    if (chatMainRef.current) {
+      chatMainRef.current.handleProfileSaved()
+    }
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -40,6 +47,7 @@ export default function ChatPage() {
         <div className="flex-1 flex overflow-hidden">
           <div className={`${workspaceContent.type ? "w-1/2" : "w-full"} transition-all duration-300`}>
             <ChatMain
+              ref={chatMainRef}
               isSidebarOpen={isSidebarOpen}
               onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
               onOpenWorkspace={setWorkspaceContent}
@@ -53,6 +61,7 @@ export default function ChatPage() {
                 isOpen={!!workspaceContent.type}
                 onClose={() => setWorkspaceContent({ type: null })}
                 content={workspaceContent}
+                onProfileSave={handleProfileSave}
               />
             </div>
           )}

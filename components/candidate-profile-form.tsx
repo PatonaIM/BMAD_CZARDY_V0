@@ -12,7 +12,11 @@ interface PortfolioItem {
   url?: string
 }
 
-export function CandidateProfileForm() {
+interface CandidateProfileFormProps {
+  onSave?: () => void
+}
+
+export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -78,7 +82,9 @@ export function CandidateProfileForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log("[v0] Candidate profile submitted:", { formData, resume, portfolioItems })
-    // Mock submission - in real app, this would send to backend
+    if (onSave) {
+      onSave()
+    }
   }
 
   return (

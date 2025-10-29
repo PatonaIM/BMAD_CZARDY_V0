@@ -43,6 +43,7 @@ interface WorkspacePaneProps {
   isOpen: boolean
   onClose: () => void
   content: WorkspaceContent
+  onProfileSave?: () => void // Added callback for profile save
 }
 
 const mockJobListings: JobListing[] = [
@@ -382,7 +383,7 @@ const mockCandidateData = [
   { name: "Ashley Wright", position: "Data Scientist", experience: "7 years", status: "Interview", match: "91%" },
 ]
 
-export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) {
+export function WorkspacePane({ isOpen, onClose, content, onProfileSave }: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
   const [pdfZoom, setPdfZoom] = useState(100)
@@ -470,7 +471,7 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
   const renderContent = () => {
     switch (content.type) {
       case "candidate-profile":
-        return <CandidateProfileForm />
+        return <CandidateProfileForm onSave={onProfileSave} />
 
       case "pdf":
         return (
