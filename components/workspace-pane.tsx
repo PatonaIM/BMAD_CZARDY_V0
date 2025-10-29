@@ -13,8 +13,14 @@ import {
   FileCode,
   Folder,
   File,
+  ZoomIn,
+  ZoomOut,
+  Printer,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import type { WorkspaceContent, JobListing } from "@/types/workspace"
 import {
   BarChart,
@@ -43,47 +49,259 @@ const mockJobListings: JobListing[] = [
     id: "1",
     title: "Senior Full-Stack Developer",
     company: "Teamified",
-    location: "Remote",
+    location: "Manila, Philippines",
     type: "Full-time",
-    salary: "$120k - $160k",
+    salary: "$45k - $65k",
     posted: "2 days ago",
-    description: "We're looking for an experienced full-stack developer to join our growing team.",
+    description: "We're looking for an experienced full-stack developer to join our growing team in Manila.",
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
   },
   {
     id: "2",
     title: "AI Engineer",
-    company: "Tech Innovations",
-    location: "San Francisco, CA",
+    company: "Archa",
+    location: "Bangalore, India",
     type: "Full-time",
-    salary: "$140k - $180k",
+    salary: "$35k - $55k",
     posted: "1 week ago",
     description: "Join our AI team to build cutting-edge machine learning solutions.",
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
   },
   {
     id: "3",
     title: "Product Manager",
-    company: "StartupCo",
-    location: "New York, NY",
+    company: "Volaro Group",
+    location: "Sydney, Australia",
     type: "Full-time",
-    salary: "$130k - $170k",
+    salary: "$90k - $120k",
     posted: "3 days ago",
-    description: "Lead product strategy and execution for our flagship product.",
+    description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
   },
   {
     id: "4",
     title: "DevOps Engineer",
-    company: "CloudTech",
-    location: "Austin, TX",
+    company: "Zai",
+    location: "Colombo, Sri Lanka",
     type: "Full-time",
-    salary: "$110k - $150k",
+    salary: "$30k - $45k",
     posted: "5 days ago",
     description: "Build and maintain our cloud infrastructure and CI/CD pipelines.",
     requirements: ["Kubernetes", "Docker", "AWS/GCP", "Terraform", "4+ years experience"],
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+  },
+  {
+    id: "5",
+    title: "Frontend Developer",
+    company: "Thriday",
+    location: "Cebu, Philippines",
+    type: "Full-time",
+    salary: "$35k - $50k",
+    posted: "1 day ago",
+    description: "Create beautiful and responsive user interfaces for our web applications.",
+    requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+  },
+  {
+    id: "6",
+    title: "Data Scientist",
+    company: "Fortify",
+    location: "Mumbai, India",
+    type: "Full-time",
+    salary: "$40k - $60k",
+    posted: "4 days ago",
+    description: "Analyze complex datasets and build predictive models to drive business insights.",
+    requirements: ["Python", "SQL", "Machine Learning", "Statistics", "4+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+  },
+  {
+    id: "7",
+    title: "Backend Developer",
+    company: "Archa",
+    location: "Melbourne, Australia",
+    type: "Full-time",
+    salary: "$85k - $110k",
+    posted: "1 week ago",
+    description: "Design and implement scalable backend services and APIs.",
+    requirements: ["Node.js or Java", "Microservices", "Databases", "5+ years experience"],
+    applied: true,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+  },
+  {
+    id: "8",
+    title: "QA Engineer",
+    company: "Teamified",
+    location: "Remote (Philippines)",
+    type: "Full-time",
+    salary: "$30k - $45k",
+    posted: "2 days ago",
+    description: "Ensure software quality through comprehensive testing and automation.",
+    requirements: ["Test automation", "Selenium/Cypress", "API testing", "3+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+  },
+  {
+    id: "9",
+    title: "Mobile Developer (iOS)",
+    company: "Zai",
+    location: "Pune, India",
+    type: "Full-time",
+    salary: "$38k - $55k",
+    posted: "6 days ago",
+    description: "Build native iOS applications with cutting-edge features.",
+    requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+  },
+  {
+    id: "10",
+    title: "UX/UI Designer",
+    company: "Volaro Group",
+    location: "Brisbane, Australia",
+    type: "Full-time",
+    salary: "$70k - $95k",
+    posted: "3 days ago",
+    description: "Create intuitive and visually appealing user experiences.",
+    requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+  },
+  {
+    id: "11",
+    title: "Solutions Architect",
+    company: "Fortify",
+    location: "Galle, Sri Lanka",
+    type: "Full-time",
+    salary: "$50k - $70k",
+    posted: "1 week ago",
+    description: "Design and implement enterprise-level cloud solutions.",
+    requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+  },
+  {
+    id: "12",
+    title: "Scrum Master",
+    company: "Thriday",
+    location: "Makati, Philippines",
+    type: "Full-time",
+    salary: "$40k - $55k",
+    posted: "4 days ago",
+    description: "Facilitate agile processes and remove impediments for development teams.",
+    requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+  },
+  {
+    id: "13",
+    title: "Security Engineer",
+    company: "Archa",
+    location: "Hyderabad, India",
+    type: "Full-time",
+    salary: "$45k - $65k",
+    posted: "2 days ago",
+    description: "Protect our systems and data through robust security measures.",
+    requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
+    applied: true,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+  },
+  {
+    id: "14",
+    title: "Technical Writer",
+    company: "Teamified",
+    location: "Remote (Australia)",
+    type: "Contract",
+    salary: "$60k - $80k",
+    posted: "5 days ago",
+    description: "Create clear and comprehensive technical documentation.",
+    requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+  },
+  {
+    id: "15",
+    title: "Business Analyst",
+    company: "Zai",
+    location: "Davao, Philippines",
+    type: "Full-time",
+    salary: "$35k - $50k",
+    posted: "1 week ago",
+    description: "Bridge the gap between business needs and technical solutions.",
+    requirements: ["Requirements gathering", "Process modeling", "SQL", "4+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+  },
+  {
+    id: "16",
+    title: "Machine Learning Engineer",
+    company: "Fortify",
+    location: "Chennai, India",
+    type: "Full-time",
+    salary: "$42k - $62k",
+    posted: "3 days ago",
+    description: "Develop and deploy machine learning models at scale.",
+    requirements: ["Python", "TensorFlow", "MLOps", "Model deployment", "4+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+  },
+  {
+    id: "17",
+    title: "Site Reliability Engineer",
+    company: "Volaro Group",
+    location: "Perth, Australia",
+    type: "Full-time",
+    salary: "$95k - $125k",
+    posted: "6 days ago",
+    description: "Ensure high availability and reliability of production systems.",
+    requirements: ["Linux", "Monitoring tools", "Incident management", "5+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+  },
+  {
+    id: "18",
+    title: "Database Administrator",
+    company: "Thriday",
+    location: "Kandy, Sri Lanka",
+    type: "Full-time",
+    salary: "$35k - $50k",
+    posted: "2 days ago",
+    description: "Manage and optimize database systems for performance and reliability.",
+    requirements: ["PostgreSQL/MySQL", "Database tuning", "Backup strategies", "5+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+  },
+  {
+    id: "19",
+    title: "Cloud Engineer",
+    company: "Archa",
+    location: "Remote (India)",
+    type: "Full-time",
+    salary: "$40k - $58k",
+    posted: "4 days ago",
+    description: "Build and maintain cloud infrastructure on AWS and Azure.",
+    requirements: ["AWS/Azure", "Infrastructure as Code", "CI/CD", "4+ years experience"],
+    applied: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+  },
+  {
+    id: "20",
+    title: "Engineering Manager",
+    company: "Teamified",
+    location: "Adelaide, Australia",
+    type: "Full-time",
+    salary: "$110k - $145k",
+    posted: "1 week ago",
+    description: "Lead and mentor a team of software engineers to deliver high-quality products.",
+    requirements: ["Team leadership", "Technical expertise", "Agile", "7+ years experience"],
+    applied: true,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
   },
 ]
 
@@ -135,11 +353,116 @@ const mockTranscription = [
   { time: "01:00", text: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia." },
 ]
 
+const mockCandidateData = [
+  { name: "Sarah Johnson", position: "Senior Full-Stack", experience: "8 years", status: "Interview", match: "95%" },
+  { name: "Michael Chen", position: "AI Engineer", experience: "5 years", status: "Review", match: "88%" },
+  { name: "Emily Rodriguez", position: "Product Manager", experience: "6 years", status: "Offer", match: "92%" },
+  { name: "David Kim", position: "DevOps Engineer", experience: "7 years", status: "Assessment", match: "85%" },
+  { name: "Lisa Wang", position: "Data Scientist", experience: "6 years", status: "Interview", match: "90%" },
+  { name: "James Brown", position: "Frontend Dev", experience: "4 years", status: "Review", match: "82%" },
+  { name: "Maria Garcia", position: "Backend Dev", experience: "5 years", status: "Interview", match: "87%" },
+  { name: "Robert Taylor", position: "Senior Full-Stack", experience: "9 years", status: "Offer", match: "94%" },
+  { name: "Jennifer Lee", position: "Product Manager", experience: "7 years", status: "Review", match: "89%" },
+  { name: "William Martinez", position: "AI Engineer", experience: "4 years", status: "Assessment", match: "83%" },
+  { name: "Amanda White", position: "Data Scientist", experience: "5 years", status: "Interview", match: "86%" },
+  { name: "Christopher Davis", position: "DevOps Engineer", experience: "6 years", status: "Review", match: "88%" },
+  { name: "Jessica Wilson", position: "Frontend Dev", experience: "3 years", status: "Assessment", match: "79%" },
+  { name: "Daniel Anderson", position: "Backend Dev", experience: "7 years", status: "Interview", match: "91%" },
+  { name: "Michelle Thomas", position: "Senior Full-Stack", experience: "10 years", status: "Offer", match: "96%" },
+  { name: "Kevin Jackson", position: "Product Manager", experience: "5 years", status: "Review", match: "84%" },
+  { name: "Laura Harris", position: "AI Engineer", experience: "6 years", status: "Interview", match: "89%" },
+  { name: "Brian Clark", position: "Data Scientist", experience: "4 years", status: "Assessment", match: "81%" },
+  { name: "Nicole Lewis", position: "DevOps Engineer", experience: "8 years", status: "Interview", match: "93%" },
+  { name: "Steven Walker", position: "Frontend Dev", experience: "5 years", status: "Review", match: "85%" },
+  { name: "Rachel Hall", position: "Backend Dev", experience: "6 years", status: "Offer", match: "90%" },
+  { name: "Jason Allen", position: "Senior Full-Stack", experience: "7 years", status: "Interview", match: "88%" },
+  { name: "Stephanie Young", position: "Product Manager", experience: "8 years", status: "Review", match: "92%" },
+  { name: "Matthew King", position: "AI Engineer", experience: "5 years", status: "Assessment", match: "86%" },
+  { name: "Ashley Wright", position: "Data Scientist", experience: "7 years", status: "Interview", match: "91%" },
+]
+
 export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
+  const [pdfZoom, setPdfZoom] = useState(100)
+
+  const [sortColumn, setSortColumn] = useState<string | null>(null)
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [filters, setFilters] = useState({
+    name: "",
+    position: "",
+    experience: "",
+    status: "",
+    match: "",
+  })
 
   const mockImages = ["/dashboard-analytics.png", "/user-interface-design.png", "/data-visualization-abstract.png"]
+
+  const filteredAndSortedData = useMemo(() => {
+    let data = [...mockCandidateData]
+
+    // Apply filters
+    data = data.filter((row) => {
+      return (
+        row.name.toLowerCase().includes(filters.name.toLowerCase()) &&
+        row.position.toLowerCase().includes(filters.position.toLowerCase()) &&
+        row.experience.toLowerCase().includes(filters.experience.toLowerCase()) &&
+        row.status.toLowerCase().includes(filters.status.toLowerCase()) &&
+        row.match.toLowerCase().includes(filters.match.toLowerCase())
+      )
+    })
+
+    // Apply sorting
+    if (sortColumn) {
+      data.sort((a, b) => {
+        const aValue = a[sortColumn as keyof typeof a]
+        const bValue = b[sortColumn as keyof typeof b]
+
+        // Handle numeric sorting for experience and match
+        if (sortColumn === "experience") {
+          const aNum = Number.parseInt(aValue)
+          const bNum = Number.parseInt(bValue)
+          return sortDirection === "asc" ? aNum - bNum : bNum - aNum
+        }
+        if (sortColumn === "match") {
+          const aNum = Number.parseInt(aValue)
+          const bNum = Number.parseInt(bValue)
+          return sortDirection === "asc" ? aNum - bNum : bNum - aNum
+        }
+
+        // String sorting
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
+        return 0
+      })
+    }
+
+    return data
+  }, [filters, sortColumn, sortDirection])
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setSortColumn(column)
+      setSortDirection("asc")
+    }
+  }
+
+  const handleFilterChange = (column: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [column]: value }))
+  }
+
+  const renderSortIcon = (column: string) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="w-4 h-4 text-[#A16AE8]" />
+    ) : (
+      <ArrowDown className="w-4 h-4 text-[#A16AE8]" />
+    )
+  }
 
   if (!isOpen || !content.type) return null
 
@@ -148,28 +471,477 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
       case "pdf":
         return (
           <div className="h-full flex flex-col">
-            <div className="flex-1 bg-muted rounded-2xl p-8 flex items-center justify-center">
-              <div className="text-center max-w-2xl">
-                <div className="w-32 h-32 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center shadow-xl">
-                  <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
-                  </svg>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPdfZoom((prev) => Math.max(50, prev - 10))}
+                    className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    aria-label="Zoom out"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm font-medium min-w-[4rem] text-center">{pdfZoom}%</span>
+                  <button
+                    onClick={() => setPdfZoom((prev) => Math.min(200, prev + 10))}
+                    className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    aria-label="Zoom in"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
                 </div>
-                <h3 className="text-2xl font-bold mb-2">{content.title || "Document.pdf"}</h3>
-                <p className="text-muted-foreground mb-8">PDF Document • 2.4 MB • 12 pages</p>
-                <div className="flex gap-3 justify-center">
-                  <button className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
-                    Open Full Preview
-                  </button>
-                  <button className="px-8 py-3 rounded-xl border border-border hover:bg-accent transition-colors flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    Download
-                  </button>
+                <div className="h-6 w-px bg-border" />
+                <span className="text-sm font-medium">{content.title || "Document.pdf"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="p-2 rounded-lg hover:bg-accent transition-colors" aria-label="Print">
+                  <Printer className="w-4 h-4" />
+                </button>
+                <button className="p-2 rounded-lg hover:bg-accent transition-colors flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  <span className="text-sm">Download</span>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto bg-muted/30 p-6">
+              <div
+                className="mx-auto space-y-6"
+                style={{
+                  width: `${pdfZoom}%`,
+                  maxWidth: "100%",
+                  minWidth: "600px",
+                }}
+              >
+                {/* Page 1 */}
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
+                    <div className="space-y-6">
+                      <div className="text-center border-b-2 border-gray-800 pb-4">
+                        <h1 className="text-3xl font-bold mb-2">EMPLOYMENT CONTRACT</h1>
+                        <p className="text-sm text-gray-600">Effective Date: January 1, 2025</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <p className="text-sm leading-relaxed">
+                          This Employment Agreement is entered into as of January 1, 2025, by and between:
+                        </p>
+
+                        <div className="space-y-2">
+                          <p className="font-semibold">
+                            TEAMIFIED{" "}
+                            <span className="font-normal">(hereinafter referred to as "Company" or "Employer")</span>
+                          </p>
+                          <p className="text-sm">123 Innovation Drive</p>
+                          <p className="text-sm">San Francisco, CA 94105</p>
+                        </div>
+
+                        <p className="text-center font-semibold">AND</p>
+
+                        <div className="space-y-2">
+                          <p className="font-semibold">
+                            ROBERT DOWNEY JR.{" "}
+                            <span className="font-normal">(hereinafter referred to as "Employee")</span>
+                          </p>
+                          <p className="text-sm">456 Malibu Beach Road</p>
+                          <p className="text-sm">Malibu, CA 90265</p>
+                        </div>
+
+                        <div className="mt-8">
+                          <h2 className="text-xl font-bold mb-3">1. POSITION AND DUTIES</h2>
+                          <div className="space-y-3 text-sm">
+                            <p>
+                              <span className="font-semibold">1.1 Position:</span> The Employee is hereby employed in
+                              the position of <span className="font-semibold">Principal Software Engineer</span>.
+                            </p>
+                            <p>
+                              <span className="font-semibold">1.2 Duties:</span> The Employee shall perform all duties
+                              and responsibilities customarily associated with this position, including but not limited
+                              to:
+                            </p>
+                            <ul className="list-disc ml-6 space-y-1">
+                              <li>Leading the design and architecture of complex software systems</li>
+                              <li>Providing technical leadership and mentorship to engineering teams</li>
+                              <li>Establishing engineering best practices and coding standards</li>
+                              <li>Collaborating with cross-functional teams on technical strategy</li>
+                              <li>Contributing to key technical decisions and platform architecture</li>
+                              <li>Participating in code reviews and ensuring code quality</li>
+                              <li>Such other duties as may reasonably be assigned by the Company</li>
+                            </ul>
+                            <p>
+                              <span className="font-semibold">1.3 Reporting:</span> The Employee shall report directly
+                              to the Chief Technology Officer (CTO) or other designated supervisor.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6">
+                          <h2 className="text-xl font-bold mb-3">2. COMPENSATION</h2>
+                          <div className="space-y-2 text-sm">
+                            <p>
+                              <span className="font-semibold">2.1 Base Salary:</span> The Employee shall receive an
+                              annual base salary of $180,000 (One Hundred Eighty Thousand Dollars), payable in
+                              accordance with the Company's standard payroll practices, subject to applicable
+                              withholdings and deductions.
+                            </p>
+                            <p>
+                              <span className="font-semibold">2.2 Performance Bonus:</span> The Employee may be eligible
+                              for an annual performance bonus of up to 20% of base salary, based on individual and
+                              company performance metrics as determined by the Company.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
+                        Page 1 of 6 • Employment Contract • Confidential
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Page 2 */}
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
+                    <div className="space-y-6">
+                      <div className="space-y-4 text-sm">
+                        <p>
+                          <span className="font-semibold">2.3 Equity Compensation:</span> The Employee shall be granted
+                          stock options to purchase 10,000 shares of the Company's common stock, subject to the terms
+                          and conditions of the Company's Stock Option Plan and a separate Stock Option Agreement.
+                        </p>
+                      </div>
+
+                      <div className="mt-8">
+                        <h2 className="text-xl font-bold mb-3">3. BENEFITS</h2>
+                        <div className="space-y-3 text-sm">
+                          <p>
+                            <span className="font-semibold">3.1 Health Insurance:</span> The Employee shall be eligible
+                            to participate in the Company's group health insurance plan, including medical, dental, and
+                            vision coverage, subject to the terms and conditions of such plans.
+                          </p>
+                          <p>
+                            <span className="font-semibold">3.2 Retirement Plan:</span> The Employee shall be eligible
+                            to participate in the Company's 401(k) retirement plan with employer matching contributions
+                            of up to 4% of base salary.
+                          </p>
+                          <p>
+                            <span className="font-semibold">3.3 Paid Time Off:</span> The Employee shall be entitled to:
+                          </p>
+                          <ul className="list-disc ml-6 space-y-1">
+                            <li>20 days of paid vacation per year</li>
+                            <li>10 days of paid sick leave per year</li>
+                            <li>All Company-recognized holidays</li>
+                            <li>5 days of personal leave per year</li>
+                          </ul>
+                          <p>
+                            <span className="font-semibold">3.4 Professional Development:</span> The Company shall
+                            provide an annual professional development budget of $5,000 for conferences, training, and
+                            educational materials.
+                          </p>
+                          <p>
+                            <span className="font-semibold">3.5 Equipment:</span> The Company shall provide all
+                            necessary equipment, including laptop, monitors, and other tools required to perform job
+                            duties.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-8">
+                        <h2 className="text-xl font-bold mb-3">4. WORK SCHEDULE AND LOCATION</h2>
+                        <div className="space-y-3 text-sm">
+                          <p>
+                            <span className="font-semibold">4.1 Work Hours:</span> The Employee's standard work schedule
+                            shall be Monday through Friday, with flexible hours as agreed upon with the supervisor. As
+                            an exempt employee, the Employee may be required to work additional hours as necessary to
+                            fulfill job responsibilities.
+                          </p>
+                          <p>
+                            <span className="font-semibold">4.2 Work Location:</span> The Employee's primary work
+                            location shall be remote, with occasional visits to the Company's San Francisco office as
+                            required for meetings, team events, or other business purposes.
+                          </p>
+                          <p>
+                            <span className="font-semibold">4.3 Remote Work:</span> The Employee is authorized to work
+                            remotely, subject to maintaining appropriate work environment, internet connectivity, and
+                            availability during core business hours (9:00 AM - 5:00 PM Pacific Time).
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
+                        Page 2 of 6 • Employment Contract • Confidential
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Page 3 */}
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
+                    <div className="space-y-6">
+                      <h2 className="text-xl font-bold mb-3">5. CONFIDENTIALITY</h2>
+                      <div className="space-y-3 text-sm">
+                        <p>
+                          <span className="font-semibold">5.1 Confidential Information:</span> The Employee acknowledges
+                          that during employment, they will have access to and become familiar with confidential
+                          information belonging to the Company, including but not limited to:
+                        </p>
+                        <ul className="list-disc ml-6 space-y-1">
+                          <li>Trade secrets, proprietary technology, and source code</li>
+                          <li>Business strategies, financial information, and pricing models</li>
+                          <li>Customer lists, supplier information, and business relationships</li>
+                          <li>Marketing plans, product roadmaps, and development strategies</li>
+                          <li>Personnel information and internal processes</li>
+                        </ul>
+                        <p>
+                          <span className="font-semibold">5.2 Non-Disclosure:</span> The Employee agrees to maintain the
+                          confidentiality of all such information during and after employment, and shall not disclose,
+                          use, or permit others to use such information except as required in the performance of job
+                          duties.
+                        </p>
+                        <p>
+                          <span className="font-semibold">5.3 Return of Materials:</span> Upon termination of
+                          employment, the Employee shall immediately return all Company property, documents, and
+                          materials containing confidential information.
+                        </p>
+                      </div>
+
+                      <div className="mt-8">
+                        <h2 className="text-xl font-bold mb-3">6. INTELLECTUAL PROPERTY</h2>
+                        <div className="space-y-3 text-sm">
+                          <p>
+                            <span className="font-semibold">6.1 Work Product:</span> All inventions, discoveries,
+                            developments, improvements, works of authorship, and other intellectual property created by
+                            the Employee during employment, whether alone or with others, that relate to the Company's
+                            business or result from work performed for the Company, shall be the sole and exclusive
+                            property of the Company.
+                          </p>
+                          <p>
+                            <span className="font-semibold">6.2 Assignment:</span> The Employee hereby assigns to the
+                            Company all right, title, and interest in and to such work product, and agrees to execute
+                            any documents necessary to perfect the Company's ownership rights.
+                          </p>
+                          <p>
+                            <span className="font-semibold">6.3 Prior Inventions:</span> The Employee has disclosed to
+                            the Company all inventions, if any, that were made prior to employment and that the Employee
+                            desires to exclude from this Agreement (see Exhibit A, if applicable).
+                          </p>
+                          <p>
+                            <span className="font-semibold">6.4 Cooperation:</span> The Employee agrees to cooperate
+                            with the Company in obtaining and enforcing patents, copyrights, and other intellectual
+                            property rights for such work product.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
+                        Page 3 of 6 • Employment Contract • Confidential
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Page 4 */}
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
+                    <div className="space-y-6">
+                      <h2 className="text-xl font-bold mb-3">7. NON-COMPETE AND NON-SOLICITATION</h2>
+                      <div className="space-y-3 text-sm">
+                        <p>
+                          <span className="font-semibold">7.1 Non-Compete:</span> During employment and for a period of
+                          twelve (12) months following termination, the Employee agrees not to directly or indirectly
+                          engage in, own, manage, operate, or control any business that competes with the Company's
+                          business within the geographic areas where the Company conducts business.
+                        </p>
+                        <p>
+                          <span className="font-semibold">7.2 Non-Solicitation of Employees:</span> During employment
+                          and for a period of eighteen (18) months following termination, the Employee agrees not to
+                          directly or indirectly solicit, recruit, or hire any employee or contractor of the Company.
+                        </p>
+                        <p>
+                          <span className="font-semibold">7.3 Non-Solicitation of Customers:</span> During employment
+                          and for a period of twelve (12) months following termination, the Employee agrees not to
+                          directly or indirectly solicit or conduct business with any customer or client of the Company
+                          with whom the Employee had contact during employment.
+                        </p>
+                        <p>
+                          <span className="font-semibold">7.4 Reasonableness:</span> The Employee acknowledges that the
+                          restrictions contained in this Section are reasonable and necessary to protect the Company's
+                          legitimate business interests.
+                        </p>
+                      </div>
+
+                      <div className="mt-8">
+                        <h2 className="text-xl font-bold mb-3">8. TERMINATION</h2>
+                        <div className="space-y-3 text-sm">
+                          <p>
+                            <span className="font-semibold">8.1 At-Will Employment:</span> Employment with the Company
+                            is at-will, meaning that either the Employee or the Company may terminate the employment
+                            relationship at any time, with or without cause or notice.
+                          </p>
+                          <p>
+                            <span className="font-semibold">8.2 Termination by Company for Cause:</span> The Company may
+                            terminate the Employee's employment immediately for cause, including but not limited to:
+                          </p>
+                          <ul className="list-disc ml-6 space-y-1">
+                            <li>Material breach of this Agreement or Company policies</li>
+                            <li>Gross negligence or willful misconduct</li>
+                            <li>Conviction of a felony or crime involving moral turpitude</li>
+                            <li>Fraud, embezzlement, or dishonesty</li>
+                            <li>Unauthorized disclosure of confidential information</li>
+                          </ul>
+                          <p>
+                            <span className="font-semibold">8.3 Termination by Company without Cause:</span> If the
+                            Company terminates the Employee's employment without cause, the Company shall provide thirty
+                            (30) days' written notice or pay in lieu of notice.
+                          </p>
+                          <p>
+                            <span className="font-semibold">8.4 Termination by Employee:</span> The Employee may
+                            terminate employment by providing thirty (30) days' written notice to the Company.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
+                        Page 4 of 6 • Employment Contract • Confidential
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Page 5 */}
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
+                    <div className="space-y-6">
+                      <h2 className="text-xl font-bold mb-3">9. SEVERANCE</h2>
+                      <div className="space-y-3 text-sm">
+                        <p>
+                          <span className="font-semibold">9.1 Severance Pay:</span> If the Company terminates the
+                          Employee's employment without cause (excluding termination due to death or disability), the
+                          Employee shall be entitled to severance pay equal to three (3) months of base salary, payable
+                          in accordance with the Company's standard payroll practices.
+                        </p>
+                        <p>
+                          <span className="font-semibold">9.2 Conditions:</span> Receipt of severance pay is contingent
+                          upon the Employee signing a general release of claims and complying with all post-termination
+                          obligations under this Agreement.
+                        </p>
+                        <p>
+                          <span className="font-semibold">9.3 No Severance for Cause:</span> No severance shall be paid
+                          if employment is terminated for cause or if the Employee voluntarily resigns.
+                        </p>
+                      </div>
+
+                      <div className="mt-8">
+                        <h2 className="text-xl font-bold mb-3">10. GENERAL PROVISIONS</h2>
+                        <div className="space-y-3 text-sm">
+                          <p>
+                            <span className="font-semibold">10.1 Entire Agreement:</span> This Agreement constitutes the
+                            entire agreement between the parties and supersedes all prior agreements, understandings,
+                            and negotiations, whether written or oral.
+                          </p>
+                          <p>
+                            <span className="font-semibold">10.2 Amendments:</span> This Agreement may only be amended
+                            or modified by a written document signed by both parties.
+                          </p>
+                          <p>
+                            <span className="font-semibold">10.3 Governing Law:</span> This Agreement shall be governed
+                            by and construed in accordance with the laws of the State of California, without regard to
+                            its conflict of laws principles.
+                          </p>
+                          <p>
+                            <span className="font-semibold">10.4 Severability:</span> If any provision of this Agreement
+                            is found to be invalid or unenforceable, the remaining provisions shall continue in full
+                            force and effect.
+                          </p>
+                          <p>
+                            <span className="font-semibold">10.5 Waiver:</span> The failure of either party to enforce
+                            any provision of this Agreement shall not constitute a waiver of that provision or any other
+                            provision.
+                          </p>
+                          <p>
+                            <span className="font-semibold">10.6 Assignment:</span> This Agreement is personal to the
+                            Employee and may not be assigned by the Employee. The Company may assign this Agreement to
+                            any successor or affiliate.
+                          </p>
+                          <p>
+                            <span className="font-semibold">10.7 Notices:</span> All notices required under this
+                            Agreement shall be in writing and delivered by email, certified mail, or personal delivery
+                            to the addresses set forth above.
+                          </p>
+                          <p>
+                            <span className="font-semibold">10.8 Counterparts:</span> This Agreement may be executed in
+                            counterparts, each of which shall be deemed an original and all of which together shall
+                            constitute one instrument.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
+                        Page 5 of 6 • Employment Contract • Confidential
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Page 6 - Signatures */}
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
+                    <div className="space-y-6">
+                      <div className="space-y-3 text-sm">
+                        <p>
+                          <span className="font-semibold">10.9 Dispute Resolution:</span> Any dispute arising out of or
+                          relating to this Agreement shall be resolved through binding arbitration in accordance with
+                          the rules of the American Arbitration Association, conducted in San Francisco, California.
+                        </p>
+                        <p>
+                          <span className="font-semibold">10.10 Survival:</span> The provisions of Sections 5
+                          (Confidentiality), 6 (Intellectual Property), and 7 (Non-Compete and Non-Solicitation) shall
+                          survive the termination of this Agreement.
+                        </p>
+                      </div>
+
+                      <div className="mt-12">
+                        <p className="text-sm mb-8">
+                          IN WITNESS WHEREOF, the parties have executed this Employment Agreement as of the date first
+                          written above.
+                        </p>
+
+                        <div className="space-y-12">
+                          <div>
+                            <p className="font-semibold mb-6">COMPANY:</p>
+                            <div className="border-b-2 border-gray-800 w-80 mb-2"></div>
+                            <p className="text-sm">Signature</p>
+                            <p className="text-sm mt-4 font-semibold">Sarah Chen</p>
+                            <p className="text-sm">Chief Executive Officer, Teamified</p>
+                            <p className="text-sm mt-2">Date: January 1, 2025</p>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold mb-6">EMPLOYEE:</p>
+                            <div className="border-b-2 border-gray-800 w-80 mb-2"></div>
+                            <p className="text-sm">Signature</p>
+                            <p className="text-sm mt-4 font-semibold">Robert Downey Jr.</p>
+                            <p className="text-sm">Principal Software Engineer</p>
+                            <p className="text-sm mt-2">Date: January 1, 2025</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-12 pt-6 border-t border-gray-300">
+                        <p className="text-xs text-gray-500 text-center mb-2">
+                          This document contains confidential and proprietary information.
+                        </p>
+                        <p className="text-xs text-gray-500 text-center">
+                          Unauthorized disclosure or distribution is strictly prohibited.
+                        </p>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
+                        Page 6 of 6 • Employment Contract • Confidential
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -322,9 +1094,19 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
               {mockJobListings.map((job) => (
                 <div
                   key={job.id}
-                  className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
+                  className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
                 >
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="absolute top-6 right-6">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                      <img
+                        src={job.logo || "/placeholder.svg"}
+                        alt={`${job.company} logo`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start justify-between mb-4 pr-16">
                     <div>
                       <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                       <p className="text-sm text-muted-foreground">{job.company}</p>
@@ -370,37 +1152,165 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
 
       case "table":
         return (
-          <div className="h-full overflow-auto">
-            <div className="bg-card rounded-2xl border border-border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted">
-                    <th className="px-4 py-3 text-left font-medium">Candidate</th>
-                    <th className="px-4 py-3 text-left font-medium">Position</th>
-                    <th className="px-4 py-3 text-left font-medium">Experience</th>
-                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                    <th className="px-4 py-3 text-left font-medium">Match</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ["Sarah Johnson", "Senior Full-Stack", "8 years", "Interview", "95%"],
-                    ["Michael Chen", "AI Engineer", "5 years", "Review", "88%"],
-                    ["Emily Rodriguez", "Product Manager", "6 years", "Offer", "92%"],
-                    ["David Kim", "DevOps Engineer", "7 years", "Assessment", "85%"],
-                    ["Lisa Wang", "Data Scientist", "6 years", "Interview", "90%"],
-                    ["James Brown", "Frontend Dev", "4 years", "Review", "82%"],
-                  ].map((row, idx) => (
-                    <tr key={idx} className="border-b border-border last:border-0 hover:bg-accent/50">
-                      {row.map((cell, cellIdx) => (
-                        <td key={cellIdx} className="px-4 py-3">
-                          {cell}
-                        </td>
-                      ))}
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">
+                Showing {filteredAndSortedData.length} of {mockCandidateData.length} candidates
+              </p>
+              <button
+                onClick={() => {
+                  setFilters({ name: "", position: "", experience: "", status: "", match: "" })
+                  setSortColumn(null)
+                }}
+                className="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
+              >
+                Clear Filters
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted">
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort("name")}
+                          className="flex items-center gap-2 font-medium hover:text-[#A16AE8] transition-colors"
+                        >
+                          Candidate
+                          {renderSortIcon("name")}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort("position")}
+                          className="flex items-center gap-2 font-medium hover:text-[#A16AE8] transition-colors"
+                        >
+                          Position
+                          {renderSortIcon("position")}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort("experience")}
+                          className="flex items-center gap-2 font-medium hover:text-[#A16AE8] transition-colors"
+                        >
+                          Experience
+                          {renderSortIcon("experience")}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort("status")}
+                          className="flex items-center gap-2 font-medium hover:text-[#A16AE8] transition-colors"
+                        >
+                          Status
+                          {renderSortIcon("status")}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort("match")}
+                          className="flex items-center gap-2 font-medium hover:text-[#A16AE8] transition-colors"
+                        >
+                          Match
+                          {renderSortIcon("match")}
+                        </button>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter by name..."
+                          value={filters.name}
+                          onChange={(e) => handleFilterChange("name", e.target.value)}
+                          className="w-full px-2 py-1 text-sm rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
+                        />
+                      </th>
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter by position..."
+                          value={filters.position}
+                          onChange={(e) => handleFilterChange("position", e.target.value)}
+                          className="w-full px-2 py-1 text-sm rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
+                        />
+                      </th>
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter..."
+                          value={filters.experience}
+                          onChange={(e) => handleFilterChange("experience", e.target.value)}
+                          className="w-full px-2 py-1 text-sm rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
+                        />
+                      </th>
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter..."
+                          value={filters.status}
+                          onChange={(e) => handleFilterChange("status", e.target.value)}
+                          className="w-full px-2 py-1 text-sm rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
+                        />
+                      </th>
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter..."
+                          value={filters.match}
+                          onChange={(e) => handleFilterChange("match", e.target.value)}
+                          className="w-full px-2 py-1 text-sm rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
+                        />
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAndSortedData.length > 0 ? (
+                      filteredAndSortedData.map((row, idx) => (
+                        <tr key={idx} className="border-b border-border last:border-0 hover:bg-accent/50">
+                          <td className="px-4 py-3">{row.name}</td>
+                          <td className="px-4 py-3">{row.position}</td>
+                          <td className="px-4 py-3">{row.experience}</td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                row.status === "Offer"
+                                  ? "bg-green-500/10 text-green-500"
+                                  : row.status === "Interview"
+                                    ? "bg-blue-500/10 text-blue-500"
+                                    : row.status === "Review"
+                                      ? "bg-yellow-500/10 text-yellow-500"
+                                      : "bg-gray-500/10 text-gray-500"
+                              }`}
+                            >
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD]"
+                                  style={{ width: row.match }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium">{row.match}</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                          No candidates found matching your filters
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )

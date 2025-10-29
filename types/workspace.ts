@@ -27,4 +27,5 @@ export interface JobListing {
   description: string
   requirements: string[]
   applied?: boolean
+  logo?: string
 }

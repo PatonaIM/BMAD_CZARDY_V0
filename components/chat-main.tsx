@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { Menu, Plus, Mic, ArrowUp, Copy, Download, FileText, ChevronDown } from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
+import { MarkdownRenderer } from "./markdown-renderer"
 
 interface ChatMainProps {
   isSidebarOpen: boolean
@@ -20,6 +21,7 @@ interface Message {
   thinking?: boolean
   thinkingTime?: number
   agentId?: string
+  isAgentSwitch?: boolean // Added flag to indicate agent switch messages
 }
 
 const welcomeQuestions = [
@@ -52,14 +54,14 @@ const generateShortResponse = () => loremParagraphs[0]
 
 const generateLargeResponse = () => {
   const mainContent = loremParagraphs.slice(0, 5).join("\n\n")
-  const summary = `\n\n**In Summary**\n\n${loremParagraphs[6]}\n\n${loremParagraphs[7]}`
+  const summary = `\n\n## In Summary\n\n${loremParagraphs[6]}\n\n${loremParagraphs[7]}`
   return `${mainContent}${summary}`
 }
 
 const generateBulletResponse = () => {
   const intro = loremParagraphs[0]
   const bullets = loremBullets.map((bullet) => `• ${bullet}`).join("\n")
-  const summary = `\n\n**Summary**\n\n${loremParagraphs[1]}`
+  const summary = `\n\n## Summary\n\n${loremParagraphs[1]}`
   return `${intro}\n\n${bullets}${summary}`
 }
 
@@ -90,6 +92,47 @@ const tableData = {
   ],
 }
 
+// Helper function to format command names
+const formatCommandName = (command: string): string => {
+  return command
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
+
+// Helper function to generate agent introduction message
+const generateAgentIntroduction = (agent: AIAgent): string => {
+  const commandsList = agent.actions.map((action) => `- *${action} - ${formatCommandName(action)}`).join("\n")
+
+  return `Hello! I'm **${agent.firstName}**. Your **${agent.name}** AI Agent. ${agent.icon}
+
+${agent.fullDescription}
+
+## Available Commands:
+- *help - Show this command list
+${commandsList}
+
+Simply type the command or just ask your queries away!
+
+${agent.callToAction}`
+}
+
+// Helper function to generate help message
+const generateHelpMessage = (agent: AIAgent): string => {
+  const commandsList = agent.actions.map((action) => `- *${action} - ${formatCommandName(action)}`).join("\n")
+
+  return `## Available Commands for ${agent.name} ${agent.icon}
+
+Here are all the commands I can help you with:
+
+- *help - Show this command list
+${commandsList}
+
+Simply type any command (e.g., \`*service-overview\`) or just ask your questions naturally!
+
+${agent.callToAction}`
+}
+
 export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: ChatMainProps) {
   const [message, setMessage] = useState("")
   const [welcomeQuestion, setWelcomeQuestion] = useState("")
@@ -98,6 +141,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
   const [activeAgent, setActiveAgent] = useState<AIAgent>(AI_AGENTS[0])
   const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
+  const lastMessageRef = useRef<HTMLDivElement>(null) // Added ref for last message (any type)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const agentDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -108,14 +152,22 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
 
   useEffect(() => {
     if (messages.length > 0 && messagesContainerRef.current) {
-      // For the first message, scroll to top immediately
       if (messages.length === 1) {
-        messagesContainerRef.current.scrollTop = 0
+        requestAnimationFrame(() => {
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = 0
+          }
+        })
       } else {
-        // For subsequent messages, smooth scroll to show latest user message
         const timer = setTimeout(() => {
+          // Check if last message is a user message, scroll to it
           if (lastUserMessageRef.current) {
             lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+          } else if (lastMessageRef.current && messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTo({
+              top: messagesContainerRef.current.scrollHeight,
+              behavior: "smooth",
+            })
           }
         }, 100)
         return () => clearTimeout(timer)
@@ -143,7 +195,9 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
     let workspaceContent: WorkspaceContent | null = null
 
     // Command routing
-    if (lowerMessage === "large text") {
+    if (lowerMessage === "*help") {
+      content = generateHelpMessage(activeAgent)
+    } else if (lowerMessage === "large text") {
       content = generateLargeResponse()
     } else if (lowerMessage === "bullet text") {
       content = generateBulletResponse()
@@ -248,8 +302,9 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
       {
         id: Date.now().toString(),
         type: "ai",
-        content: `Switched to **${agent.name}**. ${agent.description}`,
+        content: generateAgentIntroduction(agent),
         agentId: agent.id,
+        isAgentSwitch: true,
       },
     ])
   }
@@ -362,7 +417,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Ask anything"
+                    placeholder="Ask anything or type *help to know what I can do!"
                     className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
                   />
                   <div className="flex items-center gap-2 pr-2">
@@ -409,12 +464,35 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto py-8 space-y-6">
+          <div className="max-w-3xl mx-auto pt-8 pb-8 space-y-6">
             {messages.map((msg, index) => {
               const isLastUserMessage = msg.type === "user" && index === messages.map((m) => m.type).lastIndexOf("user")
+              const isLastMessage = index === messages.length - 1
               const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
               return (
-                <div key={msg.id} ref={isLastUserMessage ? lastUserMessageRef : null} className="message-enter">
+                <div
+                  key={msg.id}
+                  ref={isLastUserMessage ? lastUserMessageRef : isLastMessage ? lastMessageRef : null}
+                  className="message-enter"
+                >
+                  {msg.isAgentSwitch && (
+                    <div className="flex items-center gap-4 mb-8 mt-8">
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border">
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: messageAgent?.color }}
+                        >
+                          <span className="text-xs">{messageAgent?.icon}</span>
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Switched to {messageAgent?.name}
+                        </span>
+                      </div>
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                    </div>
+                  )}
+
                   {msg.type === "user" ? (
                     <div className="flex justify-end mb-6">
                       <div className="max-w-[80%] px-5 py-3 rounded-3xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg">
@@ -439,7 +517,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                         </div>
                       )}
                       <div className="space-y-4">
-                        <div className="text-sm leading-relaxed text-foreground whitespace-pre-line">{msg.content}</div>
+                        <MarkdownRenderer content={msg.content} />
 
                         {msg.responseType === "code" && (
                           <div className="rounded-2xl overflow-hidden border border-border bg-card">
@@ -635,7 +713,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ask anything"
+                  placeholder="Ask anything or type *help to know what I can do!"
                   className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
                 />
                 <div className="flex items-center gap-2 pr-2">
