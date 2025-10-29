@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Upload, LinkIcon, X, FileText, Camera, User } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface PortfolioItem {
   id: string
@@ -17,6 +18,7 @@ interface CandidateProfileFormProps {
 }
 
 export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
+  const { toast } = useToast()
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
 
@@ -98,6 +100,13 @@ export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log("[v0] Candidate profile submitted:", { formData, profilePicture, resume, portfolioItems })
+
+    toast({
+      title: "Profile saved successfully!",
+      description: "Your candidate profile has been updated.",
+      duration: 2000,
+    })
+
     if (onSave) {
       onSave()
     }
