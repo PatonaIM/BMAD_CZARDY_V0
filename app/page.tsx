@@ -40,10 +40,18 @@ export default function ChatPage() {
     }
   }
 
+  const handleEditProfile = () => {
+    setWorkspaceContent({ type: "candidate-profile", title: "Edit Profile" })
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
-        <ChatSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <ChatSidebar
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          onEditProfile={handleEditProfile}
+        />
         <div className="flex-1 flex overflow-hidden">
           <div className={`${workspaceContent.type ? "w-1/2" : "w-full"} transition-all duration-300`}>
             <ChatMain
