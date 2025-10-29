@@ -65,13 +65,13 @@ function markOAuthUserAsRegistered(provider: "google" | "github"): void {
   }
 }
 
-export async function mockSignIn(provider: "google" | "github"): Promise<User> {
+export async function mockSignIn(provider: "google" | "github", isSignup = false): Promise<User> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
-  const isReturningUser = hasOAuthUserLoggedInBefore(provider)
+  const isReturningUser = !isSignup && hasOAuthUserLoggedInBefore(provider)
 
-  const user = { ...mockUsers[provider], isNewSignup: !isReturningUser }
+  const user = { ...mockUsers[provider], isNewSignup: isSignup || !isReturningUser }
 
   if (!isReturningUser) {
     markOAuthUserAsRegistered(provider)
