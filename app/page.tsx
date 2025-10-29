@@ -1,34 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { ChatSidebar } from "@/components/chat-sidebar"
 import { ChatMain } from "@/components/chat-main"
 import { WorkspacePane } from "@/components/workspace-pane"
 import { ThemeProvider } from "@/components/theme-provider"
 import type { WorkspaceContent } from "@/types/workspace"
-import { getCurrentUser } from "@/lib/auth"
 
 export default function ChatPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [workspaceContent, setWorkspaceContent] = useState<WorkspaceContent>({ type: null })
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    const user = getCurrentUser()
-    if (!user) {
-      router.push("/auth")
-    } else {
-      setIsAuthenticated(true)
-    }
-    setIsLoading(false)
-  }, [router])
-
-  if (isLoading || !isAuthenticated) {
-    return null
-  }
 
   return (
     <ThemeProvider>
