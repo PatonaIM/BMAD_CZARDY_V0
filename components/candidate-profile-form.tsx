@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Upload, LinkIcon, X, FileText } from "lucide-react"
+import { Upload, LinkIcon, X, FileText, Camera, User } from "lucide-react"
 
 interface PortfolioItem {
   id: string
@@ -17,6 +17,9 @@ interface CandidateProfileFormProps {
 }
 
 export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
+  const [profilePicture, setProfilePicture] = useState<File | null>(null)
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -39,6 +42,19 @@ export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleProfilePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setProfilePicture(file)
+      // Create preview URL
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,7 +97,7 @@ export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Candidate profile submitted:", { formData, resume, portfolioItems })
+    console.log("[v0] Candidate profile submitted:", { formData, profilePicture, resume, portfolioItems })
     if (onSave) {
       onSave()
     }
@@ -98,6 +114,35 @@ export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-border bg-muted flex items-center justify-center">
+                {profilePicturePreview ? (
+                  <img
+                    src={profilePicturePreview || "/placeholder.svg"}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-16 h-16 text-muted-foreground" />
+                )}
+              </div>
+              <label
+                htmlFor="profile-picture-upload"
+                className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center cursor-pointer hover:shadow-lg transition-all border-4 border-background"
+              >
+                <Camera className="w-5 h-5 text-white" />
+                <input
+                  type="file"
+                  id="profile-picture-upload"
+                  accept="image/*"
+                  onChange={handleProfilePictureUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
           {/* Personal Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground">Personal Information</h3>
