@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useTheme } from "./theme-provider"
+import { useRouter, usePathname } from "next/navigation"
 import {
   MessageSquarePlus,
   Search,
@@ -27,6 +28,8 @@ interface ChatSidebarProps {
 export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
 
   const chats = [
     "Job Search for Senior Fullstack Developers",
@@ -38,6 +41,10 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
     "Track all my applications",
     "Why are you reading this?",
   ]
+
+  const handleNavigation = (path: string) => {
+    router.push(path)
+  }
 
   return (
     <div
@@ -69,10 +76,22 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
       {/* Main Navigation */}
       <div className="flex-1 overflow-y-auto p-3">
         <nav className="space-y-1">
-          <SidebarButton icon={MessageSquarePlus} label="New chat" isOpen={isOpen} />
-          <SidebarButton icon={Search} label="Search chats" isOpen={isOpen} />
-          <SidebarButton icon={Library} label="Library" isOpen={isOpen} />
-          <SidebarButton icon={Code2} label="Codex" isOpen={isOpen} />
+          <SidebarButton
+            icon={MessageSquarePlus}
+            label="New chat"
+            isOpen={isOpen}
+            onClick={() => handleNavigation("/")}
+            isActive={pathname === "/"}
+          />
+          <SidebarButton icon={Search} label="Search chats" isOpen={isOpen} onClick={() => {}} />
+          <SidebarButton
+            icon={Library}
+            label="Library"
+            isOpen={isOpen}
+            onClick={() => handleNavigation("/library")}
+            isActive={pathname === "/library"}
+          />
+          <SidebarButton icon={Code2} label="Codex" isOpen={isOpen} onClick={() => {}} />
         </nav>
 
         {/* Chats Section */}
@@ -83,7 +102,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
             </div>
             <nav className="space-y-1">
               {chats.map((chat) => (
-                <SidebarButton key={chat} icon={MessageSquare} label={chat} isOpen={isOpen} />
+                <SidebarButton key={chat} icon={MessageSquare} label={chat} isOpen={isOpen} onClick={() => {}} />
               ))}
             </nav>
           </div>
@@ -149,12 +168,17 @@ interface SidebarButtonProps {
   icon: React.ElementType
   label: string
   isOpen: boolean
+  onClick?: () => void
+  isActive?: boolean
 }
 
-function SidebarButton({ icon: Icon, label, isOpen }: SidebarButtonProps) {
+function SidebarButton({ icon: Icon, label, isOpen, onClick, isActive }: SidebarButtonProps) {
   return (
     <button
-      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent transition-colors group"
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group ${
+        isActive ? "bg-sidebar-accent" : "hover:bg-sidebar-accent"
+      }`}
       aria-label={label}
     >
       <Icon className="w-5 h-5 text-sidebar-foreground flex-shrink-0" />
