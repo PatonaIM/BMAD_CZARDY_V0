@@ -15,9 +15,10 @@ interface PortfolioItem {
 
 interface CandidateProfileFormProps {
   onSave?: () => void
+  onClose?: () => void
 }
 
-export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
+export function CandidateProfileForm({ onSave, onClose }: CandidateProfileFormProps) {
   const { toast } = useToast()
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
@@ -99,18 +100,21 @@ export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Candidate profile submitted:", { formData, profilePicture, resume, portfolioItems })
 
-    console.log("[v0] Calling toast notification")
-    const result = toast({
+    toast({
       title: "Profile saved successfully!",
       description: "Your candidate profile has been updated.",
       duration: 2000,
     })
-    console.log("[v0] Toast result:", result)
 
     if (onSave) {
       onSave()
+    }
+
+    if (onClose) {
+      setTimeout(() => {
+        onClose()
+      }, 2000)
     }
   }
 

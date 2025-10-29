@@ -471,7 +471,7 @@ export function WorkspacePane({ isOpen, onClose, content, onProfileSave }: Works
   const renderContent = () => {
     switch (content.type) {
       case "candidate-profile":
-        return <CandidateProfileForm onSave={onProfileSave} />
+        return <CandidateProfileForm onSave={onProfileSave} onClose={onClose} />
 
       case "pdf":
         return (
