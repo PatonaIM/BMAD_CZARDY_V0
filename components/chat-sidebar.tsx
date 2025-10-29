@@ -19,6 +19,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react"
+import { signOut, getCurrentUser } from "@/lib/auth"
 
 interface ChatSidebarProps {
   isOpen: boolean
@@ -30,6 +31,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const user = getCurrentUser()
 
   const chats = [
     "Job Search for Senior Fullstack Developers",
@@ -44,6 +46,11 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
 
   const handleNavigation = (path: string) => {
     router.push(path)
+  }
+
+  const handleLogout = () => {
+    signOut()
+    router.push("/auth")
   }
 
   return (
@@ -135,12 +142,14 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
             aria-label="User menu"
           >
             <div className="w-8 h-8 rounded-full bg-[#A16AE8] flex items-center justify-center">
-              <span className="text-sm font-semibold text-white">CD</span>
+              <span className="text-sm font-semibold text-white">{user?.avatar || "CD"}</span>
             </div>
             {isOpen && (
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium text-sidebar-foreground">Czar Dy</div>
-                <div className="text-xs text-muted-foreground">Personal account</div>
+                <div className="text-sm font-medium text-sidebar-foreground">{user?.name || "User"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {user?.provider ? `${user.provider} account` : "Personal account"}
+                </div>
               </div>
             )}
           </button>
@@ -152,7 +161,10 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
                 <Settings className="w-4 h-4" />
                 <span className="text-sm">Settings</span>
               </button>
-              <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors"
+              >
                 <LogOut className="w-4 h-4" />
                 <span className="text-sm">Log out</span>
               </button>
