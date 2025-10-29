@@ -70,15 +70,12 @@ export async function mockSignIn(
   isSignup = false,
   role?: "candidate" | "hiring_manager",
 ): Promise<User> {
-  console.log("[v0] mockSignIn called with:", { provider, isSignup, role })
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
   const isReturningUser = !isSignup && hasOAuthUserLoggedInBefore(provider)
-  console.log("[v0] isReturningUser:", isReturningUser)
 
   const baseUser = mockUsers[provider]
   const userRole = role || baseUser.role
-  console.log("[v0] userRole determined:", userRole, "from role:", role, "or baseUser.role:", baseUser.role)
 
   const user: User = {
     ...baseUser,
@@ -87,14 +84,11 @@ export async function mockSignIn(
     ...(userRole === "hiring_manager" && { company: baseUser.company || "Your Company" }),
   }
 
-  console.log("[v0] Created user object:", user)
-
   if (!isReturningUser) {
     markOAuthUserAsRegistered(provider)
   }
 
   setCurrentUser(user)
-  console.log("[v0] User saved to localStorage")
   return user
 }
 
@@ -149,9 +143,17 @@ export function signOut(): void {
   clearCurrentUser()
 }
 
-export function ensureAnonymousStart(): void {
-  if (typeof window !== "undefined") {
+export function clearUserOnInitialLoad(): void {
+  if (typeof window === "undefined") return
+
+  // Check if this is the first load of the session
+  const hasInitialized = sessionStorage.getItem("teamified_initialized")
+
+  if (!hasInitialized) {
+    // First load - clear any existing user
     clearCurrentUser()
+    // Mark as initialized for this session
+    sessionStorage.setItem("teamified_initialized", "true")
   }
 }
 

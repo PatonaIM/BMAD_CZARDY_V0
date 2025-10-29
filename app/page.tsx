@@ -6,7 +6,7 @@ import { ChatMain } from "@/components/chat-main"
 import { WorkspacePane } from "@/components/workspace-pane"
 import { ThemeProvider } from "@/components/theme-provider"
 import type { WorkspaceContent } from "@/types/workspace"
-import { getCurrentUser, clearNewSignupFlag } from "@/lib/auth"
+import { getCurrentUser, clearNewSignupFlag, clearUserOnInitialLoad } from "@/lib/auth"
 import { AI_AGENTS } from "@/types/agents"
 
 export default function ChatPage() {
@@ -17,47 +17,40 @@ export default function ChatPage() {
   const chatMainRef = useRef<{ handleProfileSaved: () => void } | null>(null)
 
   useEffect(() => {
+    clearUserOnInitialLoad()
+  }, [])
+
+  useEffect(() => {
     const user = getCurrentUser()
-    console.log("[v0] ChatPage useEffect - user:", user)
 
     if (user?.isNewSignup) {
-      console.log("[v0] New signup detected, role:", user.role)
-
       if (user.role === "candidate") {
-        console.log("[v0] Setting up candidate flow")
         // Set the Technical Recruiter as the initial agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
-          console.log("[v0] Found technical recruiter agent")
           setInitialAgent(technicalRecruiter.id)
           setShouldShowWelcome(true)
           // Open the candidate profile form in workspace
           setTimeout(() => {
-            console.log("[v0] Opening candidate profile workspace")
             setWorkspaceContent({ type: "candidate-profile", title: "Candidate Profile" })
           }, 1000)
           // Clear the new signup flag
           clearNewSignupFlag()
         }
       } else if (user.role === "hiring_manager") {
-        console.log("[v0] Setting up hiring manager flow")
         // Set the Sales & Marketing agent as the initial agent
         const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
         if (salesAgent) {
-          console.log("[v0] Found sales agent")
           setInitialAgent(salesAgent.id)
           setShouldShowWelcome(true)
           // Open the hiring manager profile form in workspace
           setTimeout(() => {
-            console.log("[v0] Opening hiring manager profile workspace")
             setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
           }, 1000)
           // Clear the new signup flag
           clearNewSignupFlag()
         }
       }
-    } else {
-      console.log("[v0] No new signup or user not found")
     }
   }, [])
 
