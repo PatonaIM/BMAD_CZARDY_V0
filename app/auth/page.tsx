@@ -30,7 +30,7 @@ export default function AuthPage() {
     setLoginError("")
     setSignupError("")
     try {
-      await mockSignIn(provider, isSignup)
+      await mockSignIn(provider, isSignup, isSignup ? role : undefined)
       router.push("/")
     } catch (error) {
       console.error("Sign in failed:", error)

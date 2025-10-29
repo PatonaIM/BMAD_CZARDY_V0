@@ -65,11 +65,24 @@ function markOAuthUserAsRegistered(provider: "google" | "github"): void {
   }
 }
 
-export async function mockSignIn(provider: "google" | "github", isSignup = false): Promise<User> {
+export async function mockSignIn(
+  provider: "google" | "github",
+  isSignup = false,
+  role?: "candidate" | "hiring_manager",
+): Promise<User> {
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
   const isReturningUser = !isSignup && hasOAuthUserLoggedInBefore(provider)
-  const user = { ...mockUsers[provider], isNewSignup: isSignup || !isReturningUser }
+
+  const baseUser = mockUsers[provider]
+  const userRole = role || baseUser.role
+
+  const user: User = {
+    ...baseUser,
+    role: userRole,
+    isNewSignup: isSignup || !isReturningUser,
+    ...(userRole === "hiring_manager" && { company: baseUser.company || "Your Company" }),
+  }
 
   if (!isReturningUser) {
     markOAuthUserAsRegistered(provider)
