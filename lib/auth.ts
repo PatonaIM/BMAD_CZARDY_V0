@@ -66,11 +66,9 @@ function markOAuthUserAsRegistered(provider: "google" | "github"): void {
 }
 
 export async function mockSignIn(provider: "google" | "github", isSignup = false): Promise<User> {
-  // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
   const isReturningUser = !isSignup && hasOAuthUserLoggedInBefore(provider)
-
   const user = { ...mockUsers[provider], isNewSignup: isSignup || !isReturningUser }
 
   if (!isReturningUser) {
@@ -87,10 +85,8 @@ export async function mockSignUp(
   name: string,
   role: "candidate" | "hiring_manager",
 ): Promise<User> {
-  // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
-  // Create a mock user from the sign-up data
   const user: User = {
     id: `email-user-${Date.now()}`,
     name: name,
@@ -107,7 +103,6 @@ export async function mockSignUp(
     ...(role === "hiring_manager" && { company: "Your Company" }),
   }
 
-  // Store the credentials for mock login
   const credentials = JSON.parse(localStorage.getItem("teamified_credentials") || "{}")
   credentials[email] = { password, user }
   localStorage.setItem("teamified_credentials", JSON.stringify(credentials))
@@ -117,10 +112,8 @@ export async function mockSignUp(
 }
 
 export async function mockLogin(email: string, password: string): Promise<User> {
-  // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
-  // Check stored credentials
   const credentials = JSON.parse(localStorage.getItem("teamified_credentials") || "{}")
   const storedCredential = credentials[email]
 
@@ -139,7 +132,6 @@ export function signOut(): void {
 
 export function ensureAnonymousStart(): void {
   if (typeof window !== "undefined") {
-    // Clear any existing auth state for demo purposes
     clearCurrentUser()
   }
 }
