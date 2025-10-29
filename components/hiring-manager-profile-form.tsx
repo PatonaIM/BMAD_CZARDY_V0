@@ -146,7 +146,7 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
   }
 
   const isStep2Valid = () => {
-    return pricingSelection.plan !== null && pricingSelection.seats > 0
+    return pricingSelection.plan !== null
   }
 
   const isStep3Valid = () => {
@@ -175,14 +175,14 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
   const calculateTotal = () => {
     if (!pricingSelection.plan) return 0
 
-    const pricePerSeat: Record<string, number> = {
-      basic: 300,
-      recruiter: 500,
-      enterprise: 800,
-      premium: 1200,
+    const planPrices: Record<string, number> = {
+      basic: 300, // $300/mo flat
+      recruiter: 0, // 9% of base salary (calculated separately)
+      enterprise: 500, // $500/mo flat
+      premium: 300, // $300/mo base (+ 30% of salary)
     }
 
-    return pricingSelection.seats * (pricePerSeat[pricingSelection.plan] || 0)
+    return planPrices[pricingSelection.plan] || 0
   }
 
   const getPlanName = () => {
@@ -193,6 +193,16 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
       premium: "Premium Plan",
     }
     return pricingSelection.plan ? planNames[pricingSelection.plan] : ""
+  }
+
+  const getPricingDisplay = (plan: string) => {
+    const pricingText: Record<string, string> = {
+      basic: "$300 USD",
+      recruiter: "9% of base salary",
+      enterprise: "$500 USD",
+      premium: "30% + $300 USD",
+    }
+    return pricingText[plan] || ""
   }
 
   return (
@@ -503,7 +513,7 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                       <Briefcase className="w-5 h-5 text-[#A16AE8]" />
                       <div>
                         <h4 className="text-lg font-bold text-foreground">Basic Plan</h4>
-                        <p className="text-xs text-muted-foreground">Essential HR tools</p>
+                        <p className="text-xs text-muted-foreground">Payroll & HR essentials</p>
                       </div>
                     </div>
                     <div
@@ -517,17 +527,27 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-bold text-foreground">$300</span>
-                      <span className="text-sm text-muted-foreground">/seat/mo</span>
+                      <span className="text-sm text-muted-foreground">/mo</span>
                     </div>
                   </div>
                   <ul className="space-y-2 text-xs text-muted-foreground">
                     <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                      <span>Payroll & HR Management</span>
+                      <span className="font-semibold text-foreground">💰 PAYROLL</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                      <span>Limited access to Teamified AI Agents</span>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Global payroll & payslips</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Taxes, insurance, and local benefits</span>
+                    </li>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">👥 HR</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>HR record keeping & reporting</span>
                     </li>
                   </ul>
                 </div>
@@ -546,7 +566,7 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                       <Users className="w-5 h-5 text-[#8096FD]" />
                       <div>
                         <h4 className="text-lg font-bold text-foreground">Recruiter Plan</h4>
-                        <p className="text-xs text-muted-foreground">Hiring & performance</p>
+                        <p className="text-xs text-muted-foreground">Full recruitment lifecycle</p>
                       </div>
                     </div>
                     <div
@@ -559,26 +579,32 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                   </div>
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-foreground">$500</span>
-                      <span className="text-sm text-muted-foreground">/seat/mo</span>
+                      <span className="text-xl font-bold text-foreground">9% of base salary</span>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">Per hire</p>
                   </div>
                   <ul className="space-y-2 text-xs text-muted-foreground">
                     <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#8096FD] flex-shrink-0 mt-0.5" />
-                      <span>Everything in Basic Plan</span>
+                      <span className="font-semibold text-foreground">🎯 HIRING</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#8096FD] flex-shrink-0 mt-0.5" />
-                      <span>Hire (EOR)</span>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>Full recruitment lifecycle</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#8096FD] flex-shrink-0 mt-0.5" />
-                      <span>Performance Management</span>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>Local compliance & onboarding</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#8096FD] flex-shrink-0 mt-0.5" />
-                      <span>Limited AI Agents access</span>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">🤝 MANAGEMENT</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>HR and performance management</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>Employment contracts & benefits setup</span>
                     </li>
                   </ul>
                 </div>
@@ -600,7 +626,7 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                       <Zap className="w-5 h-5 text-[#A16AE8]" />
                       <div>
                         <h4 className="text-lg font-bold text-foreground">Enterprise Plan</h4>
-                        <p className="text-xs text-muted-foreground">Complete solution</p>
+                        <p className="text-xs text-muted-foreground">Equipment & workspace</p>
                       </div>
                     </div>
                     <div
@@ -613,26 +639,28 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                   </div>
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-foreground">$800</span>
-                      <span className="text-sm text-muted-foreground">/seat/mo</span>
+                      <span className="text-2xl font-bold text-foreground">$500</span>
+                      <span className="text-sm text-muted-foreground">/mo</span>
                     </div>
                   </div>
                   <ul className="space-y-2 text-xs text-muted-foreground">
                     <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                      <span>Everything in Recruiter Plan</span>
+                      <span className="font-semibold text-foreground">💻 EQUIPMENT</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                      <span>Equipment provisioning</span>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Managed laptops and accessories</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                      <span>Office Space management</span>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">🏢 WORKSPACE</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                      <span>Full access to Teamified AI Agents</span>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Smart office locations</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Workspace and IT setup</span>
                     </li>
                   </ul>
                 </div>
@@ -654,7 +682,7 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                       <Crown className="w-5 h-5 text-amber-500" />
                       <div>
                         <h4 className="text-lg font-bold text-foreground">Premium Plan</h4>
-                        <p className="text-xs text-muted-foreground">All-in package</p>
+                        <p className="text-xs text-muted-foreground">Complete solution</p>
                       </div>
                     </div>
                     <div
@@ -667,99 +695,76 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                   </div>
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-foreground">$1,200</span>
-                      <span className="text-sm text-muted-foreground">/seat/mo</span>
+                      <span className="text-xl font-bold text-foreground">30% + $300</span>
+                      <span className="text-sm text-muted-foreground">/mo</span>
                     </div>
                   </div>
                   <ul className="space-y-2 text-xs text-muted-foreground">
                     <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <span>Everything in Enterprise Plan</span>
+                      <span className="font-semibold text-foreground">🤝 SERVICE</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <span>Dedicated Account Management</span>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Dedicated account management</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <span>Advanced Dashboarding Features</span>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Continuous HR & compliance support</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <span>Full access to Teamified AI Agents</span>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">🤝 MANAGEMENT</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Payroll + performance oversight</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Centralized reporting tools</span>
+                    </li>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">💻 EQUIPMENT</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Laptop + Office Space</span>
                     </li>
                   </ul>
                 </div>
               </div>
 
-              {/* Seats Selection */}
               {pricingSelection.plan && (
                 <div className="p-6 rounded-2xl border border-border bg-muted/30">
-                  <label className="block text-sm font-medium text-foreground mb-4">Number of Seats</label>
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() =>
-                        setPricingSelection({
-                          ...pricingSelection,
-                          seats: Math.max(1, pricingSelection.seats - 1),
-                        })
-                      }
-                      className="w-10 h-10 rounded-lg border border-border hover:bg-accent transition-colors flex items-center justify-center font-bold"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      value={pricingSelection.seats}
-                      onChange={(e) =>
-                        setPricingSelection({
-                          ...pricingSelection,
-                          seats: Math.max(1, Number.parseInt(e.target.value) || 1),
-                        })
-                      }
-                      min="1"
-                      className="flex-1 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-center font-semibold focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
-                    />
-                    <button
-                      onClick={() =>
-                        setPricingSelection({
-                          ...pricingSelection,
-                          seats: pricingSelection.seats + 1,
-                        })
-                      }
-                      className="w-10 h-10 rounded-lg border border-border hover:bg-accent transition-colors flex items-center justify-center font-bold"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <div className="mt-4 p-4 rounded-lg bg-background border border-border">
+                  <h4 className="font-semibold mb-4">Plan Summary</h4>
+                  <div className="p-4 rounded-lg bg-background border border-border">
                     <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Plan</span>
+                      <span className="text-muted-foreground">Selected Plan</span>
                       <span className="font-medium">{getPlanName()}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Seats</span>
-                      <span className="font-medium">{pricingSelection.seats}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Price per seat</span>
-                      <span className="font-medium">
-                        $
-                        {pricingSelection.plan === "basic"
-                          ? "300"
-                          : pricingSelection.plan === "recruiter"
-                            ? "500"
-                            : pricingSelection.plan === "enterprise"
-                              ? "800"
-                              : "1,200"}
-                      </span>
+                      <span className="text-muted-foreground">Pricing</span>
+                      <span className="font-medium">{getPricingDisplay(pricingSelection.plan)}</span>
                     </div>
                     <div className="border-t border-border my-2" />
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold">Total Monthly</span>
-                      <span className="text-2xl font-bold text-[#A16AE8]">${calculateTotal().toLocaleString()}</span>
+                      <span className="font-semibold">
+                        {pricingSelection.plan === "recruiter" ? "Per Hire" : "Monthly Cost"}
+                      </span>
+                      <span className="text-2xl font-bold text-[#A16AE8]">
+                        {pricingSelection.plan === "recruiter"
+                          ? "9%"
+                          : pricingSelection.plan === "premium"
+                            ? "30% + $300"
+                            : `$${calculateTotal()}`}
+                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">Billed monthly</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {pricingSelection.plan === "recruiter"
+                        ? "Charged per successful hire"
+                        : pricingSelection.plan === "premium"
+                          ? "30% of base salary + $300 monthly fee"
+                          : "Billed monthly"}
+                    </p>
                   </div>
                 </div>
               )}
@@ -780,15 +785,29 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                   <span className="font-semibold">{getPlanName()}</span>
                 </div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Seats</span>
-                  <span className="font-semibold">{pricingSelection.seats}</span>
+                  <span className="text-sm text-muted-foreground">Pricing Model</span>
+                  <span className="font-semibold">{getPricingDisplay(pricingSelection.plan!)}</span>
                 </div>
                 <div className="border-t border-border my-3" />
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">Total Amount</span>
-                  <span className="text-2xl font-bold text-[#A16AE8]">${calculateTotal().toLocaleString()}</span>
+                  <span className="font-semibold">
+                    {pricingSelection.plan === "recruiter" ? "Per Hire" : "Setup Fee"}
+                  </span>
+                  <span className="text-2xl font-bold text-[#A16AE8]">
+                    {pricingSelection.plan === "recruiter"
+                      ? "9%"
+                      : pricingSelection.plan === "premium"
+                        ? "30% + $300"
+                        : `$${calculateTotal()}`}
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">Billed monthly</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {pricingSelection.plan === "recruiter"
+                    ? "Charged per successful hire"
+                    : pricingSelection.plan === "premium"
+                      ? "30% of base salary + $300 monthly"
+                      : "Billed monthly"}
+                </p>
               </div>
 
               <div className="space-y-4">
