@@ -96,13 +96,15 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
             isActive={pathname === "/"}
           />
           <SidebarButton icon={Search} label="Search chats" isOpen={isOpen} onClick={() => {}} />
-          <SidebarButton
-            icon={Library}
-            label="Library"
-            isOpen={isOpen}
-            onClick={() => handleNavigation("/library")}
-            isActive={pathname === "/library"}
-          />
+          {user && (
+            <SidebarButton
+              icon={Library}
+              label="Library"
+              isOpen={isOpen}
+              onClick={() => handleNavigation("/library")}
+              isActive={pathname === "/library"}
+            />
+          )}
           <SidebarButton icon={Code2} label="Codex" isOpen={isOpen} onClick={() => {}} />
         </nav>
 
