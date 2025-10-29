@@ -101,11 +101,13 @@ export function CandidateProfileForm({ onSave }: CandidateProfileFormProps) {
     e.preventDefault()
     console.log("[v0] Candidate profile submitted:", { formData, profilePicture, resume, portfolioItems })
 
-    toast({
+    console.log("[v0] Calling toast notification")
+    const result = toast({
       title: "Profile saved successfully!",
       description: "Your candidate profile has been updated.",
       duration: 2000,
     })
+    console.log("[v0] Toast result:", result)
 
     if (onSave) {
       onSave()
