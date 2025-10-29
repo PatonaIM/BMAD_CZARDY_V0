@@ -1,22 +1,56 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Sparkles, Loader2 } from "lucide-react"
-import { mockSignIn } from "@/lib/auth"
+import { Sparkles, Loader2, Mail, Lock, User } from "lucide-react"
+import { mockSignIn, mockSignUp, mockLogin } from "@/lib/auth"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export default function AuthPage() {
-  const [isLoading, setIsLoading] = useState<"google" | "github" | null>(null)
+  const [mode, setMode] = useState<"login" | "signup">("login")
+  const [isLoading, setIsLoading] = useState<"google" | "github" | "email" | null>(null)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleSignIn = async (provider: "google" | "github") => {
+  const handleOAuthSignIn = async (provider: "google" | "github") => {
     setIsLoading(provider)
+    setError("")
     try {
       await mockSignIn(provider)
       router.push("/")
     } catch (error) {
       console.error("Sign in failed:", error)
+      setError("Sign in failed. Please try again.")
+    } finally {
+      setIsLoading(null)
+    }
+  }
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading("email")
+    setError("")
+
+    try {
+      if (mode === "signup") {
+        if (!name.trim()) {
+          setError("Please enter your name")
+          setIsLoading(null)
+          return
+        }
+        await mockSignUp(email, password, name)
+      } else {
+        await mockLogin(email, password)
+      }
+      router.push("/")
+    } catch (error) {
+      console.error("Auth failed:", error)
+      setError(error instanceof Error ? error.message : "Authentication failed. Please try again.")
     } finally {
       setIsLoading(null)
     }
@@ -34,15 +68,136 @@ export default function AuthPage() {
               </div>
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-2 text-balance">Welcome to Teamified AI</h1>
-            <p className="text-muted-foreground text-balance">Sign in to start collaborating with your AI assistant</p>
+            <p className="text-muted-foreground text-balance">
+              {mode === "signup" ? "Create an account to get started" : "Sign in to continue"}
+            </p>
           </div>
 
           {/* Auth Card */}
           <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-            <div className="space-y-4">
+            <div className="flex gap-2 mb-6 p-1 bg-muted rounded-lg">
+              <button
+                onClick={() => {
+                  setMode("login")
+                  setError("")
+                }}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  mode === "login"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => {
+                  setMode("signup")
+                  setError("")
+                }}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  mode === "signup"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+              {mode === "signup" && (
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <input
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="John Doe"
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg p-3">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading !== null}
+                className="w-full py-3 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:opacity-90 text-white font-medium rounded-xl transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isLoading === "email" ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>{mode === "signup" ? "Creating account..." : "Signing in..."}</span>
+                  </>
+                ) : (
+                  <span>{mode === "signup" ? "Create Account" : "Sign In"}</span>
+                )}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
               {/* Google Sign In */}
               <button
-                onClick={() => handleSignIn("google")}
+                onClick={() => handleOAuthSignIn("google")}
                 disabled={isLoading !== null}
                 className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-background hover:bg-accent border border-border rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
               >
@@ -75,7 +230,7 @@ export default function AuthPage() {
 
               {/* GitHub Sign In */}
               <button
-                onClick={() => handleSignIn("github")}
+                onClick={() => handleOAuthSignIn("github")}
                 disabled={isLoading !== null}
                 className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-background hover:bg-accent border border-border rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
               >
@@ -92,20 +247,19 @@ export default function AuthPage() {
               </button>
             </div>
 
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Free Tier</span>
-              </div>
-            </div>
-
-            {/* Free Tier Info */}
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="mt-6 text-center text-sm text-muted-foreground">
               <p className="text-balance">
-                Sign in to access Teamified AI. Free tier includes limited actions and anonymous usage.
+                Free tier includes limited actions.{" "}
+                {mode === "signup" ? "Already have an account?" : "Don't have an account?"}{" "}
+                <button
+                  onClick={() => {
+                    setMode(mode === "signup" ? "login" : "signup")
+                    setError("")
+                  }}
+                  className="text-[#A16AE8] hover:underline font-medium"
+                >
+                  {mode === "signup" ? "Login" : "Sign up"}
+                </button>
               </p>
             </div>
           </div>

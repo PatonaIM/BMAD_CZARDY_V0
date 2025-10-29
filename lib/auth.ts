@@ -5,7 +5,7 @@ export interface User {
   name: string
   email: string
   avatar: string
-  provider: "google" | "github"
+  provider: "google" | "github" | "email"
 }
 
 export const mockUsers = {
@@ -49,6 +49,50 @@ export async function mockSignIn(provider: "google" | "github"): Promise<User> {
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
   const user = mockUsers[provider]
+  setCurrentUser(user)
+  return user
+}
+
+export async function mockSignUp(email: string, password: string, name: string): Promise<User> {
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+
+  // Create a mock user from the sign-up data
+  const user: User = {
+    id: `email-user-${Date.now()}`,
+    name: name,
+    email: email,
+    avatar: name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2),
+    provider: "email",
+  }
+
+  // Store the credentials for mock login
+  const credentials = JSON.parse(localStorage.getItem("teamified_credentials") || "{}")
+  credentials[email] = { password, user }
+  localStorage.setItem("teamified_credentials", JSON.stringify(credentials))
+
+  setCurrentUser(user)
+  return user
+}
+
+export async function mockLogin(email: string, password: string): Promise<User> {
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+
+  // Check stored credentials
+  const credentials = JSON.parse(localStorage.getItem("teamified_credentials") || "{}")
+  const storedCredential = credentials[email]
+
+  if (!storedCredential || storedCredential.password !== password) {
+    throw new Error("Invalid email or password")
+  }
+
+  const user = storedCredential.user
   setCurrentUser(user)
   return user
 }
