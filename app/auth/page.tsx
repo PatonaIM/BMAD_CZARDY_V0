@@ -206,7 +206,7 @@ export default function AuthPage() {
                       </svg>
                     )}
                     <span className="text-sm font-medium text-foreground">
-                      {loginLoading === "google" ? "Signing in..." : "Continue with Google"}
+                      {loginLoading === "google" ? "Signing in..." : "Login using Google"}
                     </span>
                   </button>
 
@@ -224,7 +224,7 @@ export default function AuthPage() {
                       </svg>
                     )}
                     <span className="text-sm font-medium text-foreground">
-                      {loginLoading === "github" ? "Signing in..." : "Continue with GitHub"}
+                      {loginLoading === "github" ? "Signing in..." : "Login using GitHub"}
                     </span>
                   </button>
                 </div>
@@ -394,7 +394,7 @@ export default function AuthPage() {
                       </svg>
                     )}
                     <span className="text-sm font-medium text-foreground">
-                      {signupLoading === "google" ? "Signing up..." : "Continue with Google"}
+                      {signupLoading === "google" ? "Creating account..." : "Create account using Google"}
                     </span>
                   </button>
 
@@ -412,7 +412,7 @@ export default function AuthPage() {
                       </svg>
                     )}
                     <span className="text-sm font-medium text-foreground">
-                      {signupLoading === "github" ? "Signing up..." : "Continue with GitHub"}
+                      {signupLoading === "github" ? "Creating account..." : "Create account using GitHub"}
                     </span>
                   </button>
                 </div>
