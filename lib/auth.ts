@@ -56,3 +56,10 @@ export async function mockSignIn(provider: "google" | "github"): Promise<User> {
 export function signOut(): void {
   clearCurrentUser()
 }
+
+export function ensureAnonymousStart(): void {
+  if (typeof window !== "undefined") {
+    // Clear any existing auth state for demo purposes
+    clearCurrentUser()
+  }
+}
