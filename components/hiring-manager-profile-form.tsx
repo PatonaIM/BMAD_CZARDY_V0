@@ -181,32 +181,62 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
 
         {/* Progress Steps */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {[1, 2, 3].map((step) => (
-              <div key={step} className="flex items-center flex-1">
-                <div className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
-                      currentStep >= step
-                        ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {currentStep > step ? <Check className="w-5 h-5" /> : step}
-                  </div>
-                  <span className="text-xs mt-2 font-medium">
-                    {step === 1 ? "Company Profile" : step === 2 ? "Select Pricing" : "Payment"}
-                  </span>
-                </div>
-                {step < 3 && (
-                  <div
-                    className={`h-1 flex-1 mx-2 rounded-full transition-all ${
-                      currentStep > step ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD]" : "bg-muted"
-                    }`}
-                  />
-                )}
+          <div className="flex items-center justify-between gap-4">
+            {/* Step 1 */}
+            <div className="flex flex-col items-center flex-1">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                  currentStep >= 1
+                    ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {currentStep > 1 ? <Check className="w-5 h-5" /> : 1}
               </div>
-            ))}
+              <span className="text-xs mt-2 font-medium text-center whitespace-nowrap">Company Profile</span>
+            </div>
+
+            {/* Connector Line 1 */}
+            <div
+              className={`h-1 flex-1 rounded-full transition-all ${
+                currentStep > 1 ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD]" : "bg-muted"
+              }`}
+            />
+
+            {/* Step 2 */}
+            <div className="flex flex-col items-center flex-1">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                  currentStep >= 2
+                    ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {currentStep > 2 ? <Check className="w-5 h-5" /> : 2}
+              </div>
+              <span className="text-xs mt-2 font-medium text-center whitespace-nowrap">Select Pricing</span>
+            </div>
+
+            {/* Connector Line 2 */}
+            <div
+              className={`h-1 flex-1 rounded-full transition-all ${
+                currentStep > 2 ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD]" : "bg-muted"
+              }`}
+            />
+
+            {/* Step 3 */}
+            <div className="flex flex-col items-center flex-1">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                  currentStep >= 3
+                    ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {currentStep > 3 ? <Check className="w-5 h-5" /> : 3}
+              </div>
+              <span className="text-xs mt-2 font-medium text-center whitespace-nowrap">Payment</span>
+            </div>
           </div>
         </div>
 
@@ -236,37 +266,43 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
 
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Industry *</label>
-                    <select
-                      value={companyProfile.industry}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, industry: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
-                    >
-                      <option value="">Select industry</option>
-                      <option value="technology">Technology</option>
-                      <option value="finance">Finance</option>
-                      <option value="healthcare">Healthcare</option>
-                      <option value="retail">Retail</option>
-                      <option value="manufacturing">Manufacturing</option>
-                      <option value="other">Other</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={companyProfile.industry}
+                        onChange={(e) => setCompanyProfile({ ...companyProfile, industry: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8] appearance-none pr-10"
+                      >
+                        <option value="">Select industry</option>
+                        <option value="technology">Technology</option>
+                        <option value="finance">Finance</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="retail">Retail</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="other">Other</option>
+                      </select>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Company Size</label>
-                    <select
-                      value={companyProfile.companySize}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, companySize: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
-                    >
-                      <option value="">Select size</option>
-                      <option value="1-10">1-10 employees</option>
-                      <option value="11-50">11-50 employees</option>
-                      <option value="51-200">51-200 employees</option>
-                      <option value="201-500">201-500 employees</option>
-                      <option value="501+">501+ employees</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={companyProfile.companySize}
+                        onChange={(e) => setCompanyProfile({ ...companyProfile, companySize: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8] appearance-none pr-10"
+                      >
+                        <option value="">Select size</option>
+                        <option value="1-10">1-10 employees</option>
+                        <option value="11-50">11-50 employees</option>
+                        <option value="51-200">51-200 employees</option>
+                        <option value="201-500">201-500 employees</option>
+                        <option value="501+">501+ employees</option>
+                      </select>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
+                    </div>
                   </div>
 
                   <div>
@@ -282,7 +318,7 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Company Description</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Tell us about your company.</label>
                   <textarea
                     value={companyProfile.description}
                     onChange={(e) => setCompanyProfile({ ...companyProfile, description: e.target.value })}
@@ -390,17 +426,20 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
 
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Urgency</label>
-                    <select
-                      value={rolesHiring.urgency}
-                      onChange={(e) => setRolesHiring({ ...rolesHiring, urgency: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8]"
-                    >
-                      <option value="">Select urgency</option>
-                      <option value="immediate">Immediate (1-2 weeks)</option>
-                      <option value="urgent">Urgent (1 month)</option>
-                      <option value="normal">Normal (2-3 months)</option>
-                      <option value="flexible">Flexible (3+ months)</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={rolesHiring.urgency}
+                        onChange={(e) => setRolesHiring({ ...rolesHiring, urgency: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8] appearance-none pr-10"
+                      >
+                        <option value="">Select urgency</option>
+                        <option value="immediate">Immediate (1-2 weeks)</option>
+                        <option value="urgent">Urgent (1 month)</option>
+                        <option value="normal">Normal (2-3 months)</option>
+                        <option value="flexible">Flexible (3+ months)</option>
+                      </select>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
