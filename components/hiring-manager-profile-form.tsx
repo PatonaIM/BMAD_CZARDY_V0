@@ -1,7 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, User, CreditCard, Check, ChevronRight, ChevronLeft } from "lucide-react"
+import {
+  Building2,
+  User,
+  CreditCard,
+  Check,
+  ChevronRight,
+  ChevronLeft,
+  Briefcase,
+  Users,
+  Zap,
+  Crown,
+} from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface HiringManagerProfileFormProps {
@@ -33,7 +44,7 @@ interface RolesHiring {
 }
 
 interface PricingSelection {
-  plan: "monthly" | "annual" | null
+  plan: "basic" | "recruiter" | "enterprise" | "premium" | null
   seats: number
 }
 
@@ -163,11 +174,25 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
 
   const calculateTotal = () => {
     if (!pricingSelection.plan) return 0
-    if (pricingSelection.plan === "monthly") {
-      return pricingSelection.seats * 19.99
-    } else {
-      return Math.ceil(pricingSelection.seats / 10) * 199
+
+    const pricePerSeat: Record<string, number> = {
+      basic: 300,
+      recruiter: 500,
+      enterprise: 800,
+      premium: 1200,
     }
+
+    return pricingSelection.seats * (pricePerSeat[pricingSelection.plan] || 0)
+  }
+
+  const getPlanName = () => {
+    const planNames: Record<string, string> = {
+      basic: "Basic Plan",
+      recruiter: "Recruiter Plan",
+      enterprise: "Enterprise Plan",
+      premium: "Premium Plan",
+    }
+    return pricingSelection.plan ? planNames[pricingSelection.plan] : ""
   }
 
   return (
@@ -460,97 +485,208 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
           {/* Step 2: Pricing Selection */}
           {currentStep === 2 && (
             <div className="space-y-6 animate-in fade-in duration-300">
-              <h3 className="text-lg font-semibold text-foreground">Select Your Plan</h3>
+              <h3 className="text-lg font-semibold text-foreground">Select Your Enterprise Plan</h3>
+              <p className="text-sm text-muted-foreground">Choose the plan that best fits your organization's needs</p>
 
               <div className="grid grid-cols-2 gap-4">
-                {/* Monthly Plan */}
+                {/* Basic Plan */}
                 <div
-                  onClick={() => setPricingSelection({ ...pricingSelection, plan: "monthly" })}
+                  onClick={() => setPricingSelection({ ...pricingSelection, plan: "basic" })}
                   className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${
-                    pricingSelection.plan === "monthly"
+                    pricingSelection.plan === "basic"
                       ? "border-[#A16AE8] bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5"
                       : "border-border hover:border-[#A16AE8]/50"
                   }`}
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h4 className="text-xl font-bold text-foreground mb-1">Monthly</h4>
-                      <p className="text-sm text-muted-foreground">Flexible billing</p>
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="w-5 h-5 text-[#A16AE8]" />
+                      <div>
+                        <h4 className="text-lg font-bold text-foreground">Basic Plan</h4>
+                        <p className="text-xs text-muted-foreground">Essential HR tools</p>
+                      </div>
                     </div>
                     <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        pricingSelection.plan === "monthly" ? "border-[#A16AE8] bg-[#A16AE8]" : "border-border"
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        pricingSelection.plan === "basic" ? "border-[#A16AE8] bg-[#A16AE8]" : "border-border"
                       }`}
                     >
-                      {pricingSelection.plan === "monthly" && <Check className="w-4 h-4 text-white" />}
+                      {pricingSelection.plan === "basic" && <Check className="w-4 h-4 text-white" />}
                     </div>
                   </div>
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold text-foreground">$19.99</span>
-                      <span className="text-muted-foreground">/seat/month</span>
+                      <span className="text-2xl font-bold text-foreground">$300</span>
+                      <span className="text-sm text-muted-foreground">/seat/mo</span>
                     </div>
                   </div>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8]" />
-                      Pay as you go
+                  <ul className="space-y-2 text-xs text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Payroll & HR Management</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8]" />
-                      Cancel anytime
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8]" />
-                      Add/remove seats monthly
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Limited access to Teamified AI Agents</span>
                     </li>
                   </ul>
                 </div>
 
-                {/* Annual Plan */}
+                {/* Recruiter Plan */}
                 <div
-                  onClick={() => setPricingSelection({ ...pricingSelection, plan: "annual" })}
+                  onClick={() => setPricingSelection({ ...pricingSelection, plan: "recruiter" })}
+                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${
+                    pricingSelection.plan === "recruiter"
+                      ? "border-[#A16AE8] bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5"
+                      : "border-border hover:border-[#A16AE8]/50"
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-[#8096FD]" />
+                      <div>
+                        <h4 className="text-lg font-bold text-foreground">Recruiter Plan</h4>
+                        <p className="text-xs text-muted-foreground">Hiring & performance</p>
+                      </div>
+                    </div>
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        pricingSelection.plan === "recruiter" ? "border-[#A16AE8] bg-[#A16AE8]" : "border-border"
+                      }`}
+                    >
+                      {pricingSelection.plan === "recruiter" && <Check className="w-4 h-4 text-white" />}
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-foreground">$500</span>
+                      <span className="text-sm text-muted-foreground">/seat/mo</span>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 text-xs text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>Everything in Basic Plan</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>Hire (EOR)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>Performance Management</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>Limited AI Agents access</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Enterprise Plan */}
+                <div
+                  onClick={() => setPricingSelection({ ...pricingSelection, plan: "enterprise" })}
                   className={`p-6 rounded-2xl border-2 cursor-pointer transition-all relative ${
-                    pricingSelection.plan === "annual"
+                    pricingSelection.plan === "enterprise"
                       ? "border-[#A16AE8] bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5"
                       : "border-border hover:border-[#A16AE8]/50"
                   }`}
                 >
                   <div className="absolute -top-3 right-4 px-3 py-1 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white text-xs font-semibold">
-                    Save 17%
+                    Popular
                   </div>
                   <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h4 className="text-xl font-bold text-foreground mb-1">Annual</h4>
-                      <p className="text-sm text-muted-foreground">Best value</p>
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-[#A16AE8]" />
+                      <div>
+                        <h4 className="text-lg font-bold text-foreground">Enterprise Plan</h4>
+                        <p className="text-xs text-muted-foreground">Complete solution</p>
+                      </div>
                     </div>
                     <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        pricingSelection.plan === "annual" ? "border-[#A16AE8] bg-[#A16AE8]" : "border-border"
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        pricingSelection.plan === "enterprise" ? "border-[#A16AE8] bg-[#A16AE8]" : "border-border"
                       }`}
                     >
-                      {pricingSelection.plan === "annual" && <Check className="w-4 h-4 text-white" />}
+                      {pricingSelection.plan === "enterprise" && <Check className="w-4 h-4 text-white" />}
                     </div>
                   </div>
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold text-foreground">$199</span>
-                      <span className="text-muted-foreground">/10 seats/year</span>
+                      <span className="text-2xl font-bold text-foreground">$800</span>
+                      <span className="text-sm text-muted-foreground">/seat/mo</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">$16.58 per seat per month</p>
                   </div>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8]" />
-                      17% discount
+                  <ul className="space-y-2 text-xs text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Everything in Recruiter Plan</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8]" />
-                      Priority support
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Equipment provisioning</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#A16AE8]" />
-                      Dedicated account manager
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Office Space management</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Full access to Teamified AI Agents</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Premium Plan */}
+                <div
+                  onClick={() => setPricingSelection({ ...pricingSelection, plan: "premium" })}
+                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all relative ${
+                    pricingSelection.plan === "premium"
+                      ? "border-[#A16AE8] bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5"
+                      : "border-border hover:border-[#A16AE8]/50"
+                  }`}
+                >
+                  <div className="absolute -top-3 right-4 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs font-semibold">
+                    All-In
+                  </div>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-5 h-5 text-amber-500" />
+                      <div>
+                        <h4 className="text-lg font-bold text-foreground">Premium Plan</h4>
+                        <p className="text-xs text-muted-foreground">All-in package</p>
+                      </div>
+                    </div>
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        pricingSelection.plan === "premium" ? "border-[#A16AE8] bg-[#A16AE8]" : "border-border"
+                      }`}
+                    >
+                      {pricingSelection.plan === "premium" && <Check className="w-4 h-4 text-white" />}
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-foreground">$1,200</span>
+                      <span className="text-sm text-muted-foreground">/seat/mo</span>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 text-xs text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Everything in Enterprise Plan</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Dedicated Account Management</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Advanced Dashboarding Features</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Full access to Teamified AI Agents</span>
                     </li>
                   </ul>
                 </div>
@@ -598,23 +734,32 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                   </div>
                   <div className="mt-4 p-4 rounded-lg bg-background border border-border">
                     <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="text-muted-foreground">Plan</span>
+                      <span className="font-medium">{getPlanName()}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mb-2">
                       <span className="text-muted-foreground">Seats</span>
                       <span className="font-medium">{pricingSelection.seats}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">
-                        {pricingSelection.plan === "monthly" ? "Price per seat" : "Price per 10 seats"}
+                      <span className="text-muted-foreground">Price per seat</span>
+                      <span className="font-medium">
+                        $
+                        {pricingSelection.plan === "basic"
+                          ? "300"
+                          : pricingSelection.plan === "recruiter"
+                            ? "500"
+                            : pricingSelection.plan === "enterprise"
+                              ? "800"
+                              : "1,200"}
                       </span>
-                      <span className="font-medium">${pricingSelection.plan === "monthly" ? "19.99" : "199.00"}</span>
                     </div>
                     <div className="border-t border-border my-2" />
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold">Total</span>
-                      <span className="text-2xl font-bold text-[#A16AE8]">${calculateTotal().toFixed(2)}</span>
+                      <span className="font-semibold">Total Monthly</span>
+                      <span className="text-2xl font-bold text-[#A16AE8]">${calculateTotal().toLocaleString()}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {pricingSelection.plan === "monthly" ? "Billed monthly" : "Billed annually"}
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">Billed monthly</p>
                   </div>
                 </div>
               )}
@@ -632,7 +777,7 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
               <div className="p-6 rounded-2xl border border-border bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Plan</span>
-                  <span className="font-semibold capitalize">{pricingSelection.plan}</span>
+                  <span className="font-semibold">{getPlanName()}</span>
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Seats</span>
@@ -641,8 +786,9 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                 <div className="border-t border-border my-3" />
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Total Amount</span>
-                  <span className="text-2xl font-bold text-[#A16AE8]">${calculateTotal().toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-[#A16AE8]">${calculateTotal().toLocaleString()}</span>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">Billed monthly</p>
               </div>
 
               <div className="space-y-4">
