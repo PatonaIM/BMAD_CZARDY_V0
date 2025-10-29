@@ -202,8 +202,9 @@ const categoryTabs: Array<{ id: SuggestionCategory; label: string; icon: React.R
   { id: "about-us", label: "About Us", icon: <Info className="w-4 h-4" /> },
 ]
 
-const generateCandidateWelcome = (): string => {
-  return `Hello! Welcome to Teamified AI! I'm **Danny**, your **Technical Recruiter** AI Agent. 🎯
+const generateWelcomeMessage = (agent: AIAgent, userRole: "candidate" | "hiring_manager"): string => {
+  if (userRole === "candidate") {
+    return `Hello! Welcome to Teamified AI! I'm **${agent.firstName}**, your **${agent.name}** AI Agent. ${agent.icon}
 
 I'm excited to help you find your next great opportunity! To get started, I've opened a Candidate Profile form in the workspace on the right where you can share your information with me.
 
@@ -220,6 +221,26 @@ ${loremParagraphs[3]}
 Please take a moment to complete your profile, and then we can start exploring opportunities that match your skills and experience!
 
 What would you like to know about the opportunities we have available?`
+  } else {
+    // Hiring manager welcome
+    return `Hello! Welcome to Teamified AI! I'm **${agent.firstName}**, your **${agent.name}** AI Agent. ${agent.icon}
+
+I'm excited to help you build your team with Teamified! To get started, I've opened the Enterprise Account Setup in the workspace on the right.
+
+${loremParagraphs[0]}
+
+${loremParagraphs[1]}
+
+## Here's what I can help you with:
+
+${loremParagraphs[2]}
+
+${loremParagraphs[3]}
+
+Let's complete your company profile and select the perfect plan for your hiring needs!
+
+What questions do you have about our enterprise solutions?`
+  }
 }
 
 const generateProfileSavedMessage = (): string => {
@@ -260,11 +281,12 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
       if (shouldShowWelcome && initialAgentId) {
         const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
         if (agent) {
+          const userRole = agent.id === "technical-recruiter" ? "candidate" : "hiring_manager"
           setMessages([
             {
               id: Date.now().toString(),
               type: "ai",
-              content: generateCandidateWelcome(),
+              content: generateWelcomeMessage(agent, userRole),
               agentId: agent.id,
               isAgentSwitch: false,
             },
