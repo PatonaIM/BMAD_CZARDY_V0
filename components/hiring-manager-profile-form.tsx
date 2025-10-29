@@ -549,6 +549,13 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                       <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
                       <span>HR record keeping & reporting</span>
                     </li>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">✨ TEAMIFIED AI</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Limited Access to Teamified AI Agents</span>
+                    </li>
                   </ul>
                 </div>
 
@@ -606,6 +613,13 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                       <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
                       <span>Employment contracts & benefits setup</span>
                     </li>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">✨ TEAMIFIED AI</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                      <span>Limited Access to Teamified AI Agents</span>
+                    </li>
                   </ul>
                 </div>
 
@@ -661,6 +675,13 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                     <li className="flex items-start gap-2 pl-4">
                       <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
                       <span>Workspace and IT setup</span>
+                    </li>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">✨ TEAMIFIED AI</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span>Full Access to Teamified AI Agents</span>
                     </li>
                   </ul>
                 </div>
@@ -728,6 +749,13 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
                     <li className="flex items-start gap-2 pl-4">
                       <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
                       <span>Laptop + Office Space</span>
+                    </li>
+                    <li className="flex items-start gap-2 mt-2">
+                      <span className="font-semibold text-foreground">✨ TEAMIFIED AI</span>
+                    </li>
+                    <li className="flex items-start gap-2 pl-4">
+                      <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>Full Access to Teamified AI Agents + Dashboarding & Analytics</span>
                     </li>
                   </ul>
                 </div>
