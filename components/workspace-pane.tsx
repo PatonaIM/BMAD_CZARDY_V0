@@ -1554,8 +1554,8 @@ export function WorkspacePane({
                           </div>
 
                           <div className="flex gap-6">
-                            {/* Left side - 70% */}
-                            <div className="flex-[7] flex flex-col gap-4">
+                            {/* Left side - 80% width */}
+                            <div className="flex-[8] flex flex-col gap-4">
                               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <MapPin className="w-4 h-4" />
@@ -1587,8 +1587,8 @@ export function WorkspacePane({
                               </button>
                             </div>
 
-                            {/* Right side - 30% */}
-                            <div className="flex-[3] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
+                            {/* Right side - 20% width */}
+                            <div className="flex-[2] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
                               <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
                                 Applied
                               </span>
@@ -1660,8 +1660,8 @@ export function WorkspacePane({
                           </div>
 
                           <div className="flex gap-6">
-                            {/* Left side - 70% */}
-                            <div className="flex-[7] flex flex-col gap-4">
+                            {/* Left side - 80% width */}
+                            <div className="flex-[8] flex flex-col gap-4">
                               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <MapPin className="w-4 h-4" />
@@ -1693,8 +1693,8 @@ export function WorkspacePane({
                               </button>
                             </div>
 
-                            {/* Right side - 30% */}
-                            <div className="flex-[3] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
+                            {/* Right side - 20% width */}
+                            <div className="flex-[2] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
                               <span className="px-3 py-1 text-xs rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
                                 Saved
                               </span>
