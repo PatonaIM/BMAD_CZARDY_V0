@@ -14,7 +14,7 @@ export default function ChatPage() {
   const [workspaceContent, setWorkspaceContent] = useState<WorkspaceContent>({ type: null })
   const [initialAgent, setInitialAgent] = useState<string | null>(null)
   const [shouldShowWelcome, setShouldShowWelcome] = useState(false)
-  const chatMainRef = useRef<{ handleProfileSaved: () => void } | null>(null)
+  const chatMainRef = useRef<{ handleProfileSaved: () => void; switchAgent: (agentId: string) => void } | null>(null)
 
   useEffect(() => {
     clearUserOnInitialLoad()
@@ -25,29 +25,23 @@ export default function ChatPage() {
 
     if (user?.isNewSignup) {
       if (user.role === "candidate") {
-        // Set the Technical Recruiter as the initial agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
           setInitialAgent(technicalRecruiter.id)
           setShouldShowWelcome(true)
-          // Open the candidate profile form in workspace
           setTimeout(() => {
             setWorkspaceContent({ type: "candidate-profile", title: "Candidate Profile" })
           }, 1000)
-          // Clear the new signup flag
           clearNewSignupFlag()
         }
       } else if (user.role === "hiring_manager") {
-        // Set the Sales & Marketing agent as the initial agent
         const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
         if (salesAgent) {
           setInitialAgent(salesAgent.id)
           setShouldShowWelcome(true)
-          // Open the hiring manager profile form in workspace
           setTimeout(() => {
             setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
           }, 1000)
-          // Clear the new signup flag
           clearNewSignupFlag()
         }
       }
@@ -64,6 +58,20 @@ export default function ChatPage() {
     setWorkspaceContent({ type: "candidate-profile", title: "Edit Profile" })
   }
 
+  // <CHANGE> Added handleUpgradePlan to switch to Sales agent and show pricing
+  const handleUpgradePlan = () => {
+    console.log("[v0] Upgrade plan clicked")
+    // Switch to Sales & Marketing agent
+    const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
+    if (salesAgent && chatMainRef.current) {
+      console.log("[v0] Switching to Sales & Marketing agent")
+      chatMainRef.current.switchAgent(salesAgent.id)
+    }
+    // Show candidate pricing in workspace
+    console.log("[v0] Opening candidate pricing workspace")
+    setWorkspaceContent({ type: "candidate-pricing", title: "Upgrade to Premium" })
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -71,6 +79,7 @@ export default function ChatPage() {
           isOpen={isSidebarOpen}
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           onEditProfile={handleEditProfile}
+          onUpgradePlan={handleUpgradePlan}
         />
         <div className="flex-1 flex overflow-hidden">
           <div className={`${workspaceContent.type ? "w-1/2" : "w-full"} transition-all duration-300`}>
@@ -90,6 +99,7 @@ export default function ChatPage() {
                 onClose={() => setWorkspaceContent({ type: null })}
                 content={workspaceContent}
                 onProfileSave={handleProfileSave}
+                onUpgradePlan={handleUpgradePlan}
               />
             </div>
           )}

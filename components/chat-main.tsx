@@ -22,6 +22,8 @@ import {
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
 import { MarkdownRenderer } from "./markdown-renderer"
+import { useChat } from "@ai-sdk/react"
+import { DefaultChatTransport } from "ai"
 
 interface ChatMainProps {
   isSidebarOpen: boolean
@@ -253,10 +255,8 @@ Now that I have your information, I can help you in several ways. Here are some 
 
 export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainProps>(
   ({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
-    const [message, setMessage] = useState("")
+    const [inputMessage, setInputMessage] = useState("")
     const [welcomeQuestion, setWelcomeQuestion] = useState("")
-    const [messages, setMessages] = useState<Message[]>([])
-    const [isThinking, setIsThinking] = useState(false)
     const [activeAgent, setActiveAgent] = useState<AIAgent>(() => {
       if (initialAgentId) {
         return AI_AGENTS.find((agent) => agent.id === initialAgentId) || AI_AGENTS[0]
@@ -267,10 +267,23 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
     const [activeSuggestionTab, setActiveSuggestionTab] = useState<SuggestionCategory>("suggested")
     const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
     const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
+    const [localMessages, setLocalMessages] = useState<Message[]>([])
     const lastUserMessageRef = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
     const agentDropdownRef = useRef<HTMLDivElement>(null)
+
+    const {
+      messages: aiMessages,
+      sendMessage,
+      status,
+    } = useChat({
+      transport: new DefaultChatTransport({ api: "/api/chat" }),
+      body: {
+        agentId: activeAgent.id,
+      },
+      initialMessages: [], // Start with an empty array, welcome messages are handled separately
+    })
 
     useEffect(() => {
       const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
@@ -282,7 +295,7 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
         const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
         if (agent) {
           const userRole = agent.id === "technical-recruiter" ? "candidate" : "hiring_manager"
-          setMessages([
+          setLocalMessages([
             {
               id: Date.now().toString(),
               type: "ai",
@@ -296,8 +309,34 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
     }, [shouldShowWelcome, initialAgentId])
 
     useEffect(() => {
-      if (messages.length > 0 && messagesContainerRef.current) {
-        if (messages.length === 1) {
+      const convertedMessages: Message[] = aiMessages.map((msg) => {
+        // Find the corresponding agent if it's an AI message. If not, use the active agent.
+        const messageAgent = AI_AGENTS.find((a) => a.id === msg.extra?.agentId) || activeAgent
+        return {
+          id: msg.id,
+          type: msg.role === "user" ? "user" : "ai",
+          content: msg.parts.map((part) => (part.type === "text" ? part.text : "")).join(""),
+          agentId: messageAgent.id,
+          responseType: msg.extra?.responseType,
+          thinkingTime: msg.extra?.thinkingTime,
+          promptSuggestions: msg.extra?.promptSuggestions,
+        }
+      })
+
+      // Filter out messages that might have already been added as welcome or agent switch messages
+      const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
+      const filteredLocalMessages = localMessages.filter((m) => !aiMessageIds.has(m.id))
+
+      // Merge with local messages (welcome, agent switch messages)
+      const welcomeAndSwitchMessages = filteredLocalMessages.filter(
+        (m) => m.isAgentSwitch !== undefined || m.id.startsWith(Date.now().toString()),
+      )
+      setLocalMessages([...welcomeAndSwitchMessages, ...convertedMessages])
+    }, [aiMessages, activeAgent])
+
+    useEffect(() => {
+      if (localMessages.length > 0 && messagesContainerRef.current) {
+        if (localMessages.length === 1) {
           requestAnimationFrame(() => {
             if (messagesContainerRef.current) {
               messagesContainerRef.current.scrollTop = 0
@@ -317,7 +356,7 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
           return () => clearTimeout(timer)
         }
       }
-    }, [messages, isThinking])
+    }, [localMessages, status])
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -333,7 +372,7 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
 
     useImperativeHandle(ref, () => ({
       handleProfileSaved: () => {
-        setMessages((prev) => [
+        setLocalMessages((prev) => [
           ...prev,
           {
             id: Date.now().toString(),
@@ -354,88 +393,6 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
       },
     }))
 
-    const simulateAIResponse = (userMessage: string) => {
-      const lowerMessage = userMessage.toLowerCase().trim()
-      let responseType: "text" | "code" | "table" | "file" | "image" = "text"
-      let content = ""
-      let shouldOpenWorkspace = false
-      let workspaceContent: WorkspaceContent | null = null
-
-      if (lowerMessage === "*help") {
-        content = generateHelpMessage(activeAgent)
-      } else if (lowerMessage === "large text") {
-        content = generateLargeResponse()
-      } else if (lowerMessage === "bullet text") {
-        content = generateBulletResponse()
-      } else if (lowerMessage === "pdf") {
-        responseType = "file"
-        content = generateShortResponse()
-      } else if (lowerMessage === "pdf preview") {
-        content = generateLargeResponse()
-        shouldOpenWorkspace = true
-        workspaceContent = { type: "pdf", title: "employment-contract.pdf" }
-      } else if (lowerMessage === "table") {
-        responseType = "table"
-        content = generateShortResponse()
-      } else if (lowerMessage === "table preview") {
-        content = generateLargeResponse()
-        shouldOpenWorkspace = true
-        workspaceContent = { type: "table", title: "Candidate Data" }
-      } else if (lowerMessage === "image") {
-        responseType = "image"
-        content = generateShortResponse()
-      } else if (lowerMessage === "image preview") {
-        content = generateLargeResponse()
-        shouldOpenWorkspace = true
-        workspaceContent = { type: "image", title: "Dashboard Screenshot" }
-      } else if (lowerMessage === "video preview") {
-        content = generateLargeResponse()
-        shouldOpenWorkspace = true
-        workspaceContent = { type: "video", title: "Product Demo Video" }
-      } else if (lowerMessage === "code") {
-        responseType = "code"
-        content = generateShortResponse()
-      } else if (lowerMessage === "code preview") {
-        content = generateLargeResponse()
-        shouldOpenWorkspace = true
-        workspaceContent = { type: "code", title: "server.js", data: codeSnippet }
-      } else if (lowerMessage === "job board") {
-        content = generateLargeResponse()
-        shouldOpenWorkspace = true
-        workspaceContent = { type: "job-board", title: "Open Positions" }
-      } else if (lowerMessage === "data") {
-        content = generateLargeResponse()
-        shouldOpenWorkspace = true
-        workspaceContent = { type: "analytics", title: "Recruitment Analytics" }
-      } else {
-        content = generateShortResponse()
-      }
-
-      setIsThinking(true)
-      const thinkingTime = Math.floor(Math.random() * 20) + 15
-
-      setTimeout(() => {
-        setIsThinking(false)
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            type: "ai",
-            content,
-            responseType,
-            thinkingTime,
-            agentId: activeAgent.id,
-          },
-        ])
-
-        if (shouldOpenWorkspace && workspaceContent) {
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceContent)
-          setTimeout(() => onOpenWorkspace(workspaceContent), 100)
-        }
-      }, 2000)
-    }
-
     const handlePreviewClick = (fileType: string) => {
       onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
     }
@@ -448,43 +405,28 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
-      if (message.trim()) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            type: "user",
-            content: message,
-          },
-        ])
-        simulateAIResponse(message)
-        setMessage("")
+      if (inputMessage.trim()) {
+        sendMessage({ text: inputMessage, agentId: activeAgent.id }) // Pass agentId to the backend
+        setInputMessage("")
       }
     }
 
     const handleSuggestionClick = (suggestionText: string) => {
-      setMessage(suggestionText)
+      setInputMessage(suggestionText)
     }
 
     const handlePromptSuggestionClick = (suggestionText: string) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: "user",
-          content: suggestionText,
-        },
-      ])
-      simulateAIResponse(suggestionText)
+      sendMessage({ text: suggestionText, agentId: activeAgent.id }) // Pass agentId to the backend
     }
 
     const handleAgentChange = (agent: AIAgent) => {
       setActiveAgent(agent)
       setIsAgentDropdownOpen(false)
-      setMessages((prev) => [
+      // Add a message indicating the agent switch
+      setLocalMessages((prev) => [
         ...prev,
         {
-          id: Date.now().toString(),
+          id: Date.now().toString(), // Use a temporary ID for local message
           type: "ai",
           content: generateAgentIntroduction(agent),
           agentId: agent.id,
@@ -493,7 +435,8 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
       ])
     }
 
-    const isCentered = messages.length === 0
+    const isCentered = localMessages.length === 0 && aiMessages.length === 0
+    const isThinking = status === "in_progress"
 
     const renderSuggestions = () => (
       <>
@@ -643,8 +586,8 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
                     </div>
                     <input
                       type="text"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
                       placeholder="Ask anything or type *help to know what I can do!"
                       className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
                     />
@@ -658,11 +601,13 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
                       </button>
                       <button
                         type="submit"
-                        disabled={!message.trim()}
-                        className={`p-2.5 rounded-full transition-all ${message.trim() ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
+                        disabled={!inputMessage.trim() || isThinking}
+                        className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
                         aria-label="Send message"
                       >
-                        <ArrowUp className={`w-5 h-5 ${message.trim() ? "text-white" : "text-muted-foreground"}`} />
+                        <ArrowUp
+                          className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
+                        />
                       </button>
                     </div>
                   </div>
@@ -677,10 +622,10 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
             </div>
           ) : (
             <div className="max-w-3xl mx-auto pt-8 pb-8 space-y-6">
-              {messages.map((msg, index) => {
+              {localMessages.map((msg, index) => {
                 const isLastUserMessage =
-                  msg.type === "user" && index === messages.map((m) => m.type).lastIndexOf("user")
-                const isLastMessage = index === messages.length - 1
+                  msg.type === "user" && index === localMessages.map((m) => m.type).lastIndexOf("user")
+                const isLastMessage = index === localMessages.length - 1
                 const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
                 return (
                   <div
@@ -941,8 +886,8 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
                   </div>
                   <input
                     type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
                     placeholder="Ask anything or type *help to know what I can do!"
                     className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
                   />
@@ -956,11 +901,13 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
                     </button>
                     <button
                       type="submit"
-                      disabled={!message.trim()}
-                      className={`p-2.5 rounded-full transition-all ${message.trim() ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
+                      disabled={!inputMessage.trim() || isThinking}
+                      className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
                       aria-label="Send message"
                     >
-                      <ArrowUp className={`w-5 h-5 ${message.trim() ? "text-white" : "text-muted-foreground"}`} />
+                      <ArrowUp
+                        className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
+                      />
                     </button>
                   </div>
                 </div>
