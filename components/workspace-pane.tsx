@@ -1504,6 +1504,13 @@ export function WorkspacePane({
         const appliedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.applied) : []
         const savedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.saved && !job.applied) : []
 
+        const getSkillMatchInfo = (score: number | undefined) => {
+          if (!score) return { label: "N/A", color: "bg-gray-500/10 text-gray-600 border-gray-500/20" }
+          if (score >= 90) return { label: "STRONG FIT", color: "bg-green-500/10 text-green-600 border-green-500/20" }
+          if (score >= 70) return { label: "GOOD FIT", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" }
+          return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border-red-500/20" }
+        }
+
         return (
           <div className="h-full overflow-auto">
             {user?.role === "candidate" && displayedJobs.length === 0 ? (
@@ -1568,6 +1575,18 @@ export function WorkspacePane({
                               </span>
                             </div>
                           </div>
+
+                          {job.skillMatch && (
+                            <div className="mb-4">
+                              <div
+                                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${getSkillMatchInfo(job.skillMatch).color}`}
+                              >
+                                <span className="text-lg font-bold">{job.skillMatch}%</span>
+                                <span className="text-xs font-semibold">{getSkillMatchInfo(job.skillMatch).label}</span>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4" />
@@ -1655,6 +1674,18 @@ export function WorkspacePane({
                               </span>
                             </div>
                           </div>
+
+                          {job.skillMatch && (
+                            <div className="mb-4">
+                              <div
+                                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${getSkillMatchInfo(job.skillMatch).color}`}
+                              >
+                                <span className="text-lg font-bold">{job.skillMatch}%</span>
+                                <span className="text-xs font-semibold">{getSkillMatchInfo(job.skillMatch).label}</span>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4" />
