@@ -2021,7 +2021,22 @@ export function WorkspacePane({
   return (
     <div className="h-full flex flex-col border-l border-border bg-background">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-lg font-semibold">{getWorkspaceTitle()}</h2>
+        <div className="flex items-center gap-3">
+          {content.type === "job-view" && onBackToJobBoard && (
+            <button
+              onClick={() => {
+                console.log("[v0] Back button clicked in workspace header")
+                onBackToJobBoard()
+              }}
+              className="p-2 rounded-lg hover:bg-accent transition-colors flex items-center justify-center"
+              aria-label="Back to My Jobs"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 -ml-3" />
+            </button>
+          )}
+          <h2 className="text-lg font-semibold">{getWorkspaceTitle()}</h2>
+        </div>
         <button
           onClick={onClose}
           className="p-2 rounded-lg hover:bg-accent transition-colors"
