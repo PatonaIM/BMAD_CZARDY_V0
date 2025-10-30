@@ -402,6 +402,33 @@ export function WorkspacePane({ isOpen, onClose, content, onProfileSave, onUpgra
 
   const mockImages = ["/dashboard-analytics.png", "/user-interface-design.png", "/data-visualization-abstract.png"]
 
+  const getWorkspaceTitle = () => {
+    switch (content.type) {
+      case "candidate-profile":
+        return "Edit Candidate Profile"
+      case "hiring-manager-profile":
+        return "Edit Hiring Manager Profile"
+      case "candidate-pricing":
+        return "Upgrade to Premium"
+      case "pdf":
+        return "Document Viewer"
+      case "image":
+        return "Image Gallery"
+      case "video":
+        return "Video Player"
+      case "code":
+        return "Code Editor"
+      case "job-board":
+        return "Available Positions"
+      case "table":
+        return "Candidate Overview"
+      case "analytics":
+        return "Analytics Dashboard"
+      default:
+        return "Workspace"
+    }
+  }
+
   const filteredAndSortedData = useMemo(() => {
     let data = [...mockCandidateData]
 
@@ -1405,7 +1432,7 @@ export function WorkspacePane({ isOpen, onClose, content, onProfileSave, onUpgra
   return (
     <div className="h-full flex flex-col border-l border-border bg-background">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-lg font-semibold">Workspace</h2>
+        <h2 className="text-lg font-semibold">{getWorkspaceTitle()}</h2>
         <button
           onClick={onClose}
           className="p-2 rounded-lg hover:bg-accent transition-colors"
