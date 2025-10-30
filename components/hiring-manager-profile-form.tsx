@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import {
   Building2,
@@ -12,6 +14,7 @@ import {
   Users,
   Zap,
   Crown,
+  ChevronsRight,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -99,6 +102,8 @@ export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: Hiri
   })
 
   const [paymentProgress, setPaymentProgress] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [startX, setStartX] = useState(0)
 
   const handleNext = () => {
     if (currentStep < 3) {
@@ -120,28 +125,57 @@ export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: Hiri
     }
   }
 
-  const handlePaymentSlider = (value: number) => {
-    setPaymentProgress(value)
-    if (value === 100) {
-      // Payment complete
-      setTimeout(() => {
-        toast({
-          title: "Payment successful!",
-          description: "Your enterprise account has been activated.",
-          duration: 2000,
-        })
+  const handlePaymentConfirm = () => {
+    // Payment complete
+    toast({
+      title: "Payment successful!",
+      description: "Your enterprise account has been activated.",
+      duration: 2000,
+    })
 
-        if (onSave) {
-          onSave()
-        }
-
-        if (onClose) {
-          setTimeout(() => {
-            onClose()
-          }, 2000)
-        }
-      }, 500)
+    if (onSave) {
+      onSave()
     }
+
+    if (onClose) {
+      setTimeout(() => {
+        onClose()
+      }, 2000)
+    }
+  }
+
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isStep3Valid()) return
+    setIsDragging(true)
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX
+    setStartX(clientX)
+  }
+
+  const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDragging) return
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX
+    const container = (e.currentTarget as HTMLElement).parentElement
+    if (!container) return
+
+    const containerRect = container.getBoundingClientRect()
+    const maxWidth = containerRect.width - 80 // 80px is button width
+    const deltaX = clientX - startX
+    const newProgress = Math.min(Math.max((deltaX / maxWidth) * 100, 0), 100)
+
+    setPaymentProgress(newProgress)
+
+    if (newProgress >= 95) {
+      setIsDragging(false)
+      setPaymentProgress(100)
+      handlePaymentConfirm()
+    }
+  }
+
+  const handleDragEnd = () => {
+    if (paymentProgress < 95) {
+      setPaymentProgress(0)
+    }
+    setIsDragging(false)
   }
 
   const isStep1Valid = () => {
@@ -913,29 +947,50 @@ export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: Hiri
                 </div>
               </div>
 
-              {/* Payment Slider */}
               <div className="p-6 rounded-2xl border-2 border-dashed border-border bg-muted/30">
                 <label className="block text-sm font-medium text-foreground mb-4 text-center">
                   Slide to Complete Payment
                 </label>
-                <div className="relative">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={paymentProgress}
-                    onChange={(e) => handlePaymentSlider(Number.parseInt(e.target.value))}
-                    disabled={!isStep3Valid()}
-                    className="w-full h-12 appearance-none bg-gradient-to-r from-muted to-[#A16AE8] rounded-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                <div
+                  className="relative h-16 bg-muted rounded-full overflow-hidden"
+                  onMouseMove={handleDragMove}
+                  onMouseUp={handleDragEnd}
+                  onMouseLeave={handleDragEnd}
+                  onTouchMove={handleDragMove}
+                  onTouchEnd={handleDragEnd}
+                >
+                  {/* Progress background */}
+                  <div
+                    className="absolute inset-0 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] transition-all duration-200"
                     style={{
-                      background: `linear-gradient(to right, #A16AE8 0%, #8096FD ${paymentProgress}%, hsl(var(--muted)) ${paymentProgress}%, hsl(var(--muted)) 100%)`,
+                      width: `${paymentProgress}%`,
                     }}
                   />
+
+                  {/* Instruction text */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-sm font-semibold text-foreground">
-                      {paymentProgress === 100 ? "Processing..." : `${paymentProgress}%`}
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      {paymentProgress === 100 ? "Processing..." : "Slide to confirm"}
                     </span>
                   </div>
+
+                  {/* Draggable button with arrows */}
+                  <button
+                    onMouseDown={handleDragStart}
+                    onTouchStart={handleDragStart}
+                    disabled={!isStep3Valid() || paymentProgress === 100}
+                    className="absolute left-1 top-1 bottom-1 w-20 bg-white rounded-full shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105"
+                    style={{
+                      transform: `translateX(${(paymentProgress / 100) * (100 - 5)}%)`,
+                      transition: isDragging ? "none" : "transform 0.3s ease-out",
+                    }}
+                  >
+                    <ChevronsRight
+                      className={`w-6 h-6 transition-colors ${
+                        paymentProgress > 0 ? "text-[#A16AE8]" : "text-muted-foreground"
+                      }`}
+                    />
+                  </button>
                 </div>
                 {!isStep3Valid() && (
                   <p className="text-xs text-muted-foreground text-center mt-2">
