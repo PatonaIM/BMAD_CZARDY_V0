@@ -6,12 +6,13 @@ export type WorkspaceContentType =
   | "video"
   | "job-board"
   | "job-description"
+  | "job-view" // Added job-view content type
   | "table"
   | "analytics"
   | "candidate-profile"
   | "hiring-manager-profile"
   | "candidate-pricing"
-  | "payment-success" // Added payment success content type
+  | "payment-success"
   | null
 
 export interface WorkspaceContent {
@@ -20,7 +21,10 @@ export interface WorkspaceContent {
   data?: any
   planName?: string
   amount?: string
+  job?: JobListing // Added job property for job view
 }
+
+export type JobStatus = "draft" | "open" | "closed" | "cancelled"
 
 export interface JobListing {
   id: string
@@ -34,4 +38,15 @@ export interface JobListing {
   requirements: string[]
   applied?: boolean
   logo?: string
+  status?: JobStatus
+  responsibilities?: string[]
+  qualifications?: string[]
+  benefits?: string[]
+  department?: string
+  reportingTo?: string
+  teamSize?: string
+  workArrangement?: string
+  applicationDeadline?: string
+  hiringManager?: string
+  openings?: number
 }

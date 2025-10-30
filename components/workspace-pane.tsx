@@ -41,6 +41,7 @@ import { CandidateProfileForm } from "./candidate-profile-form"
 import { HiringManagerProfileForm } from "./hiring-manager-profile-form"
 import { CandidatePricing } from "./candidate-pricing"
 import { PaymentSuccess } from "./payment-success" // Import payment success component
+import { JobView } from "./job-view" // Import JobView component
 
 interface WorkspacePaneProps {
   isOpen: boolean
@@ -64,6 +65,38 @@ const mockJobListings: JobListing[] = [
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    status: "open",
+    qualifications: [
+      "5+ years of professional software development experience",
+      "Strong proficiency in React, Node.js, and TypeScript",
+      "Experience with AWS cloud services and infrastructure",
+      "Solid understanding of RESTful APIs and microservices architecture",
+      "Experience with SQL and NoSQL databases",
+      "Strong problem-solving and communication skills",
+    ],
+    responsibilities: [
+      "Design and develop scalable full-stack applications",
+      "Collaborate with cross-functional teams to define and implement new features",
+      "Write clean, maintainable, and well-documented code",
+      "Participate in code reviews and provide constructive feedback",
+      "Mentor junior developers and contribute to team knowledge sharing",
+      "Optimize application performance and ensure high availability",
+    ],
+    benefits: [
+      "Competitive salary and performance bonuses",
+      "Health insurance coverage",
+      "Flexible work arrangements",
+      "Professional development budget",
+      "Annual team retreats",
+      "Modern office equipment",
+    ],
+    department: "Engineering",
+    reportingTo: "Engineering Manager",
+    teamSize: "8-10 engineers",
+    workArrangement: "Hybrid (3 days office, 2 days remote)",
+    applicationDeadline: "March 15, 2025",
+    hiringManager: "Sarah Chen",
+    openings: 2,
   },
   {
     id: "2",
@@ -412,6 +445,12 @@ export function WorkspacePane({
 
   const mockImages = ["/dashboard-analytics.png", "/user-interface-design.png", "/data-visualization-abstract.png"]
 
+  const handleViewJobDetails = (job: JobListing) => {
+    // This would typically be handled by the parent component
+    // For now, we'll just log it
+    console.log("[v0] Opening job view for:", job.title)
+  }
+
   const getWorkspaceTitle = () => {
     switch (content.type) {
       case "candidate-profile":
@@ -436,6 +475,8 @@ export function WorkspacePane({
         return "Candidate Overview"
       case "analytics":
         return "Analytics Dashboard"
+      case "job-view":
+        return content.job?.title || "Job Details"
       default:
         return "Workspace"
     }
@@ -1203,7 +1244,10 @@ export function WorkspacePane({
                     <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
                       {job.applied ? "View Application" : "Apply Now"}
                     </button>
-                    <button className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors">
+                    <button
+                      onClick={() => handleViewJobDetails(job)}
+                      className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors"
+                    >
                       Details
                     </button>
                   </div>
@@ -1212,6 +1256,9 @@ export function WorkspacePane({
             </div>
           </div>
         )
+
+      case "job-view":
+        return content.job ? <JobView job={content.job} /> : <div>No job data available</div>
 
       case "table":
         return (
