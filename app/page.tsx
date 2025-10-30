@@ -14,7 +14,11 @@ export default function ChatPage() {
   const [workspaceContent, setWorkspaceContent] = useState<WorkspaceContent>({ type: null })
   const [initialAgent, setInitialAgent] = useState<string | null>(null)
   const [shouldShowWelcome, setShouldShowWelcome] = useState(false)
-  const chatMainRef = useRef<{ handleProfileSaved: () => void; switchAgent: (agentId: string) => void } | null>(null)
+  const chatMainRef = useRef<{
+    handleProfileSaved: () => void
+    switchAgent: (agentId: string) => void
+    showPricingGuidance: () => void
+  } | null>(null)
 
   useEffect(() => {
     clearUserOnInitialLoad()
@@ -88,6 +92,16 @@ export default function ChatPage() {
     setWorkspaceContent({ type: "candidate-pricing", title: "Upgrade to Premium" })
   }
 
+  const handleHiringManagerStepChange = (step: number) => {
+    console.log("[v0] Hiring manager step changed to:", step)
+
+    if (step === 2 && chatMainRef.current) {
+      // When reaching Step 2 (Select Pricing), trigger the Sales Agent to provide pricing guidance
+      console.log("[v0] Triggering pricing guidance from Sales Agent")
+      chatMainRef.current.showPricingGuidance()
+    }
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -116,6 +130,7 @@ export default function ChatPage() {
                 content={workspaceContent}
                 onProfileSave={handleProfileSave}
                 onUpgradePlan={handleUpgradePlan}
+                onHiringManagerStepChange={handleHiringManagerStepChange}
               />
             </div>
           )}
