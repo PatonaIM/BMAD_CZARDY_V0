@@ -358,7 +358,20 @@ export const ChatMain = forwardRef<
       (m) => !aiMessageIds.has(m.id) && (m.isWelcome || m.isAgentSwitch || m.type === "user"),
     )
 
-    setLocalMessages([...preservedLocalMessages, ...convertedMessages])
+    const hasWelcomeMessages = preservedLocalMessages.some((m) => m.isWelcome)
+    const wouldClearWelcome = hasWelcomeMessages && convertedMessages.length === 0
+
+    if (!wouldClearWelcome) {
+      console.log(
+        "[v0] Updating localMessages. Preserved:",
+        preservedLocalMessages.length,
+        "AI:",
+        convertedMessages.length,
+      )
+      setLocalMessages([...preservedLocalMessages, ...convertedMessages])
+    } else {
+      console.log("[v0] Skipping localMessages update to preserve welcome message")
+    }
   }, [aiMessages, activeAgent])
 
   useEffect(() => {
