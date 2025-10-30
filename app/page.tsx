@@ -56,13 +56,17 @@ export default function ChatPage() {
 
   const handleEditProfile = () => {
     const user = getCurrentUser()
+    console.log("[v0] handleEditProfile called, user role:", user?.role)
 
     if (user?.role === "hiring_manager") {
       // Switch to Sales & Marketing agent for hiring managers
       const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
+      console.log("[v0] Found sales agent:", salesAgent?.name)
       if (salesAgent && chatMainRef.current) {
-        console.log("[v0] Switching to Sales & Marketing agent for hiring manager profile")
+        console.log("[v0] Calling switchAgent with:", salesAgent.id)
         chatMainRef.current.switchAgent(salesAgent.id)
+      } else {
+        console.log("[v0] ERROR: chatMainRef.current is null or salesAgent not found")
       }
       setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
     } else {
