@@ -46,11 +46,6 @@ const getStatusConfig = (status: JobStatus) => {
 export function JobView({ job, onBack }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
 
-  console.log("[v0] JobView rendering with job:", job.title)
-  console.log("[v0] Job benefits:", job.benefits)
-  console.log("[v0] Benefits exists?", !!job.benefits)
-  console.log("[v0] Benefits length:", job.benefits?.length)
-
   const renderJobSummary = (summary: string) => {
     // Check if the summary contains bullet points (lines starting with •)
     const lines = summary.split("\n").filter((line) => line.trim())
@@ -75,12 +70,17 @@ export function JobView({ job, onBack }: JobViewProps) {
     return <p className="text-sm leading-relaxed text-muted-foreground">{summary}</p>
   }
 
+  const getSkillMatchColor = (percentage: number) => {
+    if (percentage >= 80) return "text-green-500 bg-green-500/10 border-green-500/20"
+    if (percentage >= 60) return "text-yellow-500 bg-yellow-500/10 border-yellow-500/20"
+    return "text-orange-500 bg-orange-500/10 border-orange-500/20"
+  }
+
   return (
     <div className="h-full overflow-auto">
       <div className="max-w-4xl mx-auto space-y-6 p-6">
         <button
           onClick={() => {
-            console.log("[v0] Back button clicked")
             if (onBack) {
               onBack()
             }
@@ -166,23 +166,21 @@ export function JobView({ job, onBack }: JobViewProps) {
           {renderJobSummary(job.jobSummary || job.description)}
         </div>
 
-        {job.responsibilities && job.responsibilities.length > 0 && (
-          <div className="bg-card rounded-2xl border border-border p-6">
-            <h2 className="text-lg font-semibold mb-4">Responsibilities</h2>
-            <ul className="space-y-3">
-              {job.responsibilities.map((resp, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] flex-shrink-0 mt-2" />
-                  <span className="text-muted-foreground">{resp}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         {((job.qualifications && job.qualifications.length > 0) || job.requirements.length > 0) && (
           <div className="bg-card rounded-2xl border border-border p-6">
-            <h2 className="text-lg font-semibold mb-4">Required Skills</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold">Required Skills</h2>
+              {job.skillMatch !== undefined && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">Skill Match</span>
+                  <div
+                    className={`px-4 py-2 rounded-full border font-semibold text-sm ${getSkillMatchColor(job.skillMatch)}`}
+                  >
+                    {job.skillMatch}%
+                  </div>
+                </div>
+              )}
+            </div>
             <ul className="space-y-3">
               {(job.qualifications || job.requirements).map((req, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm">

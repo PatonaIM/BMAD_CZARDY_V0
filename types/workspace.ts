@@ -53,4 +53,5 @@ export interface JobListing {
   openings?: number
   aboutClient?: string
   jobSummary?: string
+  skillMatch?: number // Percentage (0-100) indicating how well candidate matches job requirements
 }
