@@ -485,7 +485,7 @@ export function WorkspacePane({
         return "Edit Hiring Manager Profile"
       case "candidate-pricing":
         return "Upgrade to Premium"
-      case "payment-success": // Added payment success title
+      case "payment-success":
         return "Payment Successful"
       case "pdf":
         return "Document Viewer"
@@ -496,7 +496,8 @@ export function WorkspacePane({
       case "code":
         return "Code Editor"
       case "job-board":
-        return "Available Positions"
+        const user = getCurrentUser()
+        return user?.role === "candidate" ? "My Jobs" : "Available Positions"
       case "table":
         return "Candidate Overview"
       case "analytics":
