@@ -68,7 +68,7 @@ const mockJobListings: JobListing[] = [
     description: "We're looking for an experienced full-stack developer to join our growing team in Manila.",
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
-    saved: true, // Added saved property
+    saved: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
     status: "open",
     jobSummary:
@@ -125,6 +125,14 @@ const mockJobListings: JobListing[] = [
       "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
     aboutClient:
       "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+    benefits: [
+      "Competitive compensation with equity options",
+      "Comprehensive health and wellness benefits",
+      "Flexible remote work policy",
+      "Learning and development stipend",
+      "Conference attendance opportunities",
+      "Cutting-edge hardware and tools",
+    ],
   },
   {
     id: "3",
@@ -137,13 +145,21 @@ const mockJobListings: JobListing[] = [
     posted: "3 days ago",
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
-    saved: true, // Added saved property
+    saved: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
     status: "open",
     jobSummary:
       "• Define and execute product roadmap aligned with business objectives\n• Conduct market research and competitive analysis to identify opportunities\n• Work closely with engineering, design, and sales teams to deliver features\n• Analyze product metrics and user feedback to drive continuous improvement\n• Present product vision and strategy to stakeholders and leadership",
     aboutClient:
       "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia. Established in 2015, we've grown from a small startup to a publicly-traded company serving over 2,000 enterprise customers. Our comprehensive suite of business management tools helps organizations streamline operations, improve productivity, and drive growth. We're committed to innovation and customer success, investing heavily in R&D and maintaining a customer satisfaction rate of over 95%. Our Sydney headquarters houses our product development, sales, and customer success teams, creating a collaborative environment where ideas flourish. We've been recognized as one of Australia's fastest-growing tech companies for three consecutive years. Join us to be part of a dynamic team that's shaping the future of enterprise software.",
+    benefits: [
+      "Excellent salary package with performance bonuses",
+      "Premium health insurance for you and family",
+      "Generous parental leave policy",
+      "Stock options and equity participation",
+      "Professional development and training",
+      "Modern Sydney office with amenities",
+    ],
   },
   {
     id: "4",
@@ -175,7 +191,7 @@ const mockJobListings: JobListing[] = [
     description: "Create beautiful and responsive user interfaces for our web applications.",
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
-    saved: true, // Added saved property
+    saved: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
     status: "open",
     jobSummary:
@@ -271,7 +287,7 @@ const mockJobListings: JobListing[] = [
     description: "Create intuitive and visually appealing user experiences.",
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
-    saved: true, // Added saved property
+    saved: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
     status: "draft",
     jobSummary:
