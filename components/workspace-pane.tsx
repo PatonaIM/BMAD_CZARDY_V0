@@ -110,6 +110,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    status: "draft",
   },
   {
     id: "3",
@@ -122,6 +123,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    status: "open",
   },
   {
     id: "4",
@@ -134,6 +136,7 @@ const mockJobListings: JobListing[] = [
     description: "Build and maintain our cloud infrastructure and CI/CD pipelines.",
     requirements: ["Kubernetes", "Docker", "AWS/GCP", "Terraform", "4+ years experience"],
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    status: "closed",
   },
   {
     id: "5",
@@ -147,6 +150,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    status: "open",
   },
   {
     id: "6",
@@ -160,6 +164,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Python", "SQL", "Machine Learning", "Statistics", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    status: "draft",
   },
   {
     id: "7",
@@ -173,6 +178,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Node.js or Java", "Microservices", "Databases", "5+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    status: "open",
   },
   {
     id: "8",
@@ -186,6 +192,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Test automation", "Selenium/Cypress", "API testing", "3+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    status: "closed",
   },
   {
     id: "9",
@@ -199,6 +206,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    status: "open",
   },
   {
     id: "10",
@@ -212,6 +220,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    status: "draft",
   },
   {
     id: "11",
@@ -225,6 +234,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    status: "open",
   },
   {
     id: "12",
@@ -238,6 +248,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    status: "closed",
   },
   {
     id: "13",
@@ -251,6 +262,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    status: "open",
   },
   {
     id: "14",
@@ -264,6 +276,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    status: "draft",
   },
   {
     id: "15",
@@ -277,6 +290,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Requirements gathering", "Process modeling", "SQL", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    status: "open",
   },
   {
     id: "16",
@@ -290,6 +304,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Python", "TensorFlow", "MLOps", "Model deployment", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    status: "closed",
   },
   {
     id: "17",
@@ -303,6 +318,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Linux", "Monitoring tools", "Incident management", "5+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    status: "open",
   },
   {
     id: "18",
@@ -316,6 +332,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["PostgreSQL/MySQL", "Database tuning", "Backup strategies", "5+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    status: "draft",
   },
   {
     id: "19",
@@ -329,6 +346,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["AWS/Azure", "Infrastructure as Code", "CI/CD", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    status: "open",
   },
   {
     id: "20",
@@ -342,6 +360,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Team leadership", "Technical expertise", "Agile", "7+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    status: "closed",
   },
 ]
 
@@ -548,8 +567,6 @@ export function WorkspacePane({
     )
   }
 
-  if (!isOpen || !content.type) return null
-
   const renderContent = () => {
     switch (content.type) {
       case "candidate-profile":
@@ -734,7 +751,7 @@ export function WorkspacePane({
                           <ul className="list-disc ml-6 space-y-1">
                             <li>20 days of paid vacation per year</li>
                             <li>10 days of paid sick leave per year</li>
-                            <li>All Company-recognized holidays</li>
+                            <li>All Company- recognized holidays</li>
                             <li>5 days of personal leave per year</li>
                           </ul>
                           <p>
@@ -1215,11 +1232,29 @@ export function WorkspacePane({
                       <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                       <p className="text-sm text-muted-foreground">{job.company}</p>
                     </div>
-                    {job.applied && (
-                      <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                        Applied
-                      </span>
-                    )}
+                    {/* CHANGE: Added status badge display */}
+                    <div className="flex flex-col gap-2 items-end">
+                      {job.status && (
+                        <span
+                          className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            job.status === "open"
+                              ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                              : job.status === "draft"
+                                ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
+                                : job.status === "closed"
+                                  ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                  : "bg-red-500/10 text-red-600 border border-red-500/20"
+                          }`}
+                        >
+                          {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                        </span>
+                      )}
+                      {job.applied && (
+                        <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                          Applied
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
