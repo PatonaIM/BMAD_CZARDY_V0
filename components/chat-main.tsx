@@ -414,9 +414,10 @@ export const ChatMain = forwardRef<
   const handleCommandOrMessage = (text: string) => {
     const lowerText = text.toLowerCase().trim()
 
-    // Check for reserved word commands
+    // 1. Simple Text - handled at the end (default case)
+
+    // 2. Large Text
     if (lowerText === "large text") {
-      // Add user message
       const userMsg: Message = {
         id: Date.now().toString(),
         type: "user",
@@ -424,7 +425,6 @@ export const ChatMain = forwardRef<
         agentId: activeAgent.id,
       }
 
-      // Add AI response with large text
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
@@ -436,67 +436,8 @@ export const ChatMain = forwardRef<
       return true
     }
 
-    if (lowerText === "pdf preview" || lowerText === "file preview") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: "Here's the resume file you requested:",
-        responseType: "file",
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
-
-    if (lowerText === "code" || lowerText === "show code") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: "Here's a code example for setting up an Express server with API integration:",
-        responseType: "code",
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
-
-    if (lowerText === "table" || lowerText === "show table") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: "Here's a summary of top candidates matching your requirements:",
-        responseType: "table",
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
-
-    if (lowerText === "bullets" || lowerText === "bullet points") {
+    // 3. Bullet Text
+    if (lowerText === "bullet text") {
       const userMsg: Message = {
         id: Date.now().toString(),
         type: "user",
@@ -515,7 +456,8 @@ export const ChatMain = forwardRef<
       return true
     }
 
-    if (lowerText === "image" || lowerText === "show image") {
+    // 4. PDF (with file attachment, no preview change)
+    if (lowerText === "pdf") {
       const userMsg: Message = {
         id: Date.now().toString(),
         type: "user",
@@ -526,12 +468,257 @@ export const ChatMain = forwardRef<
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: "Here's a preview of the dashboard analytics interface:",
+        content: generateShortResponse(),
+        responseType: "file",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 5. PDF Preview (opens PDF viewer in workspace)
+    if (lowerText === "pdf preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open PDF viewer in workspace
+      onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" })
+
+      return true
+    }
+
+    // 6. Table (with tabular data, no preview change)
+    if (lowerText === "table") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateShortResponse(),
+        responseType: "table",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 7. Table Preview (opens table workspace)
+    if (lowerText === "table preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open table workspace
+      onOpenWorkspace({ type: "table", title: "Candidate Table" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "table", title: "Candidate Table" })
+
+      return true
+    }
+
+    // 8. Image (with image thumbnail, no preview change)
+    if (lowerText === "image") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateShortResponse(),
         responseType: "image",
         agentId: activeAgent.id,
       }
 
       setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 9. Image Preview (opens large image preview with next/prev)
+    if (lowerText === "image preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open image preview workspace
+      onOpenWorkspace({ type: "image", title: "Image Gallery" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "image", title: "Image Gallery" })
+
+      return true
+    }
+
+    // 10. Video Preview (opens video player with transcriptions)
+    if (lowerText === "video preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open video player workspace
+      onOpenWorkspace({ type: "video", title: "Video Player" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "video", title: "Video Player" })
+
+      return true
+    }
+
+    // 11. Code (with code snippet, no preview change)
+    if (lowerText === "code" || lowerText === "show code") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateShortResponse(),
+        responseType: "code",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 12. Code Preview (opens code preview with file structure)
+    if (lowerText === "code preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open code preview workspace
+      onOpenWorkspace({ type: "code", title: "server.js", data: codeSnippet })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "code", title: "server.js", data: codeSnippet })
+
+      return true
+    }
+
+    // 13. Job Board (opens job board grid)
+    if (lowerText === "job board") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open job board workspace
+      onOpenWorkspace({ type: "job-board", title: "Available Positions" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "job-board", title: "Available Positions" })
+
+      return true
+    }
+
+    // 14. Data Analytics (opens data analytics with charts)
+    if (lowerText === "data") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open data analytics workspace
+      onOpenWorkspace({ type: "analytics", title: "Recruitment Analytics" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" })
+
       return true
     }
 
