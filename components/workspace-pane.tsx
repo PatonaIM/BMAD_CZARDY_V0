@@ -1573,19 +1573,16 @@ export function WorkspacePane({
                               <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
                                 Applied
                               </span>
+                              {job.skillMatch && (
+                                <div
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${getSkillMatchInfo(job.skillMatch).color}`}
+                                >
+                                  <span className="font-bold">{job.skillMatch}%</span>
+                                  <span>{getSkillMatchInfo(job.skillMatch).label}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-
-                          {job.skillMatch && (
-                            <div className="mb-4">
-                              <div
-                                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${getSkillMatchInfo(job.skillMatch).color}`}
-                              >
-                                <span className="text-lg font-bold">{job.skillMatch}%</span>
-                                <span className="text-xs font-semibold">{getSkillMatchInfo(job.skillMatch).label}</span>
-                              </div>
-                            </div>
-                          )}
 
                           <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
@@ -1607,14 +1604,11 @@ export function WorkspacePane({
                           </div>
                           <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
                           <div className="flex gap-2">
-                            <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
-                              View Application
-                            </button>
                             <button
                               onClick={() => handleViewJobDetails(job)}
-                              className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors"
+                              className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
                             >
-                              Details
+                              View Application
                             </button>
                           </div>
                         </div>
@@ -1672,19 +1666,16 @@ export function WorkspacePane({
                               <span className="px-3 py-1 text-xs rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
                                 Saved
                               </span>
+                              {job.skillMatch && (
+                                <div
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${getSkillMatchInfo(job.skillMatch).color}`}
+                                >
+                                  <span className="font-bold">{job.skillMatch}%</span>
+                                  <span>{getSkillMatchInfo(job.skillMatch).label}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-
-                          {job.skillMatch && (
-                            <div className="mb-4">
-                              <div
-                                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${getSkillMatchInfo(job.skillMatch).color}`}
-                              >
-                                <span className="text-lg font-bold">{job.skillMatch}%</span>
-                                <span className="text-xs font-semibold">{getSkillMatchInfo(job.skillMatch).label}</span>
-                              </div>
-                            </div>
-                          )}
 
                           <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
@@ -1706,14 +1697,11 @@ export function WorkspacePane({
                           </div>
                           <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
                           <div className="flex gap-2">
-                            <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
-                              Submit Application
-                            </button>
                             <button
                               onClick={() => handleViewJobDetails(job)}
-                              className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors"
+                              className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
                             >
-                              Details
+                              Submit Application
                             </button>
                           </div>
                         </div>
