@@ -231,31 +231,24 @@ What would you like to know about the opportunities we have available?`
 
 I'm excited to help you build your team with Teamified! To get started, I've opened the Enterprise Account Setup in the workspace on the right.
 
-## Our Enterprise Plans Overview:
-
-We offer **4 flexible plans** designed to meet different organizational needs:
-
-### 💼 Basic Plan - $300/month
-Perfect for small teams needing **payroll and HR essentials**. Includes global payroll, tax management, and HR record keeping with limited AI agent access.
-
-### 🎯 Recruiter Plan - 9% of base salary per hire
-Ideal for companies focused on **hiring**. You only pay when we successfully place a candidate. Includes full recruitment lifecycle, compliance, and onboarding support.
-
-### ⚡ Enterprise Plan - $500/month ⭐ POPULAR
-Our most popular choice! Provides **equipment and workspace solutions** including managed laptops, smart office locations, and full access to all Teamified AI Agents.
-
-### 👑 Premium Plan - 30% + $300/month 🏆 ALL-IN
-The complete solution with **dedicated account management**, continuous HR support, equipment, office space, and premium AI features including dashboarding and analytics.
-
-## Why Choose Teamified?
+## Let's Get Your Company Profile Set Up
 
 ${loremParagraphs[0]}
 
 ${loremParagraphs[1]}
 
-**Let's find the perfect plan for your organization!** As you complete the setup form, I'm here to answer any questions about our plans, features, or pricing.
+I'm here to guide you through the setup process and answer any questions you might have about:
 
-What would you like to know about our enterprise solutions?`
+- Setting up your company information
+- Configuring your hiring preferences
+- Understanding our enterprise solutions
+- Exploring features that match your needs
+
+${loremParagraphs[2]}
+
+Please take a moment to complete your company profile, and then we can discuss which Teamified solutions would work best for your organization!
+
+What would you like to know as you get started?`
   }
 }
 
