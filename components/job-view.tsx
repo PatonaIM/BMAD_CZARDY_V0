@@ -46,6 +46,11 @@ const getStatusConfig = (status: JobStatus) => {
 export function JobView({ job, onBack }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
 
+  console.log("[v0] JobView rendering with job:", job.title)
+  console.log("[v0] Job benefits:", job.benefits)
+  console.log("[v0] Benefits exists?", !!job.benefits)
+  console.log("[v0] Benefits length:", job.benefits?.length)
+
   const renderJobSummary = (summary: string) => {
     // Check if the summary contains bullet points (lines starting with •)
     const lines = summary.split("\n").filter((line) => line.trim())
@@ -189,9 +194,9 @@ export function JobView({ job, onBack }: JobViewProps) {
           </div>
         )}
 
-        {job.benefits && job.benefits.length > 0 && (
-          <div className="bg-card rounded-2xl border border-border p-6">
-            <h2 className="text-lg font-semibold mb-4">Benefits</h2>
+        <div className="bg-card rounded-2xl border border-border p-6">
+          <h2 className="text-lg font-semibold mb-4">Benefits</h2>
+          {job.benefits && job.benefits.length > 0 ? (
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {job.benefits.map((benefit, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm">
@@ -200,8 +205,10 @@ export function JobView({ job, onBack }: JobViewProps) {
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground">No benefits information available for this position.</p>
+          )}
+        </div>
 
         {/* Action Buttons (only show for open positions) */}
         {job.status === "open" && (
