@@ -44,6 +44,7 @@ interface Message {
   thinkingTime?: number
   agentId?: string
   isAgentSwitch?: boolean // Added flag to indicate agent switch messages
+  isWelcome?: boolean
   promptSuggestions?: Array<{ text: string; icon: React.ReactNode }>
 }
 
@@ -312,11 +313,12 @@ export const ChatMain = forwardRef<
         const userRole = agent.id === "technical-recruiter" ? "candidate" : "hiring_manager"
         setLocalMessages([
           {
-            id: Date.now().toString(),
+            id: `welcome-${Date.now()}`,
             type: "ai",
             content: generateWelcomeMessage(agent, userRole),
             agentId: agent.id,
             isAgentSwitch: false,
+            isWelcome: true, // Mark as welcome message
           },
         ])
       }
@@ -338,15 +340,14 @@ export const ChatMain = forwardRef<
       }
     })
 
-    // Filter out messages that might have already been added as welcome or agent switch messages
     const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
-    const filteredLocalMessages = localMessages.filter((m) => !aiMessageIds.has(m.id))
 
-    // Merge with local messages (welcome, agent switch messages)
-    const welcomeAndSwitchMessages = filteredLocalMessages.filter(
-      (m) => m.isAgentSwitch !== undefined || m.id.startsWith(Date.now().toString()),
+    // Preserve welcome messages, agent switch messages, and any local messages not from AI
+    const preservedLocalMessages = localMessages.filter(
+      (m) => !aiMessageIds.has(m.id) && (m.isWelcome || m.isAgentSwitch || m.type === "user"),
     )
-    setLocalMessages([...welcomeAndSwitchMessages, ...convertedMessages])
+
+    setLocalMessages([...preservedLocalMessages, ...convertedMessages])
   }, [aiMessages, activeAgent])
 
   useEffect(() => {
