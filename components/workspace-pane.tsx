@@ -38,7 +38,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { CandidateProfileForm } from "./candidate-profile-form"
-import { HiringManagerProfileForm } from "./hiring-manager-profile"
+import { HiringManagerProfileForm } from "./hiring-manager-profile-form" // Fixed import path to use the correct file name
 import { CandidatePricing } from "./candidate-pricing"
 import { PaymentSuccess } from "./payment-success" // Import payment success component
 import { JobView } from "./job-view" // Import JobView component
