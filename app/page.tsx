@@ -164,7 +164,7 @@ export default function ChatPage() {
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           onEditProfile={handleEditProfile}
           onUpgradePlan={handleUpgradePlan}
-          onMyJobs={handleMyJobs} // Added onMyJobs callback
+          onMyJobs={handleMyJobs}
         />
         <div className="flex-1 flex overflow-hidden">
           <div className={`${workspaceContent.type ? "w-2/5" : "w-full"} transition-all duration-300`}>

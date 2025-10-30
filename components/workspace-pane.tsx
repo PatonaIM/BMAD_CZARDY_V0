@@ -52,6 +52,7 @@ interface WorkspacePaneProps {
   onUpgradePlan?: () => void // Added onUpgradePlan prop
   onHiringManagerStepChange?: (step: number) => void
   onViewJob?: (job: JobListing) => void // Added callback for viewing job details
+  onBackToJobBoard?: () => void // Added onBackToJobBoard prop
 }
 
 const mockJobListings: JobListing[] = [
@@ -454,6 +455,7 @@ export function WorkspacePane({
   onUpgradePlan,
   onHiringManagerStepChange,
   onViewJob, // Added onViewJob prop
+  onBackToJobBoard, // Added onBackToJobBoard prop
 }: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
@@ -1501,7 +1503,7 @@ export function WorkspacePane({
         )
 
       case "job-view":
-        return content.job ? <JobView job={content.job} /> : <div>No job data available</div>
+        return content.job ? <JobView job={content.job} onBack={onBackToJobBoard} /> : <div>No job data available</div>
 
       case "table":
         return (
