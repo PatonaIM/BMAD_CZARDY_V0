@@ -89,7 +89,9 @@ export function JobView({ job, onBack }: JobViewProps) {
                 )}
               </div>
               <div>
-                <p className="text-lg text-muted-foreground mb-1">{job.company}</p>
+                <h1 className="text-3xl font-bold text-foreground mb-2">{job.title}</h1>
+                <p className="text-lg text-muted-foreground">{job.company}</p>
+                {job.department && <p className="text-sm text-muted-foreground mt-1">Department: {job.department}</p>}
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -127,12 +129,6 @@ export function JobView({ job, onBack }: JobViewProps) {
             {job.aboutClient ||
               `${job.company} is a leading organization committed to innovation and excellence. We are dedicated to creating a positive impact in our industry and fostering a collaborative work environment where talented professionals can thrive and grow their careers.`}
           </p>
-        </div>
-
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-4">Position Title</h2>
-          <h3 className="text-2xl font-bold text-foreground">{job.title}</h3>
-          {job.department && <p className="text-sm text-muted-foreground mt-2">Department: {job.department}</p>}
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6">
