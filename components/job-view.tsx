@@ -106,7 +106,7 @@ export function JobView({ job, onBack }: JobViewProps) {
             console.log("[v0] Back button clicked")
             onBack()
           }}
-          className="fixed top-6 left-6 z-50 w-10 h-10 rounded-full bg-card border border-border hover:bg-accent transition-all shadow-lg hover:shadow-xl flex items-center justify-center group"
+          className="absolute top-6 left-6 z-50 w-10 h-10 rounded-full bg-card border border-border hover:bg-accent transition-all shadow-lg hover:shadow-xl flex items-center justify-center group"
           aria-label="Back to My Jobs"
         >
           <ChevronLeft className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors -ml-0.5" />
