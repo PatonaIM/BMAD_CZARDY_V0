@@ -58,7 +58,6 @@ export default function ChatPage() {
     setWorkspaceContent({ type: "candidate-profile", title: "Edit Profile" })
   }
 
-  // <CHANGE> Added handleUpgradePlan to switch to Sales agent and show pricing
   const handleUpgradePlan = () => {
     console.log("[v0] Upgrade plan clicked")
     // Switch to Sales & Marketing agent
@@ -82,7 +81,7 @@ export default function ChatPage() {
           onUpgradePlan={handleUpgradePlan}
         />
         <div className="flex-1 flex overflow-hidden">
-          <div className={`${workspaceContent.type ? "w-1/2" : "w-full"} transition-all duration-300`}>
+          <div className={`${workspaceContent.type ? "w-2/5" : "w-full"} transition-all duration-300`}>
             <ChatMain
               ref={chatMainRef}
               isSidebarOpen={isSidebarOpen}
@@ -93,7 +92,7 @@ export default function ChatPage() {
             />
           </div>
           {workspaceContent.type && (
-            <div className="w-1/2 animate-in slide-in-from-right duration-300">
+            <div className="w-3/5 animate-in slide-in-from-right duration-300">
               <WorkspacePane
                 isOpen={!!workspaceContent.type}
                 onClose={() => setWorkspaceContent({ type: null })}

@@ -10,16 +10,15 @@ interface CandidatePricingProps {
 
 export function CandidatePricing({ onClose }: CandidatePricingProps) {
   const { toast } = useToast()
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("monthly")
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const handleUpgrade = () => {
+  const handleUpgrade = (plan: "monthly" | "annual") => {
     setIsProcessing(true)
 
     setTimeout(() => {
       toast({
         title: "Upgrade successful!",
-        description: "Welcome to Teamified Premium! You now have access to all premium features.",
+        description: `Welcome to Teamified Premium ${plan === "annual" ? "(Annual)" : "(Monthly)"}! You now have access to all premium features.`,
         duration: 3000,
       })
 
@@ -64,35 +63,7 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
           </p>
         </div>
 
-        {/* Plan Toggle */}
-        <div className="flex items-center justify-center gap-4 mb-8">
-          <button
-            onClick={() => setSelectedPlan("monthly")}
-            className={`px-6 py-2 rounded-lg font-medium transition-all ${
-              selectedPlan === "monthly"
-                ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg"
-                : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setSelectedPlan("annual")}
-            className={`px-6 py-2 rounded-lg font-medium transition-all relative ${
-              selectedPlan === "annual"
-                ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg"
-                : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            Annual
-            <span className="absolute -top-2 -right-2 px-2 py-0.5 text-xs font-bold bg-green-500 text-white rounded-full">
-              Save 38%
-            </span>
-          </button>
-        </div>
-
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Free Plan */}
           <div className="rounded-2xl border-2 border-border bg-card p-6">
             <div className="mb-6">
@@ -120,39 +91,24 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
             </button>
           </div>
 
-          {/* Premium Plan */}
+          {/* Monthly Premium Plan */}
           <div className="rounded-2xl border-2 border-[#A16AE8] bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5 p-6 relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white text-xs font-bold">
-              RECOMMENDED
+              POPULAR
             </div>
 
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-xl font-bold text-foreground">Premium Plan</h3>
+                <h3 className="text-xl font-bold text-foreground">Premium Monthly</h3>
                 <Sparkles className="w-5 h-5 text-[#A16AE8]" />
               </div>
               <div className="flex items-baseline gap-2">
-                {selectedPlan === "monthly" ? (
-                  <>
-                    <span className="text-2xl font-bold text-muted-foreground line-through">$29.99</span>
-                    <span className="text-4xl font-bold bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
-                      $19.99
-                    </span>
-                    <span className="text-muted-foreground">/month</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-2xl font-bold text-muted-foreground line-through">$239.88</span>
-                    <span className="text-4xl font-bold bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
-                      $149
-                    </span>
-                    <span className="text-muted-foreground">/year</span>
-                  </>
-                )}
+                <span className="text-2xl font-bold text-muted-foreground line-through">$29.99</span>
+                <span className="text-4xl font-bold bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
+                  $19.99
+                </span>
+                <span className="text-muted-foreground">/month</span>
               </div>
-              {selectedPlan === "annual" && (
-                <p className="text-xs text-green-600 font-medium mt-1">Save $90.88 per year!</p>
-              )}
             </div>
 
             <div className="space-y-3 mb-6">
@@ -165,14 +121,54 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
             </div>
 
             <button
-              onClick={handleUpgrade}
+              onClick={() => handleUpgrade("monthly")}
               disabled={isProcessing}
               className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isProcessing ? "Processing..." : "Upgrade to Premium"}
+              {isProcessing ? "Processing..." : "Upgrade Monthly"}
+            </button>
+          </div>
+
+          {/* Annual Premium Plan */}
+          <div className="rounded-2xl border-2 border-[#60D394] bg-gradient-to-br from-[#60D394]/5 to-[#60D394]/10 p-6 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#60D394] to-[#4CAF50] text-white text-xs font-bold">
+              BEST VALUE
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xl font-bold text-foreground">Premium Annual</h3>
+                <Sparkles className="w-5 h-5 text-[#60D394]" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-muted-foreground line-through">$239.88</span>
+                <span className="text-4xl font-bold bg-gradient-to-r from-[#60D394] to-[#4CAF50] bg-clip-text text-transparent">
+                  $149
+                </span>
+                <span className="text-muted-foreground">/year</span>
+              </div>
+              <p className="text-xs text-green-600 font-medium mt-1">Save $90.88 per year (38% off)!</p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              {premiumPlanFeatures.map((feature, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-[#60D394] flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-foreground">{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => handleUpgrade("annual")}
+              disabled={isProcessing}
+              className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-[#60D394] to-[#4CAF50] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? "Processing..." : "Upgrade Annually"}
             </button>
           </div>
         </div>
+        {/* </CHANGE> */}
 
         {/* Benefits Section */}
         <div className="rounded-2xl border border-border bg-card p-6">
