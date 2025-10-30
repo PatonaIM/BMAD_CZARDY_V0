@@ -17,11 +17,17 @@ export default function AuthPage() {
   const [signupPassword, setSignupPassword] = useState("")
   const [name, setName] = useState("")
   const [role, setRole] = useState<"candidate" | "hiring_manager">("candidate")
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [loginError, setLoginError] = useState("")
   const [signupError, setSignupError] = useState("")
   const router = useRouter()
 
   const handleOAuthSignIn = async (provider: "google" | "github", isSignup: boolean) => {
+    if (isSignup && !acceptedTerms) {
+      setSignupError("Please accept the terms and conditions to continue")
+      return
+    }
+
     if (isSignup) {
       setSignupLoading(provider)
     } else {
@@ -72,6 +78,11 @@ export default function AuthPage() {
     try {
       if (!name.trim()) {
         setSignupError("Please enter your name")
+        setSignupLoading(null)
+        return
+      }
+      if (!acceptedTerms) {
+        setSignupError("Please accept the terms and conditions to continue")
         setSignupLoading(null)
         return
       }
@@ -330,6 +341,34 @@ export default function AuthPage() {
                         className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#A16AE8] focus:border-transparent"
                       />
                     </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <input
+                      id="terms"
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      className="mt-1 w-4 h-4 rounded border-border text-[#A16AE8] focus:ring-2 focus:ring-[#A16AE8] focus:ring-offset-0 bg-background"
+                    />
+                    <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed">
+                      I agree to the{" "}
+                      <a
+                        href="#"
+                        onClick={(e) => e.preventDefault()}
+                        className="text-[#A16AE8] hover:underline font-medium"
+                      >
+                        Terms and Conditions
+                      </a>{" "}
+                      and{" "}
+                      <a
+                        href="#"
+                        onClick={(e) => e.preventDefault()}
+                        className="text-[#A16AE8] hover:underline font-medium"
+                      >
+                        Privacy Policy
+                      </a>
+                    </label>
                   </div>
 
                   {signupError && (
