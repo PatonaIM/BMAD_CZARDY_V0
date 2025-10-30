@@ -16,7 +16,7 @@ import type { JobListing, JobStatus } from "@/types/workspace"
 
 interface JobViewProps {
   job: JobListing
-  onBack?: () => void // Added onBack callback prop
+  onBack?: () => void
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -57,8 +57,6 @@ const getStatusConfig = (status: JobStatus) => {
 export function JobView({ job, onBack }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
 
-  console.log("[v0] JobView rendered with onBack:", !!onBack)
-
   return (
     <div className="h-full overflow-auto">
       <div className="max-w-4xl mx-auto space-y-6 p-6">
@@ -75,7 +73,7 @@ export function JobView({ job, onBack }: JobViewProps) {
           Back to My Jobs
         </button>
 
-        {/* Header Section */}
+        {/* Header with Status */}
         <div className="bg-card rounded-2xl border border-border p-8">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-start gap-4">
@@ -91,8 +89,7 @@ export function JobView({ job, onBack }: JobViewProps) {
                 )}
               </div>
               <div>
-                <h1 className="text-2xl font-bold mb-2">{job.title}</h1>
-                <p className="text-lg text-muted-foreground">{job.company}</p>
+                <p className="text-lg text-muted-foreground mb-1">{job.company}</p>
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -124,50 +121,25 @@ export function JobView({ job, onBack }: JobViewProps) {
           </div>
         </div>
 
-        {/* Status Description */}
-        {statusConfig.description && (
-          <div className="bg-muted/50 rounded-xl border border-border p-4">
-            <p className="text-sm text-muted-foreground">{statusConfig.description}</p>
-          </div>
-        )}
-
-        {/* Job Description */}
         <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-4">Job Description</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">{job.description}</p>
+          <h2 className="text-lg font-semibold mb-4">About The Client</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {job.aboutClient ||
+              `${job.company} is a leading organization committed to innovation and excellence. We are dedicated to creating a positive impact in our industry and fostering a collaborative work environment where talented professionals can thrive and grow their careers.`}
+          </p>
         </div>
 
-        {/* Key Qualifications */}
-        {job.qualifications && job.qualifications.length > 0 && (
-          <div className="bg-card rounded-2xl border border-border p-6">
-            <h2 className="text-lg font-semibold mb-4">Key Qualifications</h2>
-            <ul className="space-y-3">
-              {job.qualifications.map((qual, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">{qual}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div className="bg-card rounded-2xl border border-border p-6">
+          <h2 className="text-lg font-semibold mb-4">Position Title</h2>
+          <h3 className="text-2xl font-bold text-foreground">{job.title}</h3>
+          {job.department && <p className="text-sm text-muted-foreground mt-2">Department: {job.department}</p>}
+        </div>
 
-        {/* Requirements (fallback if no qualifications) */}
-        {(!job.qualifications || job.qualifications.length === 0) && job.requirements.length > 0 && (
-          <div className="bg-card rounded-2xl border border-border p-6">
-            <h2 className="text-lg font-semibold mb-4">Requirements</h2>
-            <ul className="space-y-3">
-              {job.requirements.map((req, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">{req}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div className="bg-card rounded-2xl border border-border p-6">
+          <h2 className="text-lg font-semibold mb-4">Job Summary</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">{job.jobSummary || job.description}</p>
+        </div>
 
-        {/* Responsibilities */}
         {job.responsibilities && job.responsibilities.length > 0 && (
           <div className="bg-card rounded-2xl border border-border p-6">
             <h2 className="text-lg font-semibold mb-4">Responsibilities</h2>
@@ -182,7 +154,20 @@ export function JobView({ job, onBack }: JobViewProps) {
           </div>
         )}
 
-        {/* Benefits */}
+        {((job.qualifications && job.qualifications.length > 0) || job.requirements.length > 0) && (
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <h2 className="text-lg font-semibold mb-4">Requirements</h2>
+            <ul className="space-y-3">
+              {(job.qualifications || job.requirements).map((req, idx) => (
+                <li key={idx} className="flex items-start gap-3 text-sm">
+                  <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                  <span className="text-muted-foreground">{req}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {job.benefits && job.benefits.length > 0 && (
           <div className="bg-card rounded-2xl border border-border p-6">
             <h2 className="text-lg font-semibold mb-4">Benefits</h2>
@@ -201,12 +186,6 @@ export function JobView({ job, onBack }: JobViewProps) {
         <div className="bg-card rounded-2xl border border-border p-6">
           <h2 className="text-lg font-semibold mb-4">Additional Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {job.department && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Department</p>
-                <p className="text-sm">{job.department}</p>
-              </div>
-            )}
             {job.reportingTo && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Reporting To</p>
@@ -257,7 +236,7 @@ export function JobView({ job, onBack }: JobViewProps) {
                 {job.applied ? "View Application" : "Apply for this Position"}
               </button>
               <button className="px-6 py-3 rounded-xl border border-border hover:bg-accent transition-colors font-medium">
-                Save Job
+                {job.saved ? "Unsave Job" : "Save Job"}
               </button>
             </div>
           </div>

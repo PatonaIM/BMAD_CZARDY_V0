@@ -6,7 +6,7 @@ export type WorkspaceContentType =
   | "video"
   | "job-board"
   | "job-description"
-  | "job-view" // Added job-view content type
+  | "job-view"
   | "table"
   | "analytics"
   | "candidate-profile"
@@ -21,7 +21,7 @@ export interface WorkspaceContent {
   data?: any
   planName?: string
   amount?: string
-  job?: JobListing // Added job property for job view
+  job?: JobListing
 }
 
 export type JobStatus = "draft" | "open" | "closed" | "cancelled"
@@ -37,7 +37,7 @@ export interface JobListing {
   description: string
   requirements: string[]
   applied?: boolean
-  saved?: boolean // Added saved property to track saved jobs
+  saved?: boolean
   logo?: string
   status?: JobStatus
   responsibilities?: string[]
@@ -50,4 +50,6 @@ export interface JobListing {
   applicationDeadline?: string
   hiringManager?: string
   openings?: number
+  aboutClient?: string
+  jobSummary?: string
 }
