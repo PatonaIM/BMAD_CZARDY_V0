@@ -189,18 +189,6 @@ export function JobView({ job, onBack }: JobViewProps) {
                 </li>
               ))}
             </ul>
-
-            <div className="mt-6 pt-6 border-t border-border">
-              <div className="bg-gradient-to-r from-[#A16AE8]/5 to-[#8096FD]/5 rounded-xl p-4 border border-[#A16AE8]/20">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Take our AI-powered assessments to validate your skills and increase your match score for this
-                  position.
-                </p>
-                <button className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
-                  Take AI Assessments
-                </button>
-              </div>
-            </div>
           </div>
         )}
 

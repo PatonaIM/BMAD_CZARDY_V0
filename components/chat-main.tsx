@@ -267,6 +267,7 @@ export const ChatMain = forwardRef<
     showPricingGuidance: () => void
     showPaymentSuccess: () => void
     showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
+    showJobViewSummary: (job: any) => void // Added showJobViewSummary
   },
   ChatMainProps
 >(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
@@ -570,6 +571,48 @@ ${loremParagraphs[1]}`
             { text: "Find more jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
             { text: "Prepare me for upcoming interviews", icon: <Sparkles className="w-4 h-4" /> },
             { text: "Review and improve my resume", icon: <FileText className="w-4 h-4" /> },
+          ],
+        },
+      ])
+    },
+    showJobViewSummary: (job: any) => {
+      console.log("[v0] showJobViewSummary called for job:", job.title)
+
+      const skillMatchText =
+        job.skillMatch >= 80 ? "excellent match" : job.skillMatch >= 60 ? "good match" : "moderate match"
+
+      const summaryMessage = `Great choice! Let me give you a quick overview of this opportunity. 📋
+
+## ${job.title} at ${job.company}
+
+**Location:** ${job.location} | **Type:** ${job.type} | **Salary:** ${job.salary}
+
+**Your Skill Match:** ${job.skillMatch}% - This is ${skillMatchText === "excellent match" ? "an" : "a"} **${skillMatchText}** for your profile! ${job.skillMatch >= 80 ? "🎯" : job.skillMatch >= 60 ? "✨" : "💡"}
+
+### Quick Summary
+
+${job.jobSummary ? job.jobSummary.split("\n").slice(0, 3).join("\n") : job.description}
+
+${loremParagraphs[0]}
+
+### What I Can Help You With
+
+I'm here to support you through every step of the application process. Whether you want to apply now, save this for later, or prepare yourself better, I've got you covered!
+
+${loremParagraphs[1]}`
+
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "ai",
+          content: summaryMessage,
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Apply to this Job", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Save this job for later", icon: <FileText className="w-4 h-4" /> },
+            { text: "Take AI Assessments to increase Skill Match Score", icon: <Sparkles className="w-4 h-4" /> },
+            { text: "Take Mock AI Interviews to prepare for this job", icon: <Sparkles className="w-4 h-4" /> },
           ],
         },
       ])

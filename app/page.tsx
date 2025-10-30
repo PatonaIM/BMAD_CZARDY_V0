@@ -20,6 +20,7 @@ export default function ChatPage() {
     showPricingGuidance: () => void
     showPaymentSuccess: () => void
     showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary to ref type
+    showJobViewSummary: (job: any) => void // Added showJobViewSummary to ref type
   } | null>(null)
 
   useEffect(() => {
@@ -123,6 +124,14 @@ export default function ChatPage() {
       title: job.title,
       job: job,
     })
+
+    if (chatMainRef.current) {
+      setTimeout(() => {
+        if (chatMainRef.current) {
+          chatMainRef.current.showJobViewSummary(job)
+        }
+      }, 1000)
+    }
   }
 
   const handleMyJobs = () => {
