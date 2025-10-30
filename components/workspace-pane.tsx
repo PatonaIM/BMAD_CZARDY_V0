@@ -70,6 +70,10 @@ const mockJobListings: JobListing[] = [
     saved: true, // Added saved property
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
     status: "open",
+    jobSummary:
+      "• Lead the development of scalable web applications using modern technologies\n• Collaborate with product and design teams to deliver exceptional user experiences\n• Mentor junior developers and contribute to technical decision-making\n• Optimize application performance and ensure code quality through best practices\n• Participate in agile ceremonies and contribute to sprint planning",
+    aboutClient:
+      "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce. We're building innovative solutions that help companies streamline hiring, onboarding, and team management processes.",
     qualifications: [
       "5+ years of professional software development experience",
       "Strong proficiency in React, Node.js, and TypeScript",
@@ -115,6 +119,10 @@ const mockJobListings: JobListing[] = [
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
     status: "draft",
+    jobSummary:
+      "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
+    aboutClient:
+      "Archa is an innovative AI company focused on developing intelligent solutions for enterprise clients. We're at the forefront of AI research and application development.",
   },
   {
     id: "3",
@@ -129,6 +137,10 @@ const mockJobListings: JobListing[] = [
     saved: true, // Added saved property
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
     status: "open",
+    jobSummary:
+      "• Define and execute product roadmap aligned with business objectives\n• Conduct market research and competitive analysis to identify opportunities\n• Work closely with engineering, design, and sales teams to deliver features\n• Analyze product metrics and user feedback to drive continuous improvement\n• Present product vision and strategy to stakeholders and leadership",
+    aboutClient:
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide. We're committed to innovation and customer success.",
   },
   {
     id: "4",
@@ -142,6 +154,10 @@ const mockJobListings: JobListing[] = [
     requirements: ["Kubernetes", "Docker", "AWS/GCP", "Terraform", "4+ years experience"],
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
     status: "closed",
+    jobSummary:
+      "• Design and maintain scalable cloud infrastructure on AWS/GCP\n• Implement and optimize CI/CD pipelines for automated deployments\n• Monitor system performance and ensure high availability\n• Automate infrastructure provisioning using Infrastructure as Code\n• Collaborate with development teams to improve deployment processes",
+    aboutClient:
+      "Zai is a fintech company revolutionizing payment solutions across Asia. We're building secure and scalable infrastructure to support millions of transactions.",
   },
   {
     id: "5",
@@ -157,6 +173,10 @@ const mockJobListings: JobListing[] = [
     saved: true, // Added saved property
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
     status: "open",
+    jobSummary:
+      "• Build responsive and accessible user interfaces using React and TypeScript\n• Collaborate with designers to implement pixel-perfect designs\n• Optimize frontend performance and ensure cross-browser compatibility\n• Write reusable components and maintain component libraries\n• Participate in code reviews and contribute to frontend architecture decisions",
+    aboutClient:
+      "Thriday is a financial management platform helping small businesses automate their accounting and bookkeeping. We're passionate about creating intuitive user experiences.",
   },
   {
     id: "6",
@@ -171,6 +191,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
     status: "draft",
+    jobSummary:
+      "• Analyze large datasets to extract actionable insights and identify trends\n• Develop and deploy machine learning models for predictive analytics\n• Collaborate with stakeholders to understand data needs and define metrics\n• Build data pipelines and ensure data quality and integrity\n• Communicate findings and recommendations through visualizations and reports",
+    aboutClient:
+      "Fortify is a data analytics firm empowering businesses with data-driven decision-making. We leverage advanced analytics and AI to solve complex business challenges.",
   },
   {
     id: "7",
@@ -185,6 +209,10 @@ const mockJobListings: JobListing[] = [
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
     status: "open",
+    jobSummary:
+      "• Design and develop robust and scalable backend services and APIs\n• Implement microservices architecture and ensure seamless integration\n• Manage and optimize database performance and integrity\n• Write clean, efficient, and well-documented code\n• Collaborate with frontend teams to define API contracts",
+    aboutClient:
+      "Archa is an innovative AI company focused on developing intelligent solutions for enterprise clients. We're at the forefront of AI research and application development.",
   },
   {
     id: "8",
@@ -199,6 +227,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
     status: "closed",
+    jobSummary:
+      "• Develop and execute comprehensive test plans and test cases\n• Perform manual and automated testing for web and mobile applications\n• Identify, document, and track bugs through to resolution\n• Collaborate with development teams to ensure high-quality releases\n• Contribute to the improvement of QA processes and methodologies",
+    aboutClient:
+      "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce. We're building innovative solutions that help companies streamline hiring, onboarding, and team management processes.",
   },
   {
     id: "9",
@@ -213,6 +245,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
     status: "open",
+    jobSummary:
+      "• Develop and maintain native iOS applications using Swift\n• Implement user interfaces with UIKit and SwiftUI\n• Integrate with backend APIs and services\n• Optimize application performance and ensure a smooth user experience\n• Collaborate with designers and product managers on new features",
+    aboutClient:
+      "Zai is a fintech company revolutionizing payment solutions across Asia. We're building secure and scalable infrastructure to support millions of transactions.",
   },
   {
     id: "10",
@@ -228,6 +264,10 @@ const mockJobListings: JobListing[] = [
     saved: true, // Added saved property
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
     status: "draft",
+    jobSummary:
+      "• Design intuitive and engaging user interfaces for web and mobile applications\n• Conduct user research and usability testing to inform design decisions\n• Create wireframes, mockups, and interactive prototypes using Figma\n• Develop and maintain design systems and style guides\n• Collaborate with product and engineering teams to ensure design feasibility",
+    aboutClient:
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide. We're committed to innovation and customer success.",
   },
   {
     id: "11",
@@ -242,6 +282,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
     status: "open",
+    jobSummary:
+      "• Design and architect scalable and resilient cloud-based solutions on AWS/Azure\n• Define technical standards and best practices for cloud adoption\n• Collaborate with development teams to ensure solutions meet business requirements\n• Provide technical leadership and guidance on cloud technologies\n• Evaluate and recommend new cloud services and tools",
+    aboutClient:
+      "Fortify is a data analytics firm empowering businesses with data-driven decision-making. We leverage advanced analytics and AI to solve complex business challenges.",
   },
   {
     id: "12",
@@ -256,6 +300,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
     status: "closed",
+    jobSummary:
+      "• Facilitate Scrum ceremonies including sprint planning, daily stand-ups, sprint reviews, and retrospectives\n• Coach and mentor the development team on Agile principles and practices\n• Remove impediments and obstacles that hinder team progress\n• Foster a collaborative and self-organizing team environment\n• Track team progress and report on key agile metrics",
+    aboutClient:
+      "Thriday is a financial management platform helping small businesses automate their accounting and bookkeeping. We're passionate about creating intuitive user experiences.",
   },
   {
     id: "13",
@@ -270,6 +318,10 @@ const mockJobListings: JobListing[] = [
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
     status: "open",
+    jobSummary:
+      "• Implement and maintain security controls to protect systems and data\n• Conduct vulnerability assessments and penetration testing\n• Monitor security alerts and respond to incidents\n• Develop and enforce security policies and procedures\n• Stay up-to-date with the latest security threats and technologies",
+    aboutClient:
+      "Archa is an innovative AI company focused on developing intelligent solutions for enterprise clients. We're at the forefront of AI research and application development.",
   },
   {
     id: "14",
@@ -284,6 +336,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
     status: "draft",
+    jobSummary:
+      "• Create and maintain technical documentation, including user guides, API documentation, and release notes\n• Collaborate with engineering and product teams to understand product features and requirements\n• Ensure documentation is accurate, clear, and concise\n• Manage documentation projects and timelines\n• Adhere to company style guides and quality standards",
+    aboutClient:
+      "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce. We're building innovative solutions that help companies streamline hiring, onboarding, and team management processes.",
   },
   {
     id: "15",
@@ -298,6 +354,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
     status: "open",
+    jobSummary:
+      "• Gather and document business requirements from stakeholders\n• Analyze and model business processes to identify areas for improvement\n• Translate business needs into technical specifications for development teams\n• Facilitate communication between business users and technical teams\n• Support user acceptance testing and system implementation",
+    aboutClient:
+      "Zai is a fintech company revolutionizing payment solutions across Asia. We're building secure and scalable infrastructure to support millions of transactions.",
   },
   {
     id: "16",
@@ -312,6 +372,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
     status: "closed",
+    jobSummary:
+      "• Develop, train, and deploy machine learning models using TensorFlow and other frameworks\n• Implement MLOps practices for model versioning, deployment, and monitoring\n• Optimize model performance and efficiency for production environments\n• Collaborate with data scientists and engineers to build end-to-end ML solutions\n• Stay current with advancements in machine learning and AI",
+    aboutClient:
+      "Fortify is a data analytics firm empowering businesses with data-driven decision-making. We leverage advanced analytics and AI to solve complex business challenges.",
   },
   {
     id: "17",
@@ -326,6 +390,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
     status: "open",
+    jobSummary:
+      "• Design, build, and maintain highly available and scalable production systems\n• Implement robust monitoring, alerting, and logging solutions\n• Respond to and resolve production incidents and outages\n• Automate operational tasks and infrastructure management\n• Collaborate with development teams to improve system reliability and performance",
+    aboutClient:
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide. We're committed to innovation and customer success.",
   },
   {
     id: "18",
@@ -340,6 +408,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
     status: "draft",
+    jobSummary:
+      "• Install, configure, and maintain database systems (PostgreSQL/MySQL)\n• Optimize database performance through tuning and indexing\n• Implement and manage database backup and recovery strategies\n• Ensure database security and integrity\n• Troubleshoot database issues and provide support",
+    aboutClient:
+      "Thriday is a financial management platform helping small businesses automate their accounting and bookkeeping. We're passionate about creating intuitive user experiences.",
   },
   {
     id: "19",
@@ -354,6 +426,10 @@ const mockJobListings: JobListing[] = [
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
     status: "open",
+    jobSummary:
+      "• Design, deploy, and manage cloud infrastructure on AWS and Azure\n• Implement Infrastructure as Code (IaC) using tools like Terraform or CloudFormation\n• Develop and maintain CI/CD pipelines for automated deployments\n• Monitor cloud resources for performance, security, and cost optimization\n• Troubleshoot and resolve cloud infrastructure issues",
+    aboutClient:
+      "Archa is an innovative AI company focused on developing intelligent solutions for enterprise clients. We're at the forefront of AI research and application development.",
   },
   {
     id: "20",
@@ -368,6 +444,10 @@ const mockJobListings: JobListing[] = [
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
     status: "closed",
+    jobSummary:
+      "• Lead, mentor, and manage a team of software engineers\n• Oversee the design, development, and delivery of software projects\n• Foster a culture of collaboration, innovation, and continuous improvement\n• Ensure adherence to agile methodologies and best practices\n• Work closely with product management and other stakeholders to define strategy",
+    aboutClient:
+      "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce. We're building innovative solutions that help companies streamline hiring, onboarding, and team management processes.",
   },
 ]
 

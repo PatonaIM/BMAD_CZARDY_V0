@@ -57,6 +57,30 @@ const getStatusConfig = (status: JobStatus) => {
 export function JobView({ job, onBack }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
 
+  const renderJobSummary = (summary: string) => {
+    // Check if the summary contains bullet points (lines starting with •)
+    const lines = summary.split("\n").filter((line) => line.trim())
+    const hasBullets = lines.some((line) => line.trim().startsWith("•"))
+
+    if (hasBullets) {
+      return (
+        <ul className="space-y-3">
+          {lines.map((line, idx) => {
+            const text = line.trim().replace(/^•\s*/, "")
+            return (
+              <li key={idx} className="flex items-start gap-3 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] flex-shrink-0 mt-2" />
+                <span className="text-muted-foreground">{text}</span>
+              </li>
+            )
+          })}
+        </ul>
+      )
+    }
+
+    return <p className="text-sm leading-relaxed text-muted-foreground">{summary}</p>
+  }
+
   return (
     <div className="h-full overflow-auto">
       <div className="max-w-4xl mx-auto space-y-6 p-6">
@@ -133,7 +157,7 @@ export function JobView({ job, onBack }: JobViewProps) {
 
         <div className="bg-card rounded-2xl border border-border p-6">
           <h2 className="text-lg font-semibold mb-4">Job Summary</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">{job.jobSummary || job.description}</p>
+          {renderJobSummary(job.jobSummary || job.description)}
         </div>
 
         {job.responsibilities && job.responsibilities.length > 0 && (
