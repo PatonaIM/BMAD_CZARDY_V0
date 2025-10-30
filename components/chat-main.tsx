@@ -261,7 +261,12 @@ Now that I have your information, I can help you in several ways. Here are some 
 }
 
 export const ChatMain = forwardRef<
-  { handleProfileSaved: () => void; switchAgent: (agentId: string) => void; showPricingGuidance: () => void },
+  {
+    handleProfileSaved: () => void
+    switchAgent: (agentId: string) => void
+    showPricingGuidance: () => void
+    showPaymentSuccess: () => void
+  },
   ChatMainProps
 >(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
   const [inputMessage, setInputMessage] = useState("")
@@ -489,6 +494,44 @@ The **complete solution** with everything included. Best if you:
             { text: "What's included in the Premium plan?", icon: <Crown className="w-4 h-4" /> },
             { text: "How does the Recruiter plan pricing work?", icon: <Users className="w-4 h-4" /> },
             { text: "Which plan is best for a 50-person team?", icon: <Briefcase className="w-4 h-4" /> },
+          ],
+        },
+      ])
+    },
+    showPaymentSuccess: () => {
+      console.log("[v0] showPaymentSuccess called")
+      const congratsMessage = `Congratulations! Your payment has been successfully processed! 🎉
+
+Welcome to Teamified Enterprise! You now have full access to all our premium features and AI agents.
+
+## What's Next?
+
+Now that your account is set up, let's get you started with building your team! Here are some things we can do together:
+
+**Create Your First Job Opening** - I can help you craft compelling job descriptions that attract top talent. Just tell me about the role you're looking to fill.
+
+**Set Up Your Hiring Pipeline** - Let's configure your recruitment workflow, interview stages, and evaluation criteria.
+
+**Explore AI Agent Capabilities** - Discover how our specialized AI agents can streamline your entire hiring process.
+
+**Import Existing Job Postings** - Already have job descriptions? I can help you import and optimize them for better results.
+
+${loremParagraphs[0]}
+
+I'm here to help you every step of the way. What would you like to start with?`
+
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "ai",
+          content: congratsMessage,
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Create a new job opening", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Show me how to write a job description", icon: <FileText className="w-4 h-4" /> },
+            { text: "Set up my hiring pipeline", icon: <Building2 className="w-4 h-4" /> },
+            { text: "Explore all AI agent features", icon: <Sparkles className="w-4 h-4" /> },
           ],
         },
       ])

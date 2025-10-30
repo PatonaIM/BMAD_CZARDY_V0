@@ -18,6 +18,7 @@ export default function ChatPage() {
     handleProfileSaved: () => void
     switchAgent: (agentId: string) => void
     showPricingGuidance: () => void
+    showPaymentSuccess: () => void
   } | null>(null)
 
   useEffect(() => {
@@ -62,8 +63,13 @@ export default function ChatPage() {
         planName: "Enterprise Plan",
         amount: "$500/mo",
       })
+
+      setTimeout(() => {
+        if (chatMainRef.current) {
+          chatMainRef.current.showPaymentSuccess()
+        }
+      }, 1500)
     } else {
-      // For candidates, just notify chat
       if (chatMainRef.current) {
         chatMainRef.current.handleProfileSaved()
       }
@@ -75,7 +81,6 @@ export default function ChatPage() {
     console.log("[v0] handleEditProfile called, user role:", user?.role)
 
     if (user?.role === "hiring_manager") {
-      // Switch to Sales & Marketing agent for hiring managers
       const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
       console.log("[v0] Found sales agent:", salesAgent?.name)
       if (salesAgent && chatMainRef.current) {
@@ -86,20 +91,17 @@ export default function ChatPage() {
       }
       setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
     } else {
-      // Candidate profile
       setWorkspaceContent({ type: "candidate-profile", title: "Edit Profile" })
     }
   }
 
   const handleUpgradePlan = () => {
     console.log("[v0] Upgrade plan clicked")
-    // Switch to Sales & Marketing agent
     const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
     if (salesAgent && chatMainRef.current) {
       console.log("[v0] Switching to Sales & Marketing agent")
       chatMainRef.current.switchAgent(salesAgent.id)
     }
-    // Show candidate pricing in workspace
     console.log("[v0] Opening candidate pricing workspace")
     setWorkspaceContent({ type: "candidate-pricing", title: "Upgrade to Premium" })
   }
@@ -108,7 +110,6 @@ export default function ChatPage() {
     console.log("[v0] Hiring manager step changed to:", step)
 
     if (step === 2 && chatMainRef.current) {
-      // When reaching Step 2 (Select Pricing), trigger the Sales Agent to provide pricing guidance
       console.log("[v0] Triggering pricing guidance from Sales Agent")
       chatMainRef.current.showPricingGuidance()
     }
