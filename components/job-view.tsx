@@ -1,17 +1,6 @@
 "use client"
 
-import {
-  Briefcase,
-  MapPin,
-  DollarSign,
-  Clock,
-  Users,
-  Building2,
-  Calendar,
-  User,
-  CheckCircle2,
-  ArrowLeft,
-} from "lucide-react"
+import { Briefcase, MapPin, DollarSign, Clock, Building2, CheckCircle2, ArrowLeft, ExternalLink } from "lucide-react"
 import type { JobListing, JobStatus } from "@/types/workspace"
 
 interface JobViewProps {
@@ -114,7 +103,19 @@ export function JobView({ job, onBack }: JobViewProps) {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-foreground mb-2">{job.title}</h1>
-                <p className="text-lg text-muted-foreground">{job.company}</p>
+                {job.companyWebsite ? (
+                  <a
+                    href={job.companyWebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lg text-[#A16AE8] hover:text-[#8096FD] transition-colors flex items-center gap-2 group"
+                  >
+                    {job.company}
+                    <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </a>
+                ) : (
+                  <p className="text-lg text-muted-foreground">{job.company}</p>
+                )}
                 {job.department && <p className="text-sm text-muted-foreground mt-1">Department: {job.department}</p>}
               </div>
             </div>
@@ -176,7 +177,7 @@ export function JobView({ job, onBack }: JobViewProps) {
 
         {((job.qualifications && job.qualifications.length > 0) || job.requirements.length > 0) && (
           <div className="bg-card rounded-2xl border border-border p-6">
-            <h2 className="text-lg font-semibold mb-4">Requirements</h2>
+            <h2 className="text-lg font-semibold mb-4">Required Skills</h2>
             <ul className="space-y-3">
               {(job.qualifications || job.requirements).map((req, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm">
@@ -201,52 +202,6 @@ export function JobView({ job, onBack }: JobViewProps) {
             </ul>
           </div>
         )}
-
-        {/* Additional Information */}
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-4">Additional Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {job.reportingTo && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Reporting To</p>
-                <p className="text-sm">{job.reportingTo}</p>
-              </div>
-            )}
-            {job.teamSize && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Team Size</p>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#A16AE8]" />
-                  <p className="text-sm">{job.teamSize}</p>
-                </div>
-              </div>
-            )}
-            {job.workArrangement && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Work Arrangement</p>
-                <p className="text-sm">{job.workArrangement}</p>
-              </div>
-            )}
-            {job.hiringManager && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Hiring Manager</p>
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#A16AE8]" />
-                  <p className="text-sm">{job.hiringManager}</p>
-                </div>
-              </div>
-            )}
-            {job.applicationDeadline && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Application Deadline</p>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#A16AE8]" />
-                  <p className="text-sm">{job.applicationDeadline}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Action Buttons (only show for open positions) */}
         {job.status === "open" && (

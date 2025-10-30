@@ -30,6 +30,7 @@ export interface JobListing {
   id: string
   title: string
   company: string
+  companyWebsite?: string
   location: string
   type: string
   salary: string
