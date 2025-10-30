@@ -411,10 +411,141 @@ export const ChatMain = forwardRef<
     }
   }
 
+  const handleCommandOrMessage = (text: string) => {
+    const lowerText = text.toLowerCase().trim()
+
+    // Check for reserved word commands
+    if (lowerText === "large text") {
+      // Add user message
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      // Add AI response with large text
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    if (lowerText === "pdf preview" || lowerText === "file preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: "Here's the resume file you requested:",
+        responseType: "file",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    if (lowerText === "code" || lowerText === "show code") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: "Here's a code example for setting up an Express server with API integration:",
+        responseType: "code",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    if (lowerText === "table" || lowerText === "show table") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: "Here's a summary of top candidates matching your requirements:",
+        responseType: "table",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    if (lowerText === "bullets" || lowerText === "bullet points") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateBulletResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    if (lowerText === "image" || lowerText === "show image") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: "Here's a preview of the dashboard analytics interface:",
+        responseType: "image",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // Not a command, return false to send to OpenAI
+    return false
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (inputMessage.trim()) {
-      sendMessage({ text: inputMessage, agentId: activeAgent.id }) // Pass agentId to the backend
+      const isCommand = handleCommandOrMessage(inputMessage)
+      if (!isCommand) {
+        sendMessage({ text: inputMessage, agentId: activeAgent.id })
+      }
       setInputMessage("")
     }
   }
@@ -424,7 +555,10 @@ export const ChatMain = forwardRef<
   }
 
   const handlePromptSuggestionClick = (suggestionText: string) => {
-    sendMessage({ text: suggestionText, agentId: activeAgent.id }) // Pass agentId to the backend
+    const isCommand = handleCommandOrMessage(suggestionText)
+    if (!isCommand) {
+      sendMessage({ text: suggestionText, agentId: activeAgent.id })
+    }
   }
 
   const handleAgentChange = (agent: AIAgent) => {
