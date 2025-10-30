@@ -388,7 +388,7 @@ export default function AuthPage() {
                         <span>Creating account...</span>
                       </>
                     ) : (
-                      <span>Create Account</span>
+                      <span>Sign Up or Login</span>
                     )}
                   </button>
                 </form>
@@ -433,7 +433,7 @@ export default function AuthPage() {
                       </svg>
                     )}
                     <span className="text-sm font-medium text-foreground">
-                      {signupLoading === "google" ? "Creating account..." : "Create account using Google"}
+                      {signupLoading === "google" ? "Processing..." : "Sign Up or Login with Google"}
                     </span>
                   </button>
 
@@ -451,7 +451,7 @@ export default function AuthPage() {
                       </svg>
                     )}
                     <span className="text-sm font-medium text-foreground">
-                      {signupLoading === "github" ? "Creating account..." : "Create account using GitHub"}
+                      {signupLoading === "github" ? "Processing..." : "Sign Up or Login with GitHub"}
                     </span>
                   </button>
                 </div>
