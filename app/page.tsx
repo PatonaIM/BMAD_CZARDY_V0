@@ -124,6 +124,25 @@ export default function ChatPage() {
     })
   }
 
+  const handleMyJobs = () => {
+    console.log("[v0] My Jobs clicked")
+    const user = getCurrentUser()
+
+    // Switch to Technical Recruiter AI Agent
+    const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+    if (technicalRecruiter && chatMainRef.current) {
+      console.log("[v0] Switching to Technical Recruiter agent")
+      chatMainRef.current.switchAgent(technicalRecruiter.id)
+    }
+
+    // Open job board in workspace
+    console.log("[v0] Opening job board workspace")
+    setWorkspaceContent({
+      type: "job-board",
+      title: user?.role === "candidate" ? "My Jobs" : "Job Board",
+    })
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -132,6 +151,7 @@ export default function ChatPage() {
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           onEditProfile={handleEditProfile}
           onUpgradePlan={handleUpgradePlan}
+          onMyJobs={handleMyJobs} // Added onMyJobs callback
         />
         <div className="flex-1 flex overflow-hidden">
           <div className={`${workspaceContent.type ? "w-2/5" : "w-full"} transition-all duration-300`}>

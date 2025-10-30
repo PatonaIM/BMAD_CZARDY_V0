@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { Briefcase } from "lucide-react"
 
 import { useState } from "react"
 import { useTheme } from "./theme-provider"
@@ -9,7 +10,6 @@ import {
   MessageSquarePlus,
   Search,
   Library,
-  Code2,
   Sparkles,
   MessageSquare,
   ChevronLeft,
@@ -30,9 +30,10 @@ interface ChatSidebarProps {
   onToggle: () => void
   onEditProfile?: () => void
   onUpgradePlan?: () => void
+  onMyJobs?: () => void // Added callback for My Jobs
 }
 
-export function ChatSidebar({ isOpen, onToggle, onEditProfile, onUpgradePlan }: ChatSidebarProps) {
+export function ChatSidebar({ isOpen, onToggle, onEditProfile, onUpgradePlan, onMyJobs }: ChatSidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -138,7 +139,7 @@ export function ChatSidebar({ isOpen, onToggle, onEditProfile, onUpgradePlan }: 
                 isActive={pathname === "/library"}
               />
             )}
-            <SidebarButton icon={Code2} label="Codex" isOpen={isOpen} onClick={() => {}} />
+            {user && <SidebarButton icon={Briefcase} label="My Jobs" isOpen={isOpen} onClick={onMyJobs} />}
           </nav>
 
           {/* Chats Section */}

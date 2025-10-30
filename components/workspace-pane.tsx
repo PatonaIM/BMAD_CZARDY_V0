@@ -38,10 +38,11 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { CandidateProfileForm } from "./candidate-profile-form"
-import { HiringManagerProfileForm } from "./hiring-manager-profile-form"
+import { HiringManagerProfileForm } from "./hiring-manager-profile"
 import { CandidatePricing } from "./candidate-pricing"
 import { PaymentSuccess } from "./payment-success" // Import payment success component
 import { JobView } from "./job-view" // Import JobView component
+import { getCurrentUser } from "@/lib/auth" // Added import for getCurrentUser
 
 interface WorkspacePaneProps {
   isOpen: boolean
@@ -1211,86 +1212,103 @@ export function WorkspacePane({
         )
 
       case "job-board":
+        const user = getCurrentUser()
+        const displayedJobs =
+          user?.role === "candidate"
+            ? mockJobListings.filter((job) => job.applied || job.saved) // Show only applied or saved jobs for candidates
+            : mockJobListings // Show all jobs for hiring managers
+
         return (
           <div className="h-full overflow-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {mockJobListings.map((job) => (
-                <div
-                  key={job.id}
-                  className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
-                >
-                  <div className="absolute top-6 right-6">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
-                      <img
-                        src={job.logo || "/placeholder.svg"}
-                        alt={`${job.company} logo`}
-                        className="w-full h-full object-cover"
-                      />
+            {user?.role === "candidate" && displayedJobs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <Briefcase className="w-16 h-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Jobs Yet</h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  You haven't applied to or saved any jobs yet. Start exploring available positions and apply to jobs
+                  that match your skills!
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {displayedJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
+                  >
+                    <div className="absolute top-6 right-6">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                        <img
+                          src={job.logo || "/placeholder.svg"}
+                          alt={`${job.company} logo`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-start justify-between mb-4 pr-16">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
-                      <p className="text-sm text-muted-foreground">{job.company}</p>
+                    <div className="flex items-start justify-between mb-4 pr-16">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                        <p className="text-sm text-muted-foreground">{job.company}</p>
+                      </div>
+                      {/* CHANGE: Added status badge display */}
+                      <div className="flex flex-col gap-2 items-end">
+                        {job.status && (
+                          <span
+                            className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              job.status === "open"
+                                ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                : job.status === "draft"
+                                  ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
+                                  : job.status === "closed"
+                                    ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                    : "bg-red-500/10 text-red-600 border border-red-500/20"
+                            }`}
+                          >
+                            {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                          </span>
+                        )}
+                        {job.applied && (
+                          <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                            Applied
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {/* CHANGE: Added status badge display */}
-                    <div className="flex flex-col gap-2 items-end">
-                      {job.status && (
-                        <span
-                          className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            job.status === "open"
-                              ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                              : job.status === "draft"
-                                ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
-                                : job.status === "closed"
-                                  ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  : "bg-red-500/10 text-red-600 border border-red-500/20"
-                          }`}
-                        >
-                          {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                        </span>
-                      )}
-                      {job.applied && (
-                        <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                          Applied
-                        </span>
-                      )}
+                    <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {job.location}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Briefcase className="w-4 h-4" />
+                        {job.type}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" />
+                        {job.salary}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {job.posted}
+                      </div>
+                    </div>
+                    <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
+                    <div className="flex gap-2">
+                      <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
+                        {job.applied ? "View Application" : "Apply Now"}
+                      </button>
+                      <button
+                        onClick={() => handleViewJobDetails(job)}
+                        className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors"
+                      >
+                        Details
+                      </button>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {job.location}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Briefcase className="w-4 h-4" />
-                      {job.type}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
-                      {job.salary}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {job.posted}
-                    </div>
-                  </div>
-                  <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
-                  <div className="flex gap-2">
-                    <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
-                      {job.applied ? "View Application" : "Apply Now"}
-                    </button>
-                    <button
-                      onClick={() => handleViewJobDetails(job)}
-                      className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors"
-                    >
-                      Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )
 
