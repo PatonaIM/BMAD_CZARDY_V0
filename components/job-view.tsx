@@ -1,6 +1,6 @@
 "use client"
 
-import { Briefcase, MapPin, DollarSign, Clock, Building2, CheckCircle2, ArrowLeft, ExternalLink } from "lucide-react"
+import { Briefcase, MapPin, DollarSign, Clock, Building2, CheckCircle2, ChevronLeft, ExternalLink } from "lucide-react"
 import type { JobListing, JobStatus } from "@/types/workspace"
 
 interface JobViewProps {
@@ -99,24 +99,22 @@ export function JobView({ job, onBack }: JobViewProps) {
   }
 
   return (
-    <div className="h-full overflow-auto">
-      <div className="max-w-4xl mx-auto space-y-6 p-6">
+    <div className="h-full overflow-auto relative">
+      {onBack && (
         <button
           onClick={() => {
             console.log("[v0] Back button clicked")
-            if (onBack) {
-              console.log("[v0] Calling onBack callback")
-              onBack()
-            } else {
-              console.log("[v0] ERROR: onBack callback is undefined")
-            }
+            onBack()
           }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-accent transition-colors text-sm font-medium shadow-sm"
+          className="fixed top-6 left-6 z-50 w-10 h-10 rounded-full bg-card border border-border hover:bg-accent transition-all shadow-lg hover:shadow-xl flex items-center justify-center group"
+          aria-label="Back to My Jobs"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back to My Jobs
+          <ChevronLeft className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors -ml-0.5" />
+          <ChevronLeft className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors -ml-3.5" />
         </button>
+      )}
 
+      <div className="max-w-4xl mx-auto space-y-6 p-6">
         {/* Header with Status */}
         <div className="bg-card rounded-2xl border border-border p-8">
           <div className="flex items-start justify-between mb-6">
