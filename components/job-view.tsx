@@ -196,32 +196,37 @@ export function JobView({ job, onBack }: JobViewProps) {
           <div className="bg-card rounded-2xl border border-border p-6">
             <h2 className="text-lg font-semibold mb-6">Required Skills</h2>
 
-            {job.skillMatch !== undefined && (
-              <div
-                className={`mb-6 p-8 rounded-2xl border-2 ${getSkillMatchConfig(job.skillMatch).bgColor} ${getSkillMatchConfig(job.skillMatch).borderColor}`}
-              >
-                <div className="text-center space-y-3">
-                  <div className="flex items-center justify-center gap-3">
-                    <span className={`text-6xl font-bold ${getSkillMatchConfig(job.skillMatch).color}`}>
-                      {job.skillMatch}%
-                    </span>
+            <div className="flex gap-6">
+              {/* Left Pane - Skills List (70%) */}
+              <div className="flex-[7]">
+                <ul className="space-y-3">
+                  {(job.qualifications || job.requirements).map((req, idx) => (
+                    <li key={idx} className="flex items-start gap-3 text-sm">
+                      <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Vertical Divider */}
+              {job.skillMatch !== undefined && <div className="w-px bg-border flex-shrink-0" />}
+
+              {/* Right Pane - Skill Match Score (30%) */}
+              {job.skillMatch !== undefined && (
+                <div className="flex-[3] flex flex-col items-center justify-center text-center space-y-2">
+                  <div className={`text-5xl font-bold ${getSkillMatchConfig(job.skillMatch).color}`}>
+                    {job.skillMatch}%
                   </div>
-                  <div className={`text-2xl font-bold tracking-wide ${getSkillMatchConfig(job.skillMatch).color}`}>
+                  <div className={`text-lg font-semibold ${getSkillMatchConfig(job.skillMatch).color}`}>
                     {getSkillMatchConfig(job.skillMatch).label}
                   </div>
-                  <p className="text-sm text-muted-foreground">{getSkillMatchConfig(job.skillMatch).description}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {getSkillMatchConfig(job.skillMatch).description}
+                  </p>
                 </div>
-              </div>
-            )}
-
-            <ul className="space-y-3">
-              {(job.qualifications || job.requirements).map((req, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">{req}</span>
-                </li>
-              ))}
-            </ul>
+              )}
+            </div>
           </div>
         )}
 
