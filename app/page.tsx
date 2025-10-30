@@ -19,6 +19,7 @@ export default function ChatPage() {
     switchAgent: (agentId: string) => void
     showPricingGuidance: () => void
     showPaymentSuccess: () => void
+    showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary to ref type
   } | null>(null)
 
   useEffect(() => {
@@ -141,6 +142,18 @@ export default function ChatPage() {
       type: "job-board",
       title: user?.role === "candidate" ? "My Jobs" : "Job Board",
     })
+
+    if (user?.role === "candidate" && chatMainRef.current) {
+      // Mock data - in a real app, this would come from the database
+      const appliedCount = 4 // Number of jobs the user has applied to
+      const savedCount = 2 // Number of jobs the user has saved
+
+      setTimeout(() => {
+        if (chatMainRef.current) {
+          chatMainRef.current.showMyJobsSummary(appliedCount, savedCount)
+        }
+      }, 1000)
+    }
   }
 
   return (

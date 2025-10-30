@@ -266,6 +266,7 @@ export const ChatMain = forwardRef<
     switchAgent: (agentId: string) => void
     showPricingGuidance: () => void
     showPaymentSuccess: () => void
+    showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
   },
   ChatMainProps
 >(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
@@ -532,6 +533,43 @@ I'm here to help you every step of the way. What would you like to start with?`
             { text: "Show me how to write a job description", icon: <FileText className="w-4 h-4" /> },
             { text: "Set up my hiring pipeline", icon: <Building2 className="w-4 h-4" /> },
             { text: "Explore all AI agent features", icon: <Sparkles className="w-4 h-4" /> },
+          ],
+        },
+      ])
+    },
+    showMyJobsSummary: (appliedCount: number, savedCount: number) => {
+      console.log("[v0] showMyJobsSummary called with applied:", appliedCount, "saved:", savedCount)
+
+      const summaryMessage = `Great to see you exploring opportunities! Let me give you a quick summary of your job activity. 📊
+
+## Your Job Activity
+
+**Applied Jobs:** ${appliedCount} ${appliedCount === 1 ? "position" : "positions"}
+${appliedCount > 0 ? "You've taken the first step by applying to these roles. I'll help you track your applications and prepare for interviews." : "You haven't applied to any jobs yet. Let me help you find positions that match your skills!"}
+
+**Saved Jobs:** ${savedCount} ${savedCount === 1 ? "position" : "positions"}
+${savedCount > 0 ? "These are jobs you're interested in but haven't applied to yet. Ready to take the next step?" : "You haven't saved any jobs yet. When you find interesting positions, save them to review later!"}
+
+${loremParagraphs[0]}
+
+## What Would You Like to Do Next?
+
+I can help you with your job search in several ways. Whether you want to refine your applications, prepare for interviews, or explore new opportunities, I'm here to assist!
+
+${loremParagraphs[1]}`
+
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "ai",
+          content: summaryMessage,
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Help me apply to my saved jobs", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Find more jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Prepare me for upcoming interviews", icon: <Sparkles className="w-4 h-4" /> },
+            { text: "Review and improve my resume", icon: <FileText className="w-4 h-4" /> },
           ],
         },
       ])
