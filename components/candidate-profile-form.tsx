@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Upload, LinkIcon, X, FileText, Camera, User } from "lucide-react"
+import { Upload, LinkIcon, X, FileText, Camera, User, Gem, Sparkles, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface PortfolioItem {
@@ -16,9 +16,10 @@ interface PortfolioItem {
 interface CandidateProfileFormProps {
   onSave?: () => void
   onClose?: () => void
+  onUpgradePlan?: () => void
 }
 
-export function CandidateProfileForm({ onSave, onClose }: CandidateProfileFormProps) {
+export function CandidateProfileForm({ onSave, onClose, onUpgradePlan }: CandidateProfileFormProps) {
   const { toast } = useToast()
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
@@ -37,6 +38,7 @@ export function CandidateProfileForm({ onSave, onClose }: CandidateProfileFormPr
   })
 
   const [resume, setResume] = useState<File | null>(null)
+  const [isParsing, setIsParsing] = useState(false)
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
   const [showAddLink, setShowAddLink] = useState(false)
   const [newLinkName, setNewLinkName] = useState("")
@@ -96,6 +98,58 @@ export function CandidateProfileForm({ onSave, onClose }: CandidateProfileFormPr
 
   const handleRemovePortfolioItem = (id: string) => {
     setPortfolioItems((prev) => prev.filter((item) => item.id !== id))
+  }
+
+  const handleParseResume = async () => {
+    if (!resume) return
+
+    setIsParsing(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", resume)
+
+      const response = await fetch("/api/parse-resume", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (result.success && result.data) {
+        // Auto-fill form with parsed data
+        setFormData((prev) => ({
+          ...prev,
+          fullName: result.data.fullName || prev.fullName,
+          email: result.data.email || prev.email,
+          phone: result.data.phone || prev.phone,
+          location: result.data.location || prev.location,
+          currentRole: result.data.currentRole || prev.currentRole,
+          yearsOfExperience: result.data.yearsOfExperience?.toString() || prev.yearsOfExperience,
+          skills: result.data.skills || prev.skills,
+          linkedIn: result.data.linkedIn || prev.linkedIn,
+          github: result.data.github || prev.github,
+          portfolio: result.data.portfolio || prev.portfolio,
+        }))
+
+        toast({
+          title: "Resume parsed successfully!",
+          description: "Your profile has been auto-filled with information from your resume.",
+          duration: 3000,
+        })
+      } else {
+        throw new Error(result.error || "Failed to parse resume")
+      }
+    } catch (error) {
+      console.error("[v0] Resume parsing error:", error)
+      toast({
+        title: "Parsing failed",
+        description: "Could not parse your resume. Please fill the form manually.",
+        variant: "destructive",
+        duration: 3000,
+      })
+    } finally {
+      setIsParsing(false)
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -284,22 +338,42 @@ export function CandidateProfileForm({ onSave, onClose }: CandidateProfileFormPr
 
             <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-[#A16AE8] transition-colors">
               {resume ? (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-white" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{resume.name}</p>
+                        <p className="text-xs text-muted-foreground">{(resume.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{resume.name}</p>
-                      <p className="text-xs text-muted-foreground">{(resume.size / 1024 / 1024).toFixed(2)} MB</p>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setResume(null)}
+                      className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    </button>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setResume(null)}
-                    className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    onClick={handleParseResume}
+                    disabled={isParsing}
+                    className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    <X className="w-4 h-4 text-muted-foreground" />
+                    {isParsing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Parsing Resume...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Parse Resume with AI
+                      </>
+                    )}
                   </button>
                 </div>
               ) : (
@@ -484,7 +558,15 @@ export function CandidateProfileForm({ onSave, onClose }: CandidateProfileFormPr
           </div>
 
           {/* Submit Button */}
-          <div className="pt-4 border-t border-border">
+          <div className="pt-4 border-t border-border space-y-3">
+            <button
+              type="button"
+              onClick={onUpgradePlan}
+              className="w-full px-6 py-3 rounded-lg border-2 border-[#A16AE8] bg-gradient-to-r from-[#A16AE8]/10 to-[#8096FD]/10 hover:from-[#A16AE8]/20 hover:to-[#8096FD]/20 text-foreground font-medium transition-all flex items-center justify-center gap-2"
+            >
+              <Gem className="w-5 h-5 text-[#A16AE8]" />
+              Upgrade to Premium
+            </button>
             <button
               type="submit"
               className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"

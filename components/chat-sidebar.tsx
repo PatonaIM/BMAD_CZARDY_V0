@@ -20,6 +20,7 @@ import {
   LogOut,
   UserPlus,
   Edit,
+  Gem,
 } from "lucide-react"
 import { signOut, getCurrentUser } from "@/lib/auth"
 import { SettingsModal } from "./settings-modal"
@@ -28,9 +29,10 @@ interface ChatSidebarProps {
   isOpen: boolean
   onToggle: () => void
   onEditProfile?: () => void
+  onUpgradePlan?: () => void
 }
 
-export function ChatSidebar({ isOpen, onToggle, onEditProfile }: ChatSidebarProps) {
+export function ChatSidebar({ isOpen, onToggle, onEditProfile, onUpgradePlan }: ChatSidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -70,6 +72,11 @@ export function ChatSidebar({ isOpen, onToggle, onEditProfile }: ChatSidebarProp
   const handleSettings = () => {
     setShowUserMenu(false)
     setShowSettings(true)
+  }
+
+  const handleUpgradePlan = () => {
+    setShowUserMenu(false)
+    onUpgradePlan?.()
   }
 
   const getRoleDisplay = (user: ReturnType<typeof getCurrentUser>) => {
@@ -191,13 +198,22 @@ export function ChatSidebar({ isOpen, onToggle, onEditProfile }: ChatSidebarProp
               {showUserMenu && isOpen && (
                 <div className="absolute bottom-full left-0 right-0 mb-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
                   {user.role === "candidate" && (
-                    <button
-                      onClick={handleEditProfile}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span className="text-sm">Edit Profile</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={handleUpgradePlan}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors"
+                      >
+                        <Gem className="w-4 h-4 text-[#A16AE8]" />
+                        <span className="text-sm">Upgrade Plan</span>
+                      </button>
+                      <button
+                        onClick={handleEditProfile}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                        <span className="text-sm">Edit Profile</span>
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={handleSettings}

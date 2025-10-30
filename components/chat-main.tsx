@@ -344,7 +344,10 @@ export const ChatMain = forwardRef<{ handleProfileSaved: () => void }, ChatMainP
               { text: "Search for jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
               { text: "Review and improve my CV", icon: <FileText className="w-4 h-4" /> },
               { text: "Help me prepare for interviews", icon: <Sparkles className="w-4 h-4" /> },
-              { text: "Show me salary insights for my role", icon: <Calculator className="w-4 h-4" /> },
+              {
+                text: "Upgrade to Premium for unlimited access",
+                icon: <Sparkles className="w-4 h-4 text-[#A16AE8]" />,
+              },
             ],
           },
         ])
