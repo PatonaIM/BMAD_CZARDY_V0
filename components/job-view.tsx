@@ -43,6 +43,34 @@ const getStatusConfig = (status: JobStatus) => {
   }
 }
 
+const getSkillMatchConfig = (percentage: number) => {
+  if (percentage >= 90) {
+    return {
+      label: "STRONG FIT",
+      color: "text-green-500",
+      bgColor: "bg-green-500/10",
+      borderColor: "border-green-500/30",
+      description: "Your skills align excellently with this position",
+    }
+  }
+  if (percentage >= 70) {
+    return {
+      label: "GOOD FIT",
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
+      borderColor: "border-amber-500/30",
+      description: "Your skills match well with this position",
+    }
+  }
+  return {
+    label: "NOT FIT",
+    color: "text-red-500",
+    bgColor: "bg-red-500/10",
+    borderColor: "border-red-500/30",
+    description: "Consider taking assessments to improve your match",
+  }
+}
+
 export function JobView({ job, onBack }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
 
@@ -68,12 +96,6 @@ export function JobView({ job, onBack }: JobViewProps) {
     }
 
     return <p className="text-sm leading-relaxed text-muted-foreground">{summary}</p>
-  }
-
-  const getSkillMatchColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-500 bg-green-500/10 border-green-500/20"
-    if (percentage >= 60) return "text-yellow-500 bg-yellow-500/10 border-yellow-500/20"
-    return "text-orange-500 bg-orange-500/10 border-orange-500/20"
   }
 
   return (
@@ -172,19 +194,26 @@ export function JobView({ job, onBack }: JobViewProps) {
 
         {((job.qualifications && job.qualifications.length > 0) || job.requirements.length > 0) && (
           <div className="bg-card rounded-2xl border border-border p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold">Required Skills</h2>
-              {job.skillMatch !== undefined && (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">Skill Match</span>
-                  <div
-                    className={`px-4 py-2 rounded-full border font-semibold text-sm ${getSkillMatchColor(job.skillMatch)}`}
-                  >
-                    {job.skillMatch}%
+            <h2 className="text-lg font-semibold mb-6">Required Skills</h2>
+
+            {job.skillMatch !== undefined && (
+              <div
+                className={`mb-6 p-8 rounded-2xl border-2 ${getSkillMatchConfig(job.skillMatch).bgColor} ${getSkillMatchConfig(job.skillMatch).borderColor}`}
+              >
+                <div className="text-center space-y-3">
+                  <div className="flex items-center justify-center gap-3">
+                    <span className={`text-6xl font-bold ${getSkillMatchConfig(job.skillMatch).color}`}>
+                      {job.skillMatch}%
+                    </span>
                   </div>
+                  <div className={`text-2xl font-bold tracking-wide ${getSkillMatchConfig(job.skillMatch).color}`}>
+                    {getSkillMatchConfig(job.skillMatch).label}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{getSkillMatchConfig(job.skillMatch).description}</p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
             <ul className="space-y-3">
               {(job.qualifications || job.requirements).map((req, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm">
