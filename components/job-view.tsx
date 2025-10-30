@@ -131,7 +131,22 @@ export function JobView({ job, onBack }: JobViewProps) {
                 )}
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">{job.title}</h1>
+                <div className="flex items-center gap-3 mb-2">
+                  {onBack && (
+                    <button
+                      onClick={() => {
+                        console.log("[v0] Back button clicked")
+                        onBack()
+                      }}
+                      className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent hover:bg-accent/80 border border-border transition-all group"
+                      aria-label="Back to My Jobs"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors -ml-0.5" />
+                      <ChevronLeft className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors -ml-2.5" />
+                    </button>
+                  )}
+                  <h1 className="text-3xl font-bold text-foreground">{job.title}</h1>
+                </div>
                 {job.companyWebsite ? (
                   <a
                     href={job.companyWebsite}
