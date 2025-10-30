@@ -178,6 +178,14 @@ const mockJobListings: JobListing[] = [
       "• Design and maintain scalable cloud infrastructure on AWS/GCP\n• Implement and optimize CI/CD pipelines for automated deployments\n• Monitor system performance and ensure high availability\n• Automate infrastructure provisioning using Infrastructure as Code\n• Collaborate with development teams to improve deployment processes",
     aboutClient:
       "Zai is a fintech company revolutionizing payment solutions across Asia, with a mission to make financial services accessible to everyone. Founded in 2019, we've rapidly grown to process over $2 billion in transactions annually and serve millions of users across 12 countries. Our innovative payment platform combines security, speed, and simplicity to deliver seamless financial experiences. We're backed by prominent investors including Sequoia Capital and have recently expanded our operations to Sri Lanka, establishing a world-class engineering center in Colombo. Our team of 200+ professionals is passionate about leveraging technology to solve real-world financial challenges. We maintain the highest standards of security and compliance, holding licenses from multiple regulatory authorities. Join us in our journey to democratize financial services and build the payment infrastructure of tomorrow.",
+    benefits: [
+      "Competitive salary with annual increments",
+      "Health and life insurance coverage",
+      "Work from home flexibility",
+      "Annual performance bonuses",
+      "Training and certification support",
+      "Team building activities and events",
+    ],
   },
   {
     id: "5",
@@ -198,6 +206,14 @@ const mockJobListings: JobListing[] = [
       "• Build responsive and accessible user interfaces using React and TypeScript\n• Collaborate with designers to implement pixel-perfect designs\n• Optimize frontend performance and ensure cross-browser compatibility\n• Write reusable components and maintain component libraries\n• Participate in code reviews and contribute to frontend architecture decisions",
     aboutClient:
       "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    benefits: [
+      "Competitive salary and quarterly bonuses",
+      "HMO coverage for you and dependents",
+      "Fully remote work setup",
+      "Internet and equipment allowance",
+      "Learning and development budget",
+      "Flexible working hours",
+    ],
   },
   {
     id: "6",
@@ -217,6 +233,15 @@ const mockJobListings: JobListing[] = [
       "• Analyze large datasets to extract actionable insights and identify trends\n• Develop and deploy machine learning models for predictive analytics\n• Collaborate with stakeholders to understand data needs and define metrics\n• Build data pipelines and ensure data quality and integrity\n• Communicate findings and recommendations through visualizations and reports",
     aboutClient:
       "Fortify is a data analytics firm empowering businesses with data-driven decision-making, operating primarily in India and Southeast Asia. Since 2017, we have been helping organizations harness the power of their data to uncover hidden patterns, optimize operations, and gain a competitive edge. Our expertise spans data engineering, business intelligence, machine learning, and advanced analytics. We partner with companies across various sectors, including e-commerce, finance, and healthcare, to deliver bespoke data solutions. Our team of 100+ data scientists and engineers is committed to delivering tangible business value through data. We believe in fostering a culture of curiosity and continuous learning, encouraging our team to explore new technologies and methodologies. Join Fortify to work on challenging data problems and make a significant impact on our clients' success.",
+    // Added benefits for Data Scientist position
+    benefits: [
+      "Attractive salary and stock options",
+      "Comprehensive health and dental insurance",
+      "Remote work options with flexible hours",
+      "Generous professional development fund",
+      "Annual company retreats and team events",
+      "Access to cutting-edge tools and technologies",
+    ],
   },
   {
     id: "7",
@@ -236,6 +261,15 @@ const mockJobListings: JobListing[] = [
       "• Design and develop robust and scalable backend services and APIs\n• Implement microservices architecture and ensure seamless integration\n• Manage and optimize database performance and integrity\n• Write clean, efficient, and well-documented code\n• Collaborate with frontend teams to define API contracts",
     aboutClient:
       "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+    // Added benefits for Backend Developer position
+    benefits: [
+      "Highly competitive salary and performance bonuses",
+      "Full family medical, dental, and vision coverage",
+      "Flexible work hours and remote options",
+      "Generous annual leave and paid holidays",
+      "Opportunities for advanced technical training",
+      "Modern office space with excellent amenities",
+    ],
   },
   {
     id: "8",
@@ -255,6 +289,15 @@ const mockJobListings: JobListing[] = [
       "• Develop and execute comprehensive test plans and test cases\n• Perform manual and automated testing for web and mobile applications\n• Identify, document, and track bugs through to resolution\n• Collaborate with development teams to ensure high-quality releases\n• Contribute to the improvement of QA processes and methodologies",
     aboutClient:
       "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce across the Asia-Pacific region. Founded in 2020, we've grown to serve over 500 enterprise clients and process millions of employee interactions monthly. Our platform combines cutting-edge AI technology with intuitive design to streamline hiring, onboarding, and team management processes. We're backed by leading venture capital firms and have recently closed our Series B funding round. Our diverse team of 150+ professionals spans across Manila, Singapore, and Sydney, working together to build the future of work. We pride ourselves on our innovative culture, commitment to work-life balance, and dedication to helping businesses unlock their full potential. Join us in our mission to make workforce management effortless and empower organizations to focus on what truly matters - their people.",
+    // Added benefits for QA Engineer position
+    benefits: [
+      "Competitive salary and regular performance reviews",
+      "Comprehensive health benefits package",
+      "Fully remote work environment",
+      "Opportunities for professional development and training",
+      "Team collaboration and knowledge sharing sessions",
+      "Modern tools and technologies for testing",
+    ],
   },
   {
     id: "9",
@@ -274,6 +317,15 @@ const mockJobListings: JobListing[] = [
       "• Develop and maintain native iOS applications using Swift\n• Implement user interfaces with UIKit and SwiftUI\n• Integrate with backend APIs and services\n• Optimize application performance and ensure a smooth user experience\n• Collaborate with designers and product managers on new features",
     aboutClient:
       "Zai is a fintech company revolutionizing payment solutions across Asia, with a mission to make financial services accessible to everyone. Founded in 2019, we've rapidly grown to process over $2 billion in transactions annually and serve millions of users across 12 countries. Our innovative payment platform combines security, speed, and simplicity to deliver seamless financial experiences. We're backed by prominent investors including Sequoia Capital and have recently expanded our operations to Sri Lanka, establishing a world-class engineering center in Colombo. Our team of 200+ professionals is passionate about leveraging technology to solve real-world financial challenges. We maintain the highest standards of security and compliance, holding licenses from multiple regulatory authorities. Join us in our journey to democratize financial services and build the payment infrastructure of tomorrow.",
+    // Added benefits for Mobile Developer (iOS) position
+    benefits: [
+      "Competitive salary and annual bonuses",
+      "Excellent health insurance plan",
+      "Flexible work arrangements",
+      "Access to the latest Apple hardware and software",
+      "Opportunities for career growth and specialization",
+      "Company-sponsored training and conferences",
+    ],
   },
   {
     id: "10",
@@ -294,6 +346,15 @@ const mockJobListings: JobListing[] = [
       "• Design intuitive and engaging user interfaces for web and mobile applications\n• Conduct user research and usability testing to inform design decisions\n• Create wireframes, mockups, and interactive prototypes using Figma\n• Develop and maintain design systems and style guides\n• Collaborate with product and engineering teams to ensure design feasibility",
     aboutClient:
       "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia. Established in 2015, we've grown from a small startup to a publicly-traded company serving over 2,000 enterprise customers. Our comprehensive suite of business management tools helps organizations streamline operations, improve productivity, and drive growth. We're committed to innovation and customer success, investing heavily in R&D and maintaining a customer satisfaction rate of over 95%. Our Sydney headquarters houses our product development, sales, and customer success teams, creating a collaborative environment where ideas flourish. We've been recognized as one of Australia's fastest-growing tech companies for three consecutive years. Join us to be part of a dynamic team that's shaping the future of enterprise software.",
+    // Added benefits for UX/UI Designer position
+    benefits: [
+      "Competitive salary and annual performance incentives",
+      "Comprehensive health and wellness benefits",
+      "Flexible work arrangements",
+      "Professional development opportunities and workshops",
+      "Access to the latest design software and tools",
+      "Collaborative and creative work environment",
+    ],
   },
   {
     id: "11",
@@ -313,6 +374,15 @@ const mockJobListings: JobListing[] = [
       "• Design and architect scalable and resilient cloud-based solutions on AWS/Azure\n• Define technical standards and best practices for cloud adoption\n• Collaborate with development teams to ensure solutions meet business requirements\n• Provide technical leadership and guidance on cloud technologies\n• Evaluate and recommend new cloud services and tools",
     aboutClient:
       "Fortify is a data analytics firm empowering businesses with data-driven decision-making, operating primarily in India and Southeast Asia. Since 2017, we have been helping organizations harness the power of their data to uncover hidden patterns, optimize operations, and gain a competitive edge. Our expertise spans data engineering, business intelligence, machine learning, and advanced analytics. We partner with companies across various sectors, including e-commerce, finance, and healthcare, to deliver bespoke data solutions. Our team of 100+ data scientists and engineers is committed to delivering tangible business value through data. We believe in fostering a culture of curiosity and continuous learning, encouraging our team to explore new technologies and methodologies. Join Fortify to work on challenging data problems and make a significant impact on our clients' success.",
+    // Added benefits for Solutions Architect position
+    benefits: [
+      "Excellent salary package and performance bonuses",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible remote and hybrid work options",
+      "Professional certification and training support",
+      "Opportunities to work on challenging and innovative projects",
+      "Generous paid time off",
+    ],
   },
   {
     id: "12",
@@ -332,6 +402,15 @@ const mockJobListings: JobListing[] = [
       "• Facilitate Scrum ceremonies including sprint planning, daily stand-ups, sprint reviews, and retrospectives\n• Coach and mentor the development team on Agile principles and practices\n• Remove impediments and obstacles that hinder team progress\n• Foster a collaborative and self-organizing team environment\n• Track team progress and report on key agile metrics",
     aboutClient:
       "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    // Added benefits for Scrum Master position
+    benefits: [
+      "Competitive salary and performance incentives",
+      "Comprehensive health and wellness benefits",
+      "Flexible work schedule and remote options",
+      "Opportunities for professional development and certifications",
+      "Supportive team environment and collaborative culture",
+      "Annual performance bonuses",
+    ],
   },
   {
     id: "13",
@@ -351,6 +430,15 @@ const mockJobListings: JobListing[] = [
       "• Implement and maintain security controls to protect systems and data\n• Conduct vulnerability assessments and penetration testing\n• Monitor security alerts and respond to incidents\n• Develop and enforce security policies and procedures\n• Stay up-to-date with the latest security threats and technologies",
     aboutClient:
       "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+    // Added benefits for Security Engineer position
+    benefits: [
+      "Competitive salary and regular performance reviews",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible work hours and remote options",
+      "Professional development budget for certifications and training",
+      "Opportunities to work with advanced security technologies",
+      "Generous paid time off",
+    ],
   },
   {
     id: "14",
@@ -370,6 +458,14 @@ const mockJobListings: JobListing[] = [
       "• Create and maintain technical documentation, including user guides, API documentation, and release notes\n• Collaborate with engineering and product teams to understand product features and requirements\n• Ensure documentation is accurate, clear, and concise\n• Manage documentation projects and timelines\n• Adhere to company style guides and quality standards",
     aboutClient:
       "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce across the Asia-Pacific region. Founded in 2020, we've grown to serve over 500 enterprise clients and process millions of employee interactions monthly. Our platform combines cutting-edge AI technology with intuitive design to streamline hiring, onboarding, and team management processes. We're backed by leading venture capital firms and have recently closed our Series B funding round. Our diverse team of 150+ professionals spans across Manila, Singapore, and Sydney, working together to build the future of work. We pride ourselves on our innovative culture, commitment to work-life balance, and dedication to helping businesses unlock their full potential. Join us in our mission to make workforce management effortless and empower organizations to focus on what truly matters - their people.",
+    // Added benefits for Technical Writer position
+    benefits: [
+      "Competitive contract rate",
+      "Flexible remote working arrangement",
+      "Opportunity to work with a leading HR tech company",
+      "Exposure to diverse technical projects",
+      "Support for professional development",
+    ],
   },
   {
     id: "15",
@@ -389,6 +485,15 @@ const mockJobListings: JobListing[] = [
       "• Gather and document business requirements from stakeholders\n• Analyze and model business processes to identify areas for improvement\n• Translate business needs into technical specifications for development teams\n• Facilitate communication between business users and technical teams\n• Support user acceptance testing and system implementation",
     aboutClient:
       "Zai is a fintech company revolutionizing payment solutions across Asia, with a mission to make financial services accessible to everyone. Founded in 2019, we've rapidly grown to process over $2 billion in transactions annually and serve millions of users across 12 countries. Our innovative payment platform combines security, speed, and simplicity to deliver seamless financial experiences. We're backed by prominent investors including Sequoia Capital and have recently expanded our operations to Sri Lanka, establishing a world-class engineering center in Colombo. Our team of 200+ professionals is passionate about leveraging technology to solve real-world financial challenges. We maintain the highest standards of security and compliance, holding licenses from multiple regulatory authorities. Join us in our journey to democratize financial services and build the payment infrastructure of tomorrow.",
+    // Added benefits for Business Analyst position
+    benefits: [
+      "Competitive salary and annual bonuses",
+      "Comprehensive health insurance coverage",
+      "Hybrid work model with office and remote days",
+      "Opportunities for professional development and training",
+      "Collaborative work environment",
+      "Career advancement opportunities",
+    ],
   },
   {
     id: "16",
@@ -408,6 +513,15 @@ const mockJobListings: JobListing[] = [
       "• Develop, train, and deploy machine learning models using TensorFlow and other frameworks\n• Implement MLOps practices for model versioning, deployment, and monitoring\n• Optimize model performance and efficiency for production environments\n• Collaborate with data scientists and engineers to build end-to-end ML solutions\n• Stay current with advancements in machine learning and AI",
     aboutClient:
       "Fortify is a data analytics firm empowering businesses with data-driven decision-making, operating primarily in India and Southeast Asia. Since 2017, we have been helping organizations harness the power of their data to uncover hidden patterns, optimize operations, and gain a competitive edge. Our expertise spans data engineering, business intelligence, machine learning, and advanced analytics. We partner with companies across various sectors, including e-commerce, finance, and healthcare, to deliver bespoke data solutions. Our team of 100+ data scientists and engineers is committed to delivering tangible business value through data. We believe in fostering a culture of curiosity and continuous learning, encouraging our team to explore new technologies and methodologies. Join Fortify to work on challenging data problems and make a significant impact on our clients' success.",
+    // Added benefits for Machine Learning Engineer position
+    benefits: [
+      "Highly competitive salary and stock options",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible work hours and remote work opportunities",
+      "Generous budget for conferences and training",
+      "Access to state-of-the-art hardware and cloud resources",
+      "Collaborative environment with leading AI researchers",
+    ],
   },
   {
     id: "17",
@@ -427,6 +541,15 @@ const mockJobListings: JobListing[] = [
       "• Design, build, and maintain highly available and scalable production systems\n• Implement robust monitoring, alerting, and logging solutions\n• Respond to and resolve production incidents and outages\n• Automate operational tasks and infrastructure management\n• Collaborate with development teams to improve system reliability and performance",
     aboutClient:
       "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia. Established in 2015, we've grown from a small startup to a publicly-traded company serving over 2,000 enterprise customers. Our comprehensive suite of business management tools helps organizations streamline operations, improve productivity, and drive growth. We're committed to innovation and customer success, investing heavily in R&D and maintaining a customer satisfaction rate of over 95%. Our Sydney headquarters houses our product development, sales, and customer success teams, creating a collaborative environment where ideas flourish. We've been recognized as one of Australia's fastest-growing tech companies for three consecutive years. Join us to be part of a dynamic team that's shaping the future of enterprise software.",
+    // Added benefits for Site Reliability Engineer position
+    benefits: [
+      "Highly competitive salary and stock options",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible work arrangements and remote possibilities",
+      "Annual budget for professional development and conferences",
+      "Opportunity to work with cutting-edge infrastructure technologies",
+      "Generous paid time off and holidays",
+    ],
   },
   {
     id: "18",
@@ -446,6 +569,15 @@ const mockJobListings: JobListing[] = [
       "• Install, configure, and maintain database systems (PostgreSQL/MySQL)\n• Optimize database performance through tuning and indexing\n• Implement and manage database backup and recovery strategies\n• Ensure database security and integrity\n• Troubleshoot database issues and provide support",
     aboutClient:
       "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    // Added benefits for Database Administrator position
+    benefits: [
+      "Competitive salary and performance bonuses",
+      "Comprehensive health and wellness benefits",
+      "Flexible work hours and remote options",
+      "Training and certification opportunities",
+      "Supportive team and collaborative culture",
+      "Annual performance reviews and salary adjustments",
+    ],
   },
   {
     id: "19",
@@ -465,6 +597,15 @@ const mockJobListings: JobListing[] = [
       "• Design, deploy, and manage cloud infrastructure on AWS and Azure\n• Implement Infrastructure as Code (IaC) using tools like Terraform or CloudFormation\n• Develop and maintain CI/CD pipelines for automated deployments\n• Monitor cloud resources for performance, security, and cost optimization\n• Troubleshoot and resolve cloud infrastructure issues",
     aboutClient:
       "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+    // Added benefits for Cloud Engineer position
+    benefits: [
+      "Competitive salary and performance incentives",
+      "Comprehensive health and wellness benefits",
+      "Fully remote work environment",
+      "Professional development budget for certifications and training",
+      "Access to cutting-edge cloud technologies",
+      "Generous paid time off",
+    ],
   },
   {
     id: "20",
@@ -484,6 +625,15 @@ const mockJobListings: JobListing[] = [
       "• Lead, mentor, and manage a team of software engineers\n• Oversee the design, development, and delivery of software projects\n• Foster a culture of collaboration, innovation, and continuous improvement\n• Ensure adherence to agile methodologies and best practices\n• Work closely with product management and other stakeholders to define strategy",
     aboutClient:
       "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce across the Asia-Pacific region. Founded in 2020, we've grown to serve over 500 enterprise clients and process millions of employee interactions monthly. Our platform combines cutting-edge AI technology with intuitive design to streamline hiring, onboarding, and team management processes. We're backed by leading venture capital firms and have recently closed our Series B funding round. Our diverse team of 150+ professionals spans across Manila, Singapore, and Sydney, working together to build the future of work. We pride ourselves on our innovative culture, commitment to work-life balance, and dedication to helping businesses unlock their full potential. Join us in our mission to make workforce management effortless and empower organizations to focus on what truly matters - their people.",
+    // Added benefits for Engineering Manager position
+    benefits: [
+      "Highly competitive salary and stock options",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible work arrangements and remote options",
+      "Significant budget for professional development and leadership training",
+      "Opportunity to shape the engineering culture and strategy",
+      "Annual performance bonuses",
+    ],
   },
 ]
 
