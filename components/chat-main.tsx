@@ -224,24 +224,35 @@ Please take a moment to complete your profile, and then we can start exploring o
 
 What would you like to know about the opportunities we have available?`
   } else {
-    // Hiring manager welcome
     return `Hello! Welcome to Teamified AI! I'm **${agent.firstName}**, your **${agent.name}** AI Agent. ${agent.icon}
 
 I'm excited to help you build your team with Teamified! To get started, I've opened the Enterprise Account Setup in the workspace on the right.
+
+## Our Enterprise Plans Overview:
+
+We offer **4 flexible plans** designed to meet different organizational needs:
+
+### 💼 Basic Plan - $300/month
+Perfect for small teams needing **payroll and HR essentials**. Includes global payroll, tax management, and HR record keeping with limited AI agent access.
+
+### 🎯 Recruiter Plan - 9% of base salary per hire
+Ideal for companies focused on **hiring**. You only pay when we successfully place a candidate. Includes full recruitment lifecycle, compliance, and onboarding support.
+
+### ⚡ Enterprise Plan - $500/month ⭐ POPULAR
+Our most popular choice! Provides **equipment and workspace solutions** including managed laptops, smart office locations, and full access to all Teamified AI Agents.
+
+### 👑 Premium Plan - 30% + $300/month 🏆 ALL-IN
+The complete solution with **dedicated account management**, continuous HR support, equipment, office space, and premium AI features including dashboarding and analytics.
+
+## Why Choose Teamified?
 
 ${loremParagraphs[0]}
 
 ${loremParagraphs[1]}
 
-## Here's what I can help you with:
+**Let's find the perfect plan for your organization!** As you complete the setup form, I'm here to answer any questions about our plans, features, or pricing.
 
-${loremParagraphs[2]}
-
-${loremParagraphs[3]}
-
-Let's complete your company profile and select the perfect plan for your hiring needs!
-
-What questions do you have about our enterprise solutions?`
+What would you like to know about our enterprise solutions?`
   }
 }
 
