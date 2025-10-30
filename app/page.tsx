@@ -53,8 +53,20 @@ export default function ChatPage() {
   }, [])
 
   const handleProfileSave = () => {
-    if (chatMainRef.current) {
-      chatMainRef.current.handleProfileSaved()
+    const user = getCurrentUser()
+
+    if (user?.role === "hiring_manager") {
+      setWorkspaceContent({
+        type: "payment-success",
+        title: "Payment Successful",
+        planName: "Enterprise Plan",
+        amount: "$500/mo",
+      })
+    } else {
+      // For candidates, just notify chat
+      if (chatMainRef.current) {
+        chatMainRef.current.handleProfileSaved()
+      }
     }
   }
 

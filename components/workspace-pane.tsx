@@ -40,6 +40,7 @@ import {
 import { CandidateProfileForm } from "./candidate-profile-form"
 import { HiringManagerProfileForm } from "./hiring-manager-profile-form"
 import { CandidatePricing } from "./candidate-pricing"
+import { PaymentSuccess } from "./payment-success" // Import payment success component
 
 interface WorkspacePaneProps {
   isOpen: boolean
@@ -419,6 +420,8 @@ export function WorkspacePane({
         return "Edit Hiring Manager Profile"
       case "candidate-pricing":
         return "Upgrade to Premium"
+      case "payment-success": // Added payment success title
+        return "Payment Successful"
       case "pdf":
         return "Document Viewer"
       case "image":
@@ -518,6 +521,15 @@ export function WorkspacePane({
 
       case "candidate-pricing":
         return <CandidatePricing onClose={onClose} />
+
+      case "payment-success":
+        return (
+          <PaymentSuccess
+            planName={content.planName || "Enterprise Plan"}
+            amount={content.amount || "$500/mo"}
+            onClose={onClose}
+          />
+        )
 
       case "pdf":
         return (

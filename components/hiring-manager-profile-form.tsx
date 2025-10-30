@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Building2,
   User,
@@ -62,6 +62,7 @@ interface PaymentInfo {
 export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: HiringManagerProfileFormProps) {
   const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1)
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
 
   // Step 1: Company Profile
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>({
@@ -104,6 +105,7 @@ export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: Hiri
   const [paymentProgress, setPaymentProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
+  const [containerWidth, setContainerWidth] = useState(0)
 
   const handleNext = () => {
     if (currentStep < 3) {
@@ -126,41 +128,45 @@ export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: Hiri
   }
 
   const handlePaymentConfirm = () => {
-    // Payment complete
-    toast({
-      title: "Payment successful!",
-      description: "Your enterprise account has been activated.",
-      duration: 2000,
-    })
+    setIsProcessingPayment(true)
 
-    if (onSave) {
-      onSave()
-    }
+    // Simulate payment processing
+    setTimeout(() => {
+      toast({
+        title: "Payment successful!",
+        description: "Your enterprise account has been activated.",
+        duration: 2000,
+      })
 
-    if (onClose) {
-      setTimeout(() => {
-        onClose()
-      }, 2000)
-    }
+      if (onSave) {
+        onSave()
+      }
+    }, 2000)
   }
 
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isStep3Valid()) return
     setIsDragging(true)
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX
-    setStartX(clientX)
+    const container = (e.currentTarget as HTMLElement).parentElement
+    if (container) {
+      setContainerWidth(container.getBoundingClientRect().width)
+      setStartX(clientX - container.getBoundingClientRect().left)
+    }
   }
 
   const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDragging) return
+    if (!isDragging || !containerWidth) return
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX
-    const container = (e.currentTarget as HTMLElement).parentElement
+    const container = e.currentTarget as HTMLElement
     if (!container) return
 
     const containerRect = container.getBoundingClientRect()
-    const maxWidth = containerRect.width - 80 // 80px is button width
-    const deltaX = clientX - startX
-    const newProgress = Math.min(Math.max((deltaX / maxWidth) * 100, 0), 100)
+    const currentX = clientX - containerRect.left
+    const buttonWidth = 80
+    const maxDrag = containerWidth - buttonWidth
+    const dragDistance = currentX - startX
+    const newProgress = Math.min(Math.max((dragDistance / maxDrag) * 100, 0), 100)
 
     setPaymentProgress(newProgress)
 
@@ -248,9 +254,45 @@ export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: Hiri
     return pricingText[plan] || ""
   }
 
+  // Use effect to set initial container width if needed, or on resize
+  useEffect(() => {
+    const container = document.querySelector(".relative.h-16.bg-muted.rounded-full.overflow-hidden") as HTMLElement
+    if (container) {
+      setContainerWidth(container.offsetWidth)
+    }
+
+    const handleResize = () => {
+      if (container) {
+        setContainerWidth(container.offsetWidth)
+      }
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-6">
+        {isProcessingPayment && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-card p-8 rounded-2xl border border-border shadow-2xl max-w-md w-full mx-4">
+              <div className="flex flex-col items-center gap-6">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full border-4 border-muted animate-spin border-t-[#A16AE8]" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <CreditCard className="w-8 h-8 text-[#A16AE8]" />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-foreground mb-2">Processing Payment</h3>
+                  <p className="text-sm text-muted-foreground">Please wait while we securely process your payment...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-foreground mb-2">Enterprise Account Setup</h2>
@@ -952,42 +994,44 @@ export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: Hiri
                   Slide to Complete Payment
                 </label>
                 <div
-                  className="relative h-16 bg-muted rounded-full overflow-hidden"
+                  className="relative h-16 bg-gradient-to-r from-muted to-muted/50 rounded-full overflow-hidden shadow-inner"
                   onMouseMove={handleDragMove}
                   onMouseUp={handleDragEnd}
                   onMouseLeave={handleDragEnd}
                   onTouchMove={handleDragMove}
                   onTouchEnd={handleDragEnd}
                 >
-                  {/* Progress background */}
                   <div
-                    className="absolute inset-0 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] transition-all duration-200"
+                    className="absolute inset-0 bg-gradient-to-r from-[#A16AE8] via-[#8096FD] to-[#A16AE8] transition-all duration-200 shadow-lg"
                     style={{
                       width: `${paymentProgress}%`,
+                      opacity: paymentProgress > 0 ? 1 : 0,
                     }}
                   />
 
-                  {/* Instruction text */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-sm font-semibold text-muted-foreground">
-                      {paymentProgress === 100 ? "Processing..." : "Slide to confirm"}
+                    <span
+                      className={`text-sm font-semibold transition-all duration-200 ${
+                        paymentProgress > 50 ? "text-white" : "text-muted-foreground"
+                      }`}
+                    >
+                      {paymentProgress === 100 ? "Payment Confirmed!" : "Slide to confirm payment"}
                     </span>
                   </div>
 
-                  {/* Draggable button with arrows */}
                   <button
                     onMouseDown={handleDragStart}
                     onTouchStart={handleDragStart}
                     disabled={!isStep3Valid() || paymentProgress === 100}
-                    className="absolute left-1 top-1 bottom-1 w-20 bg-white rounded-full shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105"
+                    className="absolute left-1 top-1 bottom-1 w-20 bg-white rounded-full shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 border-2 border-white"
                     style={{
-                      transform: `translateX(${(paymentProgress / 100) * (100 - 5)}%)`,
-                      transition: isDragging ? "none" : "transform 0.3s ease-out",
+                      transform: `translateX(${paymentProgress > 0 ? `calc(${(paymentProgress / 100) * (containerWidth - 88)}px)` : "0px"})`,
+                      transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   >
                     <ChevronsRight
-                      className={`w-6 h-6 transition-colors ${
-                        paymentProgress > 0 ? "text-[#A16AE8]" : "text-muted-foreground"
+                      className={`w-6 h-6 transition-all duration-200 ${
+                        paymentProgress > 0 ? "text-[#A16AE8] animate-pulse" : "text-muted-foreground"
                       }`}
                     />
                   </button>
