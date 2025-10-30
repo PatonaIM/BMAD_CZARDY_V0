@@ -39,6 +39,7 @@ import {
 } from "recharts"
 import { CandidateProfileForm } from "./candidate-profile-form"
 import { HiringManagerProfileForm } from "./hiring-manager-profile-form"
+import { CandidatePricing } from "./candidate-pricing"
 
 interface WorkspacePaneProps {
   isOpen: boolean
@@ -504,6 +505,9 @@ export function WorkspacePane({ isOpen, onClose, content, onProfileSave, onUpgra
 
       case "hiring-manager-profile":
         return <HiringManagerProfileForm onSave={onProfileSave} onClose={onClose} />
+
+      case "candidate-pricing":
+        return <CandidatePricing onClose={onClose} />
 
       case "pdf":
         return (
