@@ -37,6 +37,7 @@ export interface JobListing {
   description: string
   requirements: string[]
   applied?: boolean
+  saved?: boolean // Added saved property to track saved jobs
   logo?: string
   status?: JobStatus
   responsibilities?: string[]

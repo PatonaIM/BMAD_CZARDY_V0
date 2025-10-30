@@ -66,6 +66,7 @@ const mockJobListings: JobListing[] = [
     description: "We're looking for an experienced full-stack developer to join our growing team in Manila.",
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
+    saved: true, // Added saved property
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
     status: "open",
     qualifications: [
@@ -124,6 +125,7 @@ const mockJobListings: JobListing[] = [
     posted: "3 days ago",
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
+    saved: true, // Added saved property
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
     status: "open",
   },
@@ -151,6 +153,7 @@ const mockJobListings: JobListing[] = [
     description: "Create beautiful and responsive user interfaces for our web applications.",
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
+    saved: true, // Added saved property
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
     status: "open",
   },
@@ -221,6 +224,7 @@ const mockJobListings: JobListing[] = [
     description: "Create intuitive and visually appealing user experiences.",
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
+    saved: true, // Added saved property
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
     status: "draft",
   },
@@ -1213,10 +1217,18 @@ export function WorkspacePane({
 
       case "job-board":
         const user = getCurrentUser()
-        const displayedJobs =
-          user?.role === "candidate"
-            ? mockJobListings.filter((job) => job.applied || job.saved) // Show only applied or saved jobs for candidates
-            : mockJobListings // Show all jobs for hiring managers
+
+        let displayedJobs = mockJobListings
+
+        if (user?.role === "candidate") {
+          // Candidates can only see open and closed jobs (not draft or cancelled)
+          displayedJobs = mockJobListings.filter(
+            (job) => (job.applied || job.saved) && (job.status === "open" || job.status === "closed"),
+          )
+        }
+
+        const appliedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.applied) : []
+        const savedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.saved && !job.applied) : []
 
         return (
           <div className="h-full overflow-auto">
@@ -1228,6 +1240,182 @@ export function WorkspacePane({
                   You haven't applied to or saved any jobs yet. Start exploring available positions and apply to jobs
                   that match your skills!
                 </p>
+              </div>
+            ) : user?.role === "candidate" ? (
+              <div className="space-y-8">
+                {/* Applied Jobs Section */}
+                {appliedJobs.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <h3 className="text-xl font-semibold">Applied Jobs</h3>
+                      <span className="px-3 py-1 text-sm rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                        {appliedJobs.length}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {appliedJobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
+                        >
+                          <div className="absolute top-6 right-6">
+                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                              <img
+                                src={job.logo || "/placeholder.svg"}
+                                alt={`${job.company} logo`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-start justify-between mb-4 pr-16">
+                            <div>
+                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                            </div>
+                            <div className="flex flex-col gap-2 items-end">
+                              {job.status && (
+                                <span
+                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                    job.status === "open"
+                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                      : job.status === "draft"
+                                        ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
+                                        : job.status === "closed"
+                                          ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                  }`}
+                                >
+                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                </span>
+                              )}
+                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                Applied
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              {job.location}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Briefcase className="w-4 h-4" />
+                              {job.type}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              {job.salary}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {job.posted}
+                            </div>
+                          </div>
+                          <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
+                          <div className="flex gap-2">
+                            <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
+                              View Application
+                            </button>
+                            <button
+                              onClick={() => handleViewJobDetails(job)}
+                              className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors"
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Saved Jobs Section */}
+                {savedJobs.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <h3 className="text-xl font-semibold">Saved Jobs</h3>
+                      <span className="px-3 py-1 text-sm rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                        {savedJobs.length}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {savedJobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
+                        >
+                          <div className="absolute top-6 right-6">
+                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                              <img
+                                src={job.logo || "/placeholder.svg"}
+                                alt={`${job.company} logo`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-start justify-between mb-4 pr-16">
+                            <div>
+                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                            </div>
+                            <div className="flex flex-col gap-2 items-end">
+                              {job.status && (
+                                <span
+                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                    job.status === "open"
+                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                      : job.status === "draft"
+                                        ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
+                                        : job.status === "closed"
+                                          ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                  }`}
+                                >
+                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                </span>
+                              )}
+                              <span className="px-3 py-1 text-xs rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                Saved
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              {job.location}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Briefcase className="w-4 h-4" />
+                              {job.type}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              {job.salary}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {job.posted}
+                            </div>
+                          </div>
+                          <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
+                          <div className="flex gap-2">
+                            <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
+                              Submit Application
+                            </button>
+                            <button
+                              onClick={() => handleViewJobDetails(job)}
+                              className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors"
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1251,7 +1439,6 @@ export function WorkspacePane({
                         <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                         <p className="text-sm text-muted-foreground">{job.company}</p>
                       </div>
-                      {/* CHANGE: Added status badge display */}
                       <div className="flex flex-col gap-2 items-end">
                         {job.status && (
                           <span
