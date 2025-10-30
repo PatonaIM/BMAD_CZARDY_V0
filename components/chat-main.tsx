@@ -307,9 +307,20 @@ export const ChatMain = forwardRef<
   }, [])
 
   useEffect(() => {
+    if (initialAgentId) {
+      const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
+      if (agent && agent.id !== activeAgent.id) {
+        console.log("[v0] Syncing activeAgent with initialAgentId:", initialAgentId)
+        setActiveAgent(agent)
+      }
+    }
+  }, [initialAgentId])
+
+  useEffect(() => {
     if (shouldShowWelcome && initialAgentId) {
       const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
       if (agent) {
+        console.log("[v0] Adding welcome message for agent:", agent.name)
         const userRole = agent.id === "technical-recruiter" ? "candidate" : "hiring_manager"
         setLocalMessages([
           {
