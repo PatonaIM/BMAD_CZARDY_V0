@@ -1537,10 +1537,14 @@ export function WorkspacePane({
                       {appliedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
+                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
                         >
-                          <div className="absolute top-6 right-6">
-                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                            </div>
+                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                               <img
                                 src={job.logo || "/placeholder.svg"}
                                 alt={`${job.company} logo`}
@@ -1549,67 +1553,76 @@ export function WorkspacePane({
                             </div>
                           </div>
 
-                          <div className="flex items-start justify-between mb-4 pr-16">
-                            <div>
-                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
-                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                          <div className="flex gap-6">
+                            {/* Left side - 70% */}
+                            <div className="flex-[7] flex flex-col gap-4">
+                              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {job.location}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Briefcase className="w-4 h-4" />
+                                  {job.type}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="w-4 h-4" />
+                                  {job.salary}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {job.posted}
+                                </div>
+                              </div>
+
+                              <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">
+                                {job.description}
+                              </p>
+
+                              <button
+                                onClick={() => handleViewJobDetails(job)}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
+                              >
+                                View Application
+                              </button>
                             </div>
-                            <div className="flex flex-col gap-2 items-end">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : job.status === "draft"
-                                        ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
-                                        : job.status === "closed"
-                                          ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                                </span>
-                              )}
+
+                            {/* Right side - 30% */}
+                            <div className="flex-[3] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
                               <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
                                 Applied
                               </span>
                               {job.skillMatch && (
-                                <div
-                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${getSkillMatchInfo(job.skillMatch).color}`}
-                                >
-                                  <span className="font-bold">{job.skillMatch}%</span>
-                                  <span>{getSkillMatchInfo(job.skillMatch).label}</span>
+                                <div className="text-center">
+                                  <div
+                                    className={`text-4xl font-bold mb-2 ${
+                                      job.skillMatch >= 90
+                                        ? "text-green-600"
+                                        : job.skillMatch >= 70
+                                          ? "text-amber-600"
+                                          : "text-red-600"
+                                    }`}
+                                  >
+                                    {job.skillMatch}%
+                                  </div>
+                                  <div
+                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                      job.skillMatch >= 90
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : job.skillMatch >= 70
+                                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                    }`}
+                                  >
+                                    {job.skillMatch >= 90
+                                      ? "STRONG FIT"
+                                      : job.skillMatch >= 70
+                                        ? "GOOD FIT"
+                                        : "NOT FIT"}
+                                  </div>
                                 </div>
                               )}
                             </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              {job.location}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Briefcase className="w-4 h-4" />
-                              {job.type}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="w-4 h-4" />
-                              {job.salary}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {job.posted}
-                            </div>
-                          </div>
-                          <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleViewJobDetails(job)}
-                              className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
-                            >
-                              View Application
-                            </button>
                           </div>
                         </div>
                       ))}
@@ -1630,10 +1643,14 @@ export function WorkspacePane({
                       {savedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
+                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
                         >
-                          <div className="absolute top-6 right-6">
-                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                            </div>
+                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                               <img
                                 src={job.logo || "/placeholder.svg"}
                                 alt={`${job.company} logo`}
@@ -1642,67 +1659,76 @@ export function WorkspacePane({
                             </div>
                           </div>
 
-                          <div className="flex items-start justify-between mb-4 pr-16">
-                            <div>
-                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
-                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                          <div className="flex gap-6">
+                            {/* Left side - 70% */}
+                            <div className="flex-[7] flex flex-col gap-4">
+                              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {job.location}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Briefcase className="w-4 h-4" />
+                                  {job.type}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="w-4 h-4" />
+                                  {job.salary}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {job.posted}
+                                </div>
+                              </div>
+
+                              <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">
+                                {job.description}
+                              </p>
+
+                              <button
+                                onClick={() => handleViewJobDetails(job)}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
+                              >
+                                Submit Application
+                              </button>
                             </div>
-                            <div className="flex flex-col gap-2 items-end">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : job.status === "draft"
-                                        ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
-                                        : job.status === "closed"
-                                          ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                                </span>
-                              )}
+
+                            {/* Right side - 30% */}
+                            <div className="flex-[3] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
                               <span className="px-3 py-1 text-xs rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
                                 Saved
                               </span>
                               {job.skillMatch && (
-                                <div
-                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${getSkillMatchInfo(job.skillMatch).color}`}
-                                >
-                                  <span className="font-bold">{job.skillMatch}%</span>
-                                  <span>{getSkillMatchInfo(job.skillMatch).label}</span>
+                                <div className="text-center">
+                                  <div
+                                    className={`text-4xl font-bold mb-2 ${
+                                      job.skillMatch >= 90
+                                        ? "text-green-600"
+                                        : job.skillMatch >= 70
+                                          ? "text-amber-600"
+                                          : "text-red-600"
+                                    }`}
+                                  >
+                                    {job.skillMatch}%
+                                  </div>
+                                  <div
+                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                      job.skillMatch >= 90
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : job.skillMatch >= 70
+                                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                    }`}
+                                  >
+                                    {job.skillMatch >= 90
+                                      ? "STRONG FIT"
+                                      : job.skillMatch >= 70
+                                        ? "GOOD FIT"
+                                        : "NOT FIT"}
+                                  </div>
                                 </div>
                               )}
                             </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              {job.location}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Briefcase className="w-4 h-4" />
-                              {job.type}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="w-4 h-4" />
-                              {job.salary}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {job.posted}
-                            </div>
-                          </div>
-                          <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleViewJobDetails(job)}
-                              className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
-                            >
-                              Submit Application
-                            </button>
                           </div>
                         </div>
                       ))}
