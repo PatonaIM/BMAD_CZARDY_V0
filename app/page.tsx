@@ -165,6 +165,16 @@ export default function ChatPage() {
     }
   }
 
+  const handleBackToJobBoard = () => {
+    console.log("[v0] Back to job board clicked")
+    const user = getCurrentUser()
+
+    setWorkspaceContent({
+      type: "job-board",
+      title: user?.role === "candidate" ? "My Jobs" : "Job Board",
+    })
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -196,6 +206,7 @@ export default function ChatPage() {
                 onUpgradePlan={handleUpgradePlan}
                 onHiringManagerStepChange={handleHiringManagerStepChange}
                 onViewJob={handleViewJob}
+                onBackToJobBoard={handleBackToJobBoard}
               />
             </div>
           )}

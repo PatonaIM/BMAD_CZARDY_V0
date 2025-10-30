@@ -81,8 +81,12 @@ export function JobView({ job, onBack }: JobViewProps) {
       <div className="max-w-4xl mx-auto space-y-6 p-6">
         <button
           onClick={() => {
+            console.log("[v0] Back button clicked")
             if (onBack) {
+              console.log("[v0] Calling onBack callback")
               onBack()
+            } else {
+              console.log("[v0] ERROR: onBack callback is undefined")
             }
           }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-accent transition-colors text-sm font-medium shadow-sm"
