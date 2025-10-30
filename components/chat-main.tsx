@@ -367,13 +367,21 @@ export const ChatMain = forwardRef<
       return
     }
 
-    console.log(
-      "[v0] Updating localMessages. Preserved:",
-      preservedLocalMessages.length,
-      "AI:",
-      convertedMessages.length,
-    )
-    setLocalMessages([...preservedLocalMessages, ...convertedMessages])
+    const newMessages = [...preservedLocalMessages, ...convertedMessages]
+
+    const messagesChanged =
+      newMessages.length !== localMessages.length ||
+      newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content)
+
+    if (messagesChanged) {
+      console.log(
+        "[v0] Updating localMessages. Preserved:",
+        preservedLocalMessages.length,
+        "AI:",
+        convertedMessages.length,
+      )
+      setLocalMessages(newMessages)
+    }
   }, [aiMessages, activeAgent])
 
   useEffect(() => {
