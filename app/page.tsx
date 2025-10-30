@@ -115,6 +115,15 @@ export default function ChatPage() {
     }
   }
 
+  const handleViewJob = (job: any) => {
+    console.log("[v0] Opening job view for:", job.title)
+    setWorkspaceContent({
+      type: "job-view",
+      title: job.title,
+      job: job,
+    })
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -144,6 +153,7 @@ export default function ChatPage() {
                 onProfileSave={handleProfileSave}
                 onUpgradePlan={handleUpgradePlan}
                 onHiringManagerStepChange={handleHiringManagerStepChange}
+                onViewJob={handleViewJob}
               />
             </div>
           )}

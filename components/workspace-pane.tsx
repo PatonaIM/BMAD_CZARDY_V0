@@ -50,6 +50,7 @@ interface WorkspacePaneProps {
   onProfileSave?: () => void // Added callback for profile save
   onUpgradePlan?: () => void // Added onUpgradePlan prop
   onHiringManagerStepChange?: (step: number) => void
+  onViewJob?: (job: JobListing) => void // Added callback for viewing job details
 }
 
 const mockJobListings: JobListing[] = [
@@ -447,6 +448,7 @@ export function WorkspacePane({
   onProfileSave,
   onUpgradePlan,
   onHiringManagerStepChange,
+  onViewJob, // Added onViewJob prop
 }: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
@@ -465,9 +467,9 @@ export function WorkspacePane({
   const mockImages = ["/dashboard-analytics.png", "/user-interface-design.png", "/data-visualization-abstract.png"]
 
   const handleViewJobDetails = (job: JobListing) => {
-    // This would typically be handled by the parent component
-    // For now, we'll just log it
-    console.log("[v0] Opening job view for:", job.title)
+    if (onViewJob) {
+      onViewJob(job)
+    }
   }
 
   const getWorkspaceTitle = () => {
