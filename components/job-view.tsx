@@ -57,18 +57,23 @@ const getStatusConfig = (status: JobStatus) => {
 export function JobView({ job, onBack }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
 
+  console.log("[v0] JobView rendered with onBack:", !!onBack)
+
   return (
     <div className="h-full overflow-auto">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Job Board
-          </button>
-        )}
+      <div className="max-w-4xl mx-auto space-y-6 p-6">
+        <button
+          onClick={() => {
+            console.log("[v0] Back button clicked")
+            if (onBack) {
+              onBack()
+            }
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-accent transition-colors text-sm font-medium shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to My Jobs
+        </button>
 
         {/* Header Section */}
         <div className="bg-card rounded-2xl border border-border p-8">
