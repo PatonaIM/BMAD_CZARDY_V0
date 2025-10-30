@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast"
 interface HiringManagerProfileFormProps {
   onSave?: () => void
   onClose?: () => void
+  onStepChange?: (step: number) => void // Added callback for step changes
 }
 
 interface CompanyProfile {
@@ -55,7 +56,7 @@ interface PaymentInfo {
   cvv: string
 }
 
-export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfileFormProps) {
+export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: HiringManagerProfileFormProps) {
   const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1)
 
@@ -101,13 +102,21 @@ export function HiringManagerProfileForm({ onSave, onClose }: HiringManagerProfi
 
   const handleNext = () => {
     if (currentStep < 3) {
-      setCurrentStep(currentStep + 1)
+      const nextStep = currentStep + 1
+      setCurrentStep(nextStep)
+      if (onStepChange) {
+        onStepChange(nextStep)
+      }
     }
   }
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+      const prevStep = currentStep - 1
+      setCurrentStep(prevStep)
+      if (onStepChange) {
+        onStepChange(prevStep)
+      }
     }
   }
 

@@ -18,6 +18,8 @@ import {
   Scale,
   Info,
   PanelRight,
+  Crown,
+  Users,
 } from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
@@ -265,7 +267,7 @@ Now that I have your information, I can help you in several ways. Here are some 
 }
 
 export const ChatMain = forwardRef<
-  { handleProfileSaved: () => void; switchAgent: (agentId: string) => void },
+  { handleProfileSaved: () => void; switchAgent: (agentId: string) => void; showPricingGuidance: () => void },
   ChatMainProps
 >(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
   const [inputMessage, setInputMessage] = useState("")
@@ -405,10 +407,63 @@ export const ChatMain = forwardRef<
       ])
     },
     switchAgent: (agentId: string) => {
+      console.log("[v0] switchAgent called with agentId:", agentId)
       const agent = AI_AGENTS.find((a) => a.id === agentId)
       if (agent) {
+        console.log("[v0] Agent found:", agent.name)
         handleAgentChange(agent)
+      } else {
+        console.log("[v0] Agent not found for id:", agentId)
       }
+    },
+    showPricingGuidance: () => {
+      console.log("[v0] showPricingGuidance called")
+      const pricingMessage = `Great! Let's find the perfect plan for your organization. 🎯
+
+I've analyzed our enterprise offerings, and here's what each plan provides:
+
+## 💼 **Basic Plan** - $300/month
+Perfect for **small teams** needing payroll and HR essentials. Best if you:
+- Need global payroll and tax management
+- Want HR record keeping without complexity
+- Have a limited budget but need core services
+
+## 🎯 **Recruiter Plan** - 9% of base salary per hire
+Ideal for **growing companies** focused on hiring. Best if you:
+- Only want to pay when you successfully hire
+- Need full recruitment lifecycle support
+- Require compliance and onboarding assistance
+
+## ⚡ **Enterprise Plan** - $500/month ⭐ MOST POPULAR
+Our **most popular choice**! Best if you:
+- Need equipment (laptops, accessories) for your team
+- Want smart office locations and workspace setup
+- Require full access to all Teamified AI Agents
+
+## 👑 **Premium Plan** - 30% + $300/month 🏆 ALL-IN
+The **complete solution** with everything included. Best if you:
+- Want dedicated account management
+- Need continuous HR and compliance support
+- Require equipment, office space, AND premium AI features
+- Want dashboarding and analytics capabilities
+
+**Which aspects are most important for your organization?** I can help you compare specific features or answer questions about any plan!`
+
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "ai",
+          content: pricingMessage,
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Compare Basic vs Enterprise plans", icon: <Building2 className="w-4 h-4" /> },
+            { text: "What's included in the Premium plan?", icon: <Crown className="w-4 h-4" /> },
+            { text: "How does the Recruiter plan pricing work?", icon: <Users className="w-4 h-4" /> },
+            { text: "Which plan is best for a 50-person team?", icon: <Briefcase className="w-4 h-4" /> },
+          ],
+        },
+      ])
     },
   }))
 
@@ -760,15 +815,19 @@ export const ChatMain = forwardRef<
   }
 
   const handleAgentChange = (agent: AIAgent) => {
+    console.log("[v0] handleAgentChange called with agent:", agent.name)
     setActiveAgent(agent)
     setIsAgentDropdownOpen(false)
-    // Add a message indicating the agent switch
+
+    const introMessage = generateAgentIntroduction(agent)
+    console.log("[v0] Adding agent introduction message to chat")
+
     setLocalMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(), // Use a temporary ID for local message
+        id: `agent-switch-${Date.now()}`,
         type: "ai",
-        content: generateAgentIntroduction(agent),
+        content: introMessage,
         agentId: agent.id,
         isAgentSwitch: true,
       },
