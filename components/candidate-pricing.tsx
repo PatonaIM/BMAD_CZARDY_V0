@@ -46,6 +46,8 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
     "Advanced resume optimization",
     "Priority job matching",
     "Interview preparation tools",
+    "AI Mock Interviews",
+    "Access to Teamified Learning",
     "Salary insights and negotiation tips",
     "Direct messaging with recruiters",
     "Application tracking dashboard",
@@ -65,7 +67,7 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Free Plan */}
-          <div className="rounded-2xl border-2 border-border bg-card p-6">
+          <div className="rounded-2xl border-2 border-border bg-card p-6 flex flex-col">
             <div className="mb-6">
               <h3 className="text-xl font-bold text-foreground mb-2">Free Plan</h3>
               <div className="flex items-baseline gap-2">
@@ -74,7 +76,7 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
               </div>
             </div>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-6 flex-1">
               {freePlanFeatures.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -92,7 +94,7 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
           </div>
 
           {/* Monthly Premium Plan */}
-          <div className="rounded-2xl border-2 border-[#A16AE8] bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5 p-6 relative">
+          <div className="rounded-2xl border-2 border-[#A16AE8] bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5 p-6 relative flex flex-col">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white text-xs font-bold">
               POPULAR
             </div>
@@ -111,7 +113,7 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
               </div>
             </div>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-6 flex-1">
               {premiumPlanFeatures.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
@@ -130,7 +132,7 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
           </div>
 
           {/* Annual Premium Plan */}
-          <div className="rounded-2xl border-2 border-[#60D394] bg-gradient-to-br from-[#60D394]/5 to-[#60D394]/10 p-6 relative">
+          <div className="rounded-2xl border-2 border-[#60D394] bg-gradient-to-br from-[#60D394]/5 to-[#60D394]/10 p-6 relative flex flex-col">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#60D394] to-[#4CAF50] text-white text-xs font-bold">
               BEST VALUE
             </div>
@@ -150,7 +152,7 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
               <p className="text-xs text-green-600 font-medium mt-1">Save $90.88 per year (38% off)!</p>
             </div>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-6 flex-1">
               {premiumPlanFeatures.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-[#60D394] flex-shrink-0 mt-0.5" />
@@ -168,7 +170,6 @@ export function CandidatePricing({ onClose }: CandidatePricingProps) {
             </button>
           </div>
         </div>
-        {/* </CHANGE> */}
 
         {/* Benefits Section */}
         <div className="rounded-2xl border border-border bg-card p-6">
