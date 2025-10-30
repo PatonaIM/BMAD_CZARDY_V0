@@ -55,7 +55,20 @@ export default function ChatPage() {
   }
 
   const handleEditProfile = () => {
-    setWorkspaceContent({ type: "candidate-profile", title: "Edit Profile" })
+    const user = getCurrentUser()
+
+    if (user?.role === "hiring_manager") {
+      // Switch to Sales & Marketing agent for hiring managers
+      const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
+      if (salesAgent && chatMainRef.current) {
+        console.log("[v0] Switching to Sales & Marketing agent for hiring manager profile")
+        chatMainRef.current.switchAgent(salesAgent.id)
+      }
+      setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
+    } else {
+      // Candidate profile
+      setWorkspaceContent({ type: "candidate-profile", title: "Edit Profile" })
+    }
   }
 
   const handleUpgradePlan = () => {
