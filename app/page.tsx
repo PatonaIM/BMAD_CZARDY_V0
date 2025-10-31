@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import { ChatSidebar } from "@/components/chat-sidebar"
 import { ChatMain } from "@/components/chat-main"
 import { WorkspacePane } from "@/components/workspace-pane"
-import { ThemeProvider } from "@/components/theme-provider"
 import type { WorkspaceContent } from "@/types/workspace"
 import { getCurrentUser, clearNewSignupFlag, clearUserOnInitialLoad } from "@/lib/auth"
 import { AI_AGENTS } from "@/types/agents"
@@ -19,8 +18,8 @@ export default function ChatPage() {
     switchAgent: (agentId: string) => void
     showPricingGuidance: () => void
     showPaymentSuccess: () => void
-    showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary to ref type
-    showJobViewSummary: (job: any) => void // Added showJobViewSummary to ref type
+    showMyJobsSummary: (appliedCount: number, savedCount: number) => void
+    showJobViewSummary: (job: any) => void
   } | null>(null)
 
   useEffect(() => {
@@ -138,14 +137,12 @@ export default function ChatPage() {
     console.log("[v0] My Jobs clicked")
     const user = getCurrentUser()
 
-    // Switch to Technical Recruiter AI Agent
     const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
     if (technicalRecruiter && chatMainRef.current) {
       console.log("[v0] Switching to Technical Recruiter agent")
       chatMainRef.current.switchAgent(technicalRecruiter.id)
     }
 
-    // Open job board in workspace
     console.log("[v0] Opening job board workspace")
     setWorkspaceContent({
       type: "job-board",
@@ -153,9 +150,8 @@ export default function ChatPage() {
     })
 
     if (user?.role === "candidate" && chatMainRef.current) {
-      // Mock data - in a real app, this would come from the database
-      const appliedCount = 4 // Number of jobs the user has applied to
-      const savedCount = 2 // Number of jobs the user has saved
+      const appliedCount = 4
+      const savedCount = 2
 
       setTimeout(() => {
         if (chatMainRef.current) {
@@ -176,42 +172,40 @@ export default function ChatPage() {
   }
 
   return (
-    <ThemeProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
-        <ChatSidebar
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          onEditProfile={handleEditProfile}
-          onUpgradePlan={handleUpgradePlan}
-          onMyJobs={handleMyJobs}
-        />
-        <div className="flex-1 flex overflow-hidden">
-          <div className={`${workspaceContent.type ? "w-2/5" : "w-full"} transition-all duration-300`}>
-            <ChatMain
-              ref={chatMainRef}
-              isSidebarOpen={isSidebarOpen}
-              onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-              onOpenWorkspace={setWorkspaceContent}
-              initialAgentId={initialAgent}
-              shouldShowWelcome={shouldShowWelcome}
+    <div className="flex h-screen overflow-hidden bg-background">
+      <ChatSidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        onEditProfile={handleEditProfile}
+        onUpgradePlan={handleUpgradePlan}
+        onMyJobs={handleMyJobs}
+      />
+      <div className="flex-1 flex overflow-hidden">
+        <div className={`${workspaceContent.type ? "w-2/5" : "w-full"} transition-all duration-300`}>
+          <ChatMain
+            ref={chatMainRef}
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            onOpenWorkspace={setWorkspaceContent}
+            initialAgentId={initialAgent}
+            shouldShowWelcome={shouldShowWelcome}
+          />
+        </div>
+        {workspaceContent.type && (
+          <div className="w-3/5 animate-in slide-in-from-right duration-300">
+            <WorkspacePane
+              isOpen={!!workspaceContent.type}
+              onClose={() => setWorkspaceContent({ type: null })}
+              content={workspaceContent}
+              onProfileSave={handleProfileSave}
+              onUpgradePlan={handleUpgradePlan}
+              onHiringManagerStepChange={handleHiringManagerStepChange}
+              onViewJob={handleViewJob}
+              onBackToJobBoard={handleBackToJobBoard}
             />
           </div>
-          {workspaceContent.type && (
-            <div className="w-3/5 animate-in slide-in-from-right duration-300">
-              <WorkspacePane
-                isOpen={!!workspaceContent.type}
-                onClose={() => setWorkspaceContent({ type: null })}
-                content={workspaceContent}
-                onProfileSave={handleProfileSave}
-                onUpgradePlan={handleUpgradePlan}
-                onHiringManagerStepChange={handleHiringManagerStepChange}
-                onViewJob={handleViewJob}
-                onBackToJobBoard={handleBackToJobBoard}
-              />
-            </div>
-          )}
-        </div>
+        )}
       </div>
-    </ThemeProvider>
+    </div>
   )
 }
