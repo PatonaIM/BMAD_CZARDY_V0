@@ -145,7 +145,11 @@ export function JobView({ job, onBack }: JobViewProps) {
               <span className={`px-4 py-2 text-sm font-medium rounded-full border ${statusConfig.className}`}>
                 {statusConfig.label}
               </span>
-              {job.openings && <span className="text-sm text-muted-foreground">{job.openings} opening(s)</span>}
+              {job.applied ? (
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#A16AE8] text-white">Applied</span>
+              ) : job.saved ? (
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#A16AE8] text-white">Saved</span>
+              ) : null}
             </div>
           </div>
 
