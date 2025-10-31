@@ -20,7 +20,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react" // Added useEffect
 import type { WorkspaceContent, JobListing } from "@/types/workspace"
 import {
   BarChart,
@@ -53,6 +53,7 @@ interface WorkspacePaneProps {
   onHiringManagerStepChange?: (step: number) => void
   onViewJob?: (job: JobListing) => void // Added callback for viewing job details
   onBackToJobBoard?: () => void // Added onBackToJobBoard prop
+  activeWorkspace?: string // Added activeWorkspace prop for context
 }
 
 const mockJobListings: JobListing[] = [
@@ -727,6 +728,7 @@ export function WorkspacePane({
   onHiringManagerStepChange,
   onViewJob, // Added onViewJob prop
   onBackToJobBoard, // Added onBackToJobBoard prop
+  activeWorkspace, // Added activeWorkspace prop for context
 }: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
@@ -742,7 +744,23 @@ export function WorkspacePane({
     match: "",
   })
 
+  const [loadingScores, setLoadingScores] = useState<Set<string>>(new Set())
+
   const mockImages = ["/dashboard-analytics.png", "/user-interface-design.png", "/data-visualization-abstract.png"]
+
+  // Move useEffect to the top level of the component, outside of any conditional logic.
+  useEffect(() => {
+    if (activeWorkspace === "my-jobs") {
+      const jobIds = new Set(mockJobListings.map((job) => job.id)) // Use mockJobListings directly here
+      setLoadingScores(jobIds)
+
+      const timer = setTimeout(() => {
+        setLoadingScores(new Set())
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [activeWorkspace]) // Ensure activeWorkspace is a dependency if it can change
 
   const handleViewJobDetails = (job: JobListing) => {
     if (onViewJob) {
@@ -1298,7 +1316,7 @@ export function WorkspacePane({
                         </p>
                         <p>
                           <span className="font-semibold">10.10 Survival:</span> The provisions of Sections 5
-                          (Confidentiality), 6 (Intellectual Property), and 7 (Non-Compete and Non-Solicitation) shall
+                          (Confidentiality), 6 (Intellectual Property), 7 (Non-Compete and Non-Solicitation) shall
                           survive the termination of this Agreement.
                         </p>
                       </div>
@@ -1504,6 +1522,8 @@ export function WorkspacePane({
         const appliedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.applied) : []
         const savedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.saved && !job.applied) : []
 
+        // The useEffect hook was moved to the top of the component.
+
         const getSkillMatchInfo = (score: number | undefined) => {
           if (!score) return { label: "N/A", color: "bg-gray-500/10 text-gray-600 border-gray-500/20" }
           if (score >= 90) return { label: "STRONG FIT", color: "bg-green-500/10 text-green-600 border-green-500/20" }
@@ -1538,7 +1558,7 @@ export function WorkspacePane({
                       {appliedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
+                          className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
                         >
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
@@ -1610,32 +1630,46 @@ export function WorkspacePane({
                             <div className="flex-[2] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
                               {job.skillMatch && (
                                 <div className="text-center">
-                                  <div
-                                    className={`text-4xl font-bold mb-2 ${
-                                      job.skillMatch >= 90
-                                        ? "text-green-600"
-                                        : job.skillMatch >= 70
-                                          ? "text-amber-600"
-                                          : "text-red-600"
-                                    }`}
-                                  >
-                                    {job.skillMatch}%
-                                  </div>
-                                  <div
-                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                                      job.skillMatch >= 90
-                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                        : job.skillMatch >= 70
-                                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
-                                    }`}
-                                  >
-                                    {job.skillMatch >= 90
-                                      ? "STRONG FIT"
-                                      : job.skillMatch >= 70
-                                        ? "GOOD FIT"
-                                        : "NOT FIT"}
-                                  </div>
+                                  {loadingScores.has(job.id) ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                      <div className="relative w-16 h-16">
+                                        <div className="absolute inset-0 rounded-full border-4 border-muted animate-pulse" />
+                                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                                      </div>
+                                      <div className="text-xs font-medium text-muted-foreground animate-pulse">
+                                        Calculating...
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div
+                                        className={`text-4xl font-bold mb-2 ${
+                                          job.skillMatch >= 90
+                                            ? "text-green-600"
+                                            : job.skillMatch >= 70
+                                              ? "text-amber-600"
+                                              : "text-red-600"
+                                        }`}
+                                      >
+                                        {job.skillMatch}%
+                                      </div>
+                                      <div
+                                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                          job.skillMatch >= 90
+                                            ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                            : job.skillMatch >= 70
+                                              ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                              : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                        }`}
+                                      >
+                                        {job.skillMatch >= 90
+                                          ? "STRONG FIT"
+                                          : job.skillMatch >= 70
+                                            ? "GOOD FIT"
+                                            : "NOT FIT"}
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -1659,7 +1693,7 @@ export function WorkspacePane({
                       {savedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
+                          className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
                         >
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
@@ -1731,32 +1765,46 @@ export function WorkspacePane({
                             <div className="flex-[2] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
                               {job.skillMatch && (
                                 <div className="text-center">
-                                  <div
-                                    className={`text-4xl font-bold mb-2 ${
-                                      job.skillMatch >= 90
-                                        ? "text-green-600"
-                                        : job.skillMatch >= 70
-                                          ? "text-amber-600"
-                                          : "text-red-600"
-                                    }`}
-                                  >
-                                    {job.skillMatch}%
-                                  </div>
-                                  <div
-                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                                      job.skillMatch >= 90
-                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                        : job.skillMatch >= 70
-                                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
-                                    }`}
-                                  >
-                                    {job.skillMatch >= 90
-                                      ? "STRONG FIT"
-                                      : job.skillMatch >= 70
-                                        ? "GOOD FIT"
-                                        : "NOT FIT"}
-                                  </div>
+                                  {loadingScores.has(job.id) ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                      <div className="relative w-16 h-16">
+                                        <div className="absolute inset-0 rounded-full border-4 border-muted animate-pulse" />
+                                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                                      </div>
+                                      <div className="text-xs font-medium text-muted-foreground animate-pulse">
+                                        Calculating...
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div
+                                        className={`text-4xl font-bold mb-2 ${
+                                          job.skillMatch >= 90
+                                            ? "text-green-600"
+                                            : job.skillMatch >= 70
+                                              ? "text-amber-600"
+                                              : "text-red-600"
+                                        }`}
+                                      >
+                                        {job.skillMatch}%
+                                      </div>
+                                      <div
+                                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                          job.skillMatch >= 90
+                                            ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                            : job.skillMatch >= 70
+                                              ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                              : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                        }`}
+                                      >
+                                        {job.skillMatch >= 90
+                                          ? "STRONG FIT"
+                                          : job.skillMatch >= 70
+                                            ? "GOOD FIT"
+                                            : "NOT FIT"}
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </div>
