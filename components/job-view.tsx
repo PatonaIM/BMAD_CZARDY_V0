@@ -102,7 +102,14 @@ export function JobView({ job, onBack }: JobViewProps) {
     <div className="h-full overflow-auto relative">
       <div className="max-w-4xl mx-auto space-y-6 p-6">
         {/* Header with Status */}
-        <div className="bg-card rounded-2xl border border-border p-8">
+        <div className="bg-card rounded-2xl border border-border p-8 relative">
+          {/* Pin overlay for saved jobs */}
+          {job.saved && (
+            <div className="absolute -top-2 -right-2 w-12 h-12 z-10">
+              <img src="/pin.png" alt="Saved" className="w-full h-full object-contain drop-shadow-lg" />
+            </div>
+          )}
+
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -233,14 +240,9 @@ export function JobView({ job, onBack }: JobViewProps) {
         {/* Action Buttons (only show for open positions) */}
         {job.status === "open" && (
           <div className="bg-card rounded-2xl border border-border p-6">
-            <div className="flex gap-3">
-              <button className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
-                {job.applied ? "View Application" : "Apply for this Position"}
-              </button>
-              <button className="px-6 py-3 rounded-xl border border-border hover:bg-accent transition-colors font-medium">
-                {job.saved ? "Unsave Job" : "Save Job"}
-              </button>
-            </div>
+            <button className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
+              {job.applied ? "View Application" : "Apply for this Position"}
+            </button>
           </div>
         )}
       </div>
