@@ -1,6 +1,18 @@
 "use client"
 
-import { Briefcase, MapPin, DollarSign, Clock, Building2, CheckCircle2, ExternalLink } from "lucide-react"
+import {
+  Briefcase,
+  MapPin,
+  DollarSign,
+  Clock,
+  Building2,
+  CheckCircle2,
+  ExternalLink,
+  AlertCircle,
+  BookOpen,
+  Target,
+  Sparkles,
+} from "lucide-react"
 import type { JobListing, JobStatus } from "@/types/workspace"
 
 interface JobViewProps {
@@ -71,8 +83,80 @@ const getSkillMatchConfig = (percentage: number) => {
   }
 }
 
+const generateSkillGapInsights = (matchPercentage: number) => {
+  if (matchPercentage >= 90) {
+    return {
+      title: "Excellent Match!",
+      description: "You're an outstanding fit for this role. Consider these areas to stand out even more:",
+      gaps: [
+        "Advanced certifications in your field",
+        "Leadership or mentorship experience",
+        "Contributions to open-source projects or industry publications",
+      ],
+      recommendations: [
+        {
+          title: "Advanced Technical Certification",
+          description: "Earn industry-recognized certifications to validate your expertise",
+        },
+        { title: "Leadership Training", description: "Develop management and team leadership skills" },
+      ],
+    }
+  } else if (matchPercentage >= 70) {
+    return {
+      title: "Good Match with Room for Growth",
+      description: "You have a solid foundation. Focus on these areas to increase your match score:",
+      gaps: [
+        "Some required technical skills need strengthening",
+        "Additional years of experience in specific technologies",
+        "Certifications or formal training in key areas",
+      ],
+      recommendations: [
+        {
+          title: "Technical Skills Assessment",
+          description: "Take targeted assessments to identify and improve specific skill gaps",
+        },
+        {
+          title: "Online Courses & Bootcamps",
+          description: "Complete focused training in the technologies mentioned in the job requirements",
+        },
+        { title: "Practice Projects", description: "Build portfolio projects demonstrating the required skills" },
+      ],
+    }
+  } else {
+    return {
+      title: "Significant Skill Gaps Identified",
+      description: "This role requires skills you may need to develop. Here's how to improve your match:",
+      gaps: [
+        "Multiple core technical skills are missing",
+        "Insufficient experience level for this position",
+        "Lack of required certifications or qualifications",
+      ],
+      recommendations: [
+        {
+          title: "Comprehensive Skills Training",
+          description: "Enroll in structured learning programs to build foundational skills",
+        },
+        {
+          title: "Entry-Level Positions",
+          description: "Consider similar roles with lower requirements to gain experience",
+        },
+        {
+          title: "Mentorship Program",
+          description: "Connect with experienced professionals in this field for guidance",
+        },
+        {
+          title: "Certification Programs",
+          description: "Pursue relevant certifications to demonstrate commitment and knowledge",
+        },
+      ],
+    }
+  }
+}
+
 export function JobView({ job, onBack }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
+  const skillMatchConfig = job.skillMatch !== undefined ? getSkillMatchConfig(job.skillMatch) : null
+  const skillGapInsights = job.skillMatch !== undefined ? generateSkillGapInsights(job.skillMatch) : null
 
   const renderJobSummary = (summary: string) => {
     // Check if the summary contains bullet points (lines starting with •)
@@ -210,17 +294,79 @@ export function JobView({ job, onBack }: JobViewProps) {
               {/* Right Pane - Skill Match Score (30%) */}
               {job.skillMatch !== undefined && (
                 <div className="flex-[3] flex flex-col items-center justify-center text-center space-y-2">
-                  <div className={`text-5xl font-bold ${getSkillMatchConfig(job.skillMatch).color}`}>
-                    {job.skillMatch}%
-                  </div>
-                  <div className={`text-lg font-semibold ${getSkillMatchConfig(job.skillMatch).color}`}>
-                    {getSkillMatchConfig(job.skillMatch).label}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {getSkillMatchConfig(job.skillMatch).description}
-                  </p>
+                  <div className={`text-5xl font-bold ${skillMatchConfig?.color}`}>{job.skillMatch}%</div>
+                  <div className={`text-lg font-semibold ${skillMatchConfig?.color}`}>{skillMatchConfig?.label}</div>
+                  <p className="text-xs text-muted-foreground mt-2">{skillMatchConfig?.description}</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Skill Gap Analysis section */}
+        {skillGapInsights && job.skillMatch !== undefined && job.skillMatch < 100 && (
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 flex items-center justify-center">
+                <Target className="w-5 h-5 text-[#A16AE8]" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">{skillGapInsights.title}</h2>
+                <p className="text-sm text-muted-foreground">{skillGapInsights.description}</p>
+              </div>
+            </div>
+
+            {/* Identified Gaps */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-500" />
+                Areas for Improvement
+              </h3>
+              <ul className="space-y-2">
+                {skillGapInsights.gaps.map((gap, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0 mt-2" />
+                    <span className="text-muted-foreground">{gap}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Recommendations */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-[#A16AE8]" />
+                Recommended Actions
+              </h3>
+              <div className="grid gap-3">
+                {skillGapInsights.recommendations.map((rec, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-border hover:border-[#A16AE8]/30 transition-colors"
+                  >
+                    <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground mb-1">{rec.title}</h4>
+                      <p className="text-xs text-muted-foreground">{rec.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* AI Assistance CTA */}
+            <div className="pt-4 border-t border-border">
+              <button className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8]/10 to-[#8096FD]/10 border border-[#A16AE8]/30 hover:from-[#A16AE8]/20 hover:to-[#8096FD]/20 transition-all group">
+                <div className="flex items-center justify-center gap-3">
+                  <Sparkles className="w-5 h-5 text-[#A16AE8] group-hover:scale-110 transition-transform" />
+                  <span className="font-medium text-foreground">
+                    Ask Technical Recruiter AI for Personalized Insights
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Get customized training recommendations and career guidance
+                </p>
+              </button>
             </div>
           </div>
         )}
