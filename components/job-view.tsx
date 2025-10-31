@@ -13,7 +13,7 @@ const getStatusConfig = (status: JobStatus) => {
     case "draft":
       return {
         label: "Draft",
-        className: "bg-muted text-muted-foreground border-border",
+        className: "bg-gray-500/10 text-gray-500 border-gray-500/20",
         description: "Work in progress, not yet opened but can be edited",
       }
     case "open":

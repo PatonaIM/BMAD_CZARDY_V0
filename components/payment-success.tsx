@@ -35,7 +35,7 @@ export function PaymentSuccess({ planName, amount, onClose }: PaymentSuccessProp
                 }`}
               >
                 {/* Inner white circle */}
-                <div className="w-28 h-28 rounded-full bg-background flex items-center justify-center">
+                <div className="w-28 h-28 rounded-full bg-white flex items-center justify-center">
                   {/* Checkmark */}
                   <Check
                     className={`w-16 h-16 text-[#A16AE8] transition-all duration-500 delay-300 ${

@@ -915,12 +915,12 @@ export function WorkspacePane({
                 }}
               >
                 {/* Page 1 */}
-                <div className="bg-background shadow-2xl rounded-lg overflow-hidden">
-                  <div className="aspect-[8.5/11] bg-background p-12 text-foreground">
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
                     <div className="space-y-6">
-                      <div className="text-center border-b-2 border-border pb-4">
+                      <div className="text-center border-b-2 border-gray-800 pb-4">
                         <h1 className="text-3xl font-bold mb-2">EMPLOYMENT CONTRACT</h1>
-                        <p className="text-sm text-muted-foreground">Effective Date: January 1, 2025</p>
+                        <p className="text-sm text-gray-600">Effective Date: January 1, 2025</p>
                       </div>
 
                       <div className="space-y-4">
@@ -994,7 +994,7 @@ export function WorkspacePane({
                         </div>
                       </div>
 
-                      <div className="mt-8 pt-4 border-t border-border text-xs text-muted-foreground text-center">
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
                         Page 1 of 6 • Employment Contract • Confidential
                       </div>
                     </div>
@@ -1002,8 +1002,8 @@ export function WorkspacePane({
                 </div>
 
                 {/* Page 2 */}
-                <div className="bg-background shadow-2xl rounded-lg overflow-hidden">
-                  <div className="aspect-[8.5/11] bg-background p-12 text-foreground">
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
                     <div className="space-y-6">
                       <div className="space-y-4 text-sm">
                         <p>
@@ -1070,7 +1070,7 @@ export function WorkspacePane({
                         </div>
                       </div>
 
-                      <div className="mt-8 pt-4 border-t border-border text-xs text-muted-foreground text-center">
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
                         Page 2 of 6 • Employment Contract • Confidential
                       </div>
                     </div>
@@ -1078,8 +1078,8 @@ export function WorkspacePane({
                 </div>
 
                 {/* Page 3 */}
-                <div className="bg-background shadow-2xl rounded-lg overflow-hidden">
-                  <div className="aspect-[8.5/11] bg-background p-12 text-foreground">
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
                     <div className="space-y-6">
                       <h2 className="text-xl font-bold mb-3">5. CONFIDENTIALITY</h2>
                       <div className="space-y-3 text-sm">
@@ -1136,7 +1136,7 @@ export function WorkspacePane({
                         </div>
                       </div>
 
-                      <div className="mt-8 pt-4 border-t border-border text-xs text-muted-foreground text-center">
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
                         Page 3 of 6 • Employment Contract • Confidential
                       </div>
                     </div>
@@ -1144,8 +1144,8 @@ export function WorkspacePane({
                 </div>
 
                 {/* Page 4 */}
-                <div className="bg-background shadow-2xl rounded-lg overflow-hidden">
-                  <div className="aspect-[8.5/11] bg-background p-12 text-foreground">
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
                     <div className="space-y-6">
                       <h2 className="text-xl font-bold mb-3">7. NON-COMPETE AND NON-SOLICITATION</h2>
                       <div className="space-y-3 text-sm">
@@ -1204,7 +1204,7 @@ export function WorkspacePane({
                         </div>
                       </div>
 
-                      <div className="mt-8 pt-4 border-t border-border text-xs text-muted-foreground text-center">
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
                         Page 4 of 6 • Employment Contract • Confidential
                       </div>
                     </div>
@@ -1212,8 +1212,8 @@ export function WorkspacePane({
                 </div>
 
                 {/* Page 5 */}
-                <div className="bg-background shadow-2xl rounded-lg overflow-hidden">
-                  <div className="aspect-[8.5/11] bg-background p-12 text-foreground">
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
                     <div className="space-y-6">
                       <h2 className="text-xl font-bold mb-3">9. SEVERANCE</h2>
                       <div className="space-y-3 text-sm">
@@ -1279,7 +1279,7 @@ export function WorkspacePane({
                         </div>
                       </div>
 
-                      <div className="mt-8 pt-4 border-t border-border text-xs text-muted-foreground text-center">
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
                         Page 5 of 6 • Employment Contract • Confidential
                       </div>
                     </div>
@@ -1287,8 +1287,8 @@ export function WorkspacePane({
                 </div>
 
                 {/* Page 6 - Signatures */}
-                <div className="bg-background shadow-2xl rounded-lg overflow-hidden">
-                  <div className="aspect-[8.5/11] bg-background p-12 text-foreground">
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  <div className="aspect-[8.5/11] bg-white p-12 text-gray-900">
                     <div className="space-y-6">
                       <div className="space-y-3 text-sm">
                         <p>
@@ -1312,7 +1312,7 @@ export function WorkspacePane({
                         <div className="space-y-12">
                           <div>
                             <p className="font-semibold mb-6">COMPANY:</p>
-                            <div className="border-b-2 border-border w-80 mb-2"></div>
+                            <div className="border-b-2 border-gray-800 w-80 mb-2"></div>
                             <p className="text-sm">Signature</p>
                             <p className="text-sm mt-4 font-semibold">Sarah Chen</p>
                             <p className="text-sm">Chief Executive Officer, Teamified</p>
@@ -1321,7 +1321,7 @@ export function WorkspacePane({
 
                           <div>
                             <p className="font-semibold mb-6">EMPLOYEE:</p>
-                            <div className="border-b-2 border-border w-80 mb-2"></div>
+                            <div className="border-b-2 border-gray-800 w-80 mb-2"></div>
                             <p className="text-sm">Signature</p>
                             <p className="text-sm mt-4 font-semibold">Robert Downey Jr.</p>
                             <p className="text-sm">Principal Software Engineer</p>
@@ -1330,16 +1330,16 @@ export function WorkspacePane({
                         </div>
                       </div>
 
-                      <div className="mt-12 pt-6 border-t border-border">
-                        <p className="text-xs text-muted-foreground text-center mb-2">
+                      <div className="mt-12 pt-6 border-t border-gray-300">
+                        <p className="text-xs text-gray-500 text-center mb-2">
                           This document contains confidential and proprietary information.
                         </p>
-                        <p className="text-xs text-muted-foreground text-center">
+                        <p className="text-xs text-gray-500 text-center">
                           Unauthorized disclosure or distribution is strictly prohibited.
                         </p>
                       </div>
 
-                      <div className="mt-8 pt-4 border-t border-border text-xs text-muted-foreground text-center">
+                      <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
                         Page 6 of 6 • Employment Contract • Confidential
                       </div>
                     </div>
@@ -1505,12 +1505,10 @@ export function WorkspacePane({
         const savedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.saved && !job.applied) : []
 
         const getSkillMatchInfo = (score: number | undefined) => {
-          if (!score) return { label: "N/A", color: "bg-muted text-muted-foreground border-border" }
-          if (score >= 90)
-            return { label: "STRONG FIT", color: "bg-green-500/10 text-green-600 border border-green-500/20" }
-          if (score >= 70)
-            return { label: "GOOD FIT", color: "bg-amber-500/10 text-amber-600 border border-amber-500/20" }
-          return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border border-red-500/20" }
+          if (!score) return { label: "N/A", color: "bg-gray-500/10 text-gray-600 border-gray-500/20" }
+          if (score >= 90) return { label: "STRONG FIT", color: "bg-green-500/10 text-green-600 border-green-500/20" }
+          if (score >= 70) return { label: "GOOD FIT", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" }
+          return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border-red-500/20" }
         }
 
         return (

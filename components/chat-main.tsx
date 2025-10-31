@@ -1023,8 +1023,8 @@ ${loremParagraphs[1]}`
   )
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden h-full bg-background">
-      <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border bg-background">
+    <div className="flex-1 flex flex-col overflow-hidden h-full">
+      <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border">
         {!isSidebarOpen && (
           <button
             onClick={onToggleSidebar}
@@ -1055,7 +1055,7 @@ ${loremParagraphs[1]}`
 
       <main
         ref={messagesContainerRef}
-        className={`flex-1 min-h-0 px-6 relative bg-background ${isCentered ? "flex items-center justify-center" : "flex flex-col overflow-y-auto"}`}
+        className={`flex-1 min-h-0 px-6 relative ${isCentered ? "flex items-center justify-center" : "flex flex-col overflow-y-auto"}`}
       >
         {isCentered ? (
           <div className="w-full max-w-3xl">

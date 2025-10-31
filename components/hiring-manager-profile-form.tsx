@@ -1023,7 +1023,7 @@ export function HiringManagerProfileForm({ onSave, onClose, onStepChange }: Hiri
                     onMouseDown={handleDragStart}
                     onTouchStart={handleDragStart}
                     disabled={!isStep3Valid() || paymentProgress === 100}
-                    className="absolute left-1 top-1 bottom-1 w-20 bg-background rounded-full shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 border-2 border-background"
+                    className="absolute left-1 top-1 bottom-1 w-20 bg-white rounded-full shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 border-2 border-white"
                     style={{
                       transform: `translateX(${paymentProgress > 0 ? `calc(${(paymentProgress / 100) * (containerWidth - 88)}px)` : "0px"})`,
                       transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
