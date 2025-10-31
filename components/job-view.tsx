@@ -287,7 +287,11 @@ export function JobView({ job, onBack, onRequestSkillGapAnalysis }: JobViewProps
                     <div className={`text-5xl font-bold ${skillMatchConfig?.color}`}>{job.skillMatch}%</div>
                     {job.skillMatch < 100 && onRequestSkillGapAnalysis && (
                       <button
-                        onClick={onRequestSkillGapAnalysis}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          onRequestSkillGapAnalysis()
+                        }}
                         className="p-1.5 rounded-full hover:bg-accent transition-colors group"
                         aria-label="Get skill gap insights"
                         title="Ask Technical Recruiter AI about your skill gaps"
