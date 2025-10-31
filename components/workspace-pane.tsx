@@ -37,11 +37,22 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
+import { CandidateProfileForm } from "./candidate-profile-form"
+import { HiringManagerProfileForm } from "./hiring-manager-profile-form" // Fixed import path to use the correct file name
+import { CandidatePricing } from "./candidate-pricing"
+import { PaymentSuccess } from "./payment-success" // Import payment success component
+import { JobView } from "./job-view" // Import JobView component
+import { getCurrentUser } from "@/lib/auth" // Added import for getCurrentUser
 
 interface WorkspacePaneProps {
   isOpen: boolean
   onClose: () => void
   content: WorkspaceContent
+  onProfileSave?: () => void // Added callback for profile save
+  onUpgradePlan?: () => void // Added onUpgradePlan prop
+  onHiringManagerStepChange?: (step: number) => void
+  onViewJob?: (job: JobListing) => void // Added callback for viewing job details
+  onBackToJobBoard?: () => void // Added onBackToJobBoard prop
 }
 
 const mockJobListings: JobListing[] = [
@@ -49,6 +60,7 @@ const mockJobListings: JobListing[] = [
     id: "1",
     title: "Senior Full-Stack Developer",
     company: "Teamified",
+    companyWebsite: "https://teamified.com",
     location: "Manila, Philippines",
     type: "Full-time",
     salary: "$45k - $65k",
@@ -56,12 +68,51 @@ const mockJobListings: JobListing[] = [
     description: "We're looking for an experienced full-stack developer to join our growing team in Manila.",
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
+    saved: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    status: "open",
+    skillMatch: 88,
+    jobSummary:
+      "• Lead the development of scalable web applications using modern technologies\n• Collaborate with product and design teams to deliver exceptional user experiences\n• Mentor junior developers and contribute to technical decision-making\n• Optimize application performance and ensure code quality through best practices\n• Participate in agile ceremonies and contribute to sprint planning",
+    aboutClient:
+      "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce across the Asia-Pacific region. Founded in 2020, we've grown to serve over 500 enterprise clients and process millions of employee interactions monthly. Our platform combines cutting-edge AI technology with intuitive design to streamline hiring, onboarding, and team management processes. We're backed by leading venture capital firms and have recently closed our Series B funding round. Our diverse team of 150+ professionals spans across Manila, Singapore, and Sydney, working together to build the future of work. We pride ourselves on our innovative culture, commitment to work-life balance, and dedication to helping businesses unlock their full potential. Join us in our mission to make workforce management effortless and empower organizations to focus on what truly matters - their people.",
+    qualifications: [
+      "5+ years of professional software development experience",
+      "Strong proficiency in React, Node.js, and TypeScript",
+      "Experience with AWS cloud services and infrastructure",
+      "Solid understanding of RESTful APIs and microservices architecture",
+      "Experience with SQL and NoSQL databases",
+      "Strong problem-solving and communication skills",
+    ],
+    responsibilities: [
+      "Design and develop scalable full-stack applications",
+      "Collaborate with cross-functional teams to define and implement new features",
+      "Write clean, maintainable, and well-documented code",
+      "Participate in code reviews and provide constructive feedback",
+      "Mentor junior developers and contribute to team knowledge sharing",
+      "Optimize application performance and ensure high availability",
+    ],
+    benefits: [
+      "Competitive salary and performance bonuses",
+      "Health insurance coverage",
+      "Flexible work arrangements",
+      "Professional development budget",
+      "Annual team retreats",
+      "Modern office equipment",
+    ],
+    department: "Engineering",
+    reportingTo: "Engineering Manager",
+    teamSize: "8-10 engineers",
+    workArrangement: "Hybrid (3 days office, 2 days remote)",
+    applicationDeadline: "March 15, 2025",
+    hiringManager: "Sarah Chen",
+    openings: 2,
   },
   {
     id: "2",
     title: "AI Engineer",
     company: "Archa",
+    companyWebsite: "https://archa.ai",
     location: "Bangalore, India",
     type: "Full-time",
     salary: "$35k - $55k",
@@ -70,23 +121,54 @@ const mockJobListings: JobListing[] = [
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    status: "draft",
+    skillMatch: 75,
+    jobSummary:
+      "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
+    aboutClient:
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+    benefits: [
+      "Competitive compensation with equity options",
+      "Comprehensive health and wellness benefits",
+      "Flexible remote work policy",
+      "Learning and development stipend",
+      "Conference attendance opportunities",
+      "Cutting-edge hardware and tools",
+    ],
   },
   {
     id: "3",
     title: "Product Manager",
     company: "Volaro Group",
+    companyWebsite: "https://volaro.com",
     location: "Sydney, Australia",
     type: "Full-time",
     salary: "$90k - $120k",
     posted: "3 days ago",
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
+    saved: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    status: "open",
+    skillMatch: 82,
+    jobSummary:
+      "• Define and execute product roadmap aligned with business objectives\n• Conduct market research and competitive analysis to identify opportunities\n• Work closely with engineering, design, and sales teams to deliver features\n• Analyze product metrics and user feedback to drive continuous improvement\n• Present product vision and strategy to stakeholders and leadership",
+    aboutClient:
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia. Established in 2015, we've grown from a small startup to a publicly-traded company serving over 2,000 enterprise customers. Our comprehensive suite of business management tools helps organizations streamline operations, improve productivity, and drive growth. We're committed to innovation and customer success, investing heavily in R&D and maintaining a customer satisfaction rate of over 95%. Our Sydney headquarters houses our product development, sales, and customer success teams, creating a collaborative environment where ideas flourish. We've been recognized as one of Australia's fastest-growing tech companies for three consecutive years. Join us to be part of a dynamic team that's shaping the future of enterprise software.",
+    benefits: [
+      "Excellent salary package with performance bonuses",
+      "Premium health insurance for you and family",
+      "Generous parental leave policy",
+      "Stock options and equity participation",
+      "Professional development and training",
+      "Modern Sydney office with amenities",
+    ],
   },
   {
     id: "4",
     title: "DevOps Engineer",
     company: "Zai",
+    companyWebsite: "https://hellozai.com",
     location: "Colombo, Sri Lanka",
     type: "Full-time",
     salary: "$30k - $45k",
@@ -94,11 +176,26 @@ const mockJobListings: JobListing[] = [
     description: "Build and maintain our cloud infrastructure and CI/CD pipelines.",
     requirements: ["Kubernetes", "Docker", "AWS/GCP", "Terraform", "4+ years experience"],
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    status: "closed",
+    skillMatch: 70,
+    jobSummary:
+      "• Design and maintain scalable cloud infrastructure on AWS/GCP\n• Implement and optimize CI/CD pipelines for automated deployments\n• Monitor system performance and ensure high availability\n• Automate infrastructure provisioning using Infrastructure as Code\n• Collaborate with development teams to improve deployment processes",
+    aboutClient:
+      "Zai is a fintech company revolutionizing payment solutions across Asia, with a mission to make financial services accessible to everyone. Founded in 2019, we've rapidly grown to process over $2 billion in transactions annually and serve millions of users across 12 countries. Our innovative payment platform combines security, speed, and simplicity to deliver seamless financial experiences. We're backed by prominent investors including Sequoia Capital and have recently expanded our operations to Sri Lanka, establishing a world-class engineering center in Colombo. Our team of 200+ professionals is passionate about leveraging technology to solve real-world financial challenges. We maintain the highest standards of security and compliance, holding licenses from multiple regulatory authorities. Join us in our journey to democratize financial services and build the payment infrastructure of tomorrow.",
+    benefits: [
+      "Competitive salary with annual increments",
+      "Health and life insurance coverage",
+      "Work from home flexibility",
+      "Annual performance bonuses",
+      "Training and certification support",
+      "Team building activities and events",
+    ],
   },
   {
     id: "5",
     title: "Frontend Developer",
     company: "Thriday",
+    companyWebsite: "https://thriday.com.au",
     location: "Cebu, Philippines",
     type: "Full-time",
     salary: "$35k - $50k",
@@ -106,12 +203,28 @@ const mockJobListings: JobListing[] = [
     description: "Create beautiful and responsive user interfaces for our web applications.",
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
+    saved: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    status: "open",
+    skillMatch: 92,
+    jobSummary:
+      "• Build responsive and accessible user interfaces using React and TypeScript\n• Collaborate with designers to implement pixel-perfect designs\n• Optimize frontend performance and ensure cross-browser compatibility\n• Write reusable components and maintain component libraries\n• Participate in code reviews and contribute to frontend architecture decisions",
+    aboutClient:
+      "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    benefits: [
+      "Competitive salary and quarterly bonuses",
+      "HMO coverage for you and dependents",
+      "Fully remote work setup",
+      "Internet and equipment allowance",
+      "Learning and development budget",
+      "Flexible working hours",
+    ],
   },
   {
     id: "6",
     title: "Data Scientist",
     company: "Fortify",
+    companyWebsite: "https://fortifytech.io",
     location: "Mumbai, India",
     type: "Full-time",
     salary: "$40k - $60k",
@@ -120,11 +233,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Python", "SQL", "Machine Learning", "Statistics", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    status: "draft",
+    skillMatch: 78,
+    jobSummary:
+      "• Analyze large datasets to extract actionable insights and identify trends\n• Develop and deploy machine learning models for predictive analytics\n• Collaborate with stakeholders to understand data needs and define metrics\n• Build data pipelines and ensure data quality and integrity\n• Communicate findings and recommendations through visualizations and reports",
+    aboutClient:
+      "Fortify is a data analytics firm empowering businesses with data-driven decision-making, operating primarily in India and Southeast Asia. Since 2017, we have been helping organizations harness the power of their data to uncover hidden patterns, optimize operations, and gain a competitive edge. Our expertise spans data engineering, business intelligence, machine learning, and advanced analytics. We partner with companies across various sectors, including e-commerce, finance, and healthcare, to deliver bespoke data solutions. Our team of 100+ data scientists and engineers is committed to delivering tangible business value through data. We believe in fostering a culture of curiosity and continuous learning, encouraging our team to explore new technologies and methodologies. Join Fortify to work on challenging data problems and make a significant impact on our clients' success.",
+    benefits: [
+      "Attractive salary and stock options",
+      "Comprehensive health and dental insurance",
+      "Remote work options with flexible hours",
+      "Generous professional development fund",
+      "Annual company retreats and team events",
+      "Access to cutting-edge tools and technologies",
+    ],
   },
   {
     id: "7",
     title: "Backend Developer",
     company: "Archa",
+    companyWebsite: "https://archa.ai",
     location: "Melbourne, Australia",
     type: "Full-time",
     salary: "$85k - $110k",
@@ -133,11 +261,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Node.js or Java", "Microservices", "Databases", "5+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    status: "open",
+    skillMatch: 85,
+    jobSummary:
+      "• Design and develop robust and scalable backend services and APIs\n• Implement microservices architecture and ensure seamless integration\n• Manage and optimize database performance and integrity\n• Write clean, efficient, and well-documented code\n• Collaborate with frontend teams to define API contracts",
+    aboutClient:
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+    benefits: [
+      "Highly competitive salary and performance bonuses",
+      "Full family medical, dental, and vision coverage",
+      "Flexible work hours and remote options",
+      "Generous annual leave and paid holidays",
+      "Opportunities for advanced technical training",
+      "Modern office space with excellent amenities",
+    ],
   },
   {
     id: "8",
     title: "QA Engineer",
     company: "Teamified",
+    companyWebsite: "https://teamified.com",
     location: "Remote (Philippines)",
     type: "Full-time",
     salary: "$30k - $45k",
@@ -146,11 +289,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Test automation", "Selenium/Cypress", "API testing", "3+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    status: "closed",
+    skillMatch: 72,
+    jobSummary:
+      "• Develop and execute comprehensive test plans and test cases\n• Perform manual and automated testing for web and mobile applications\n• Identify, document, and track bugs through to resolution\n• Collaborate with development teams to ensure high-quality releases\n• Contribute to the improvement of QA processes and methodologies",
+    aboutClient:
+      "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce across the Asia-Pacific region. Founded in 2020, we've grown to serve over 500 enterprise clients and process millions of employee interactions monthly. Our platform combines cutting-edge AI technology with intuitive design to streamline hiring, onboarding, and team management processes. We're backed by leading venture capital firms and have recently closed our Series B funding round. Our diverse team of 150+ professionals spans across Manila, Singapore, and Sydney, working together to build the future of work. We pride ourselves on our innovative culture, commitment to work-life balance, and dedication to helping businesses unlock their full potential. Join us in our mission to make workforce management effortless and empower organizations to focus on what truly matters - their people.",
+    benefits: [
+      "Competitive salary and regular performance reviews",
+      "Comprehensive health benefits package",
+      "Fully remote work environment",
+      "Opportunities for professional development and training",
+      "Team collaboration and knowledge sharing sessions",
+      "Modern tools and technologies for testing",
+    ],
   },
   {
     id: "9",
     title: "Mobile Developer (iOS)",
     company: "Zai",
+    companyWebsite: "https://hellozai.com",
     location: "Pune, India",
     type: "Full-time",
     salary: "$38k - $55k",
@@ -159,11 +317,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    status: "open",
+    skillMatch: 80,
+    jobSummary:
+      "• Develop and maintain native iOS applications using Swift\n• Implement user interfaces with UIKit and SwiftUI\n• Integrate with backend APIs and services\n• Optimize application performance and ensure a smooth user experience\n• Collaborate with designers and product managers on new features",
+    aboutClient:
+      "Zai is a fintech company revolutionizing payment solutions across Asia, with a mission to make financial services accessible to everyone. Founded in 2019, we've rapidly grown to process over $2 billion in transactions annually and serve millions of users across 12 countries. Our innovative payment platform combines security, speed, and simplicity to deliver seamless financial experiences. We're backed by prominent investors including Sequoia Capital and have recently expanded our operations to Sri Lanka, establishing a world-class engineering center in Colombo. Our team of 200+ professionals is passionate about leveraging technology to solve real-world financial challenges. We maintain the highest standards of security and compliance, holding licenses from multiple regulatory authorities. Join us in our journey to democratize financial services and build the payment infrastructure of tomorrow.",
+    benefits: [
+      "Competitive salary and annual bonuses",
+      "Excellent health insurance plan",
+      "Flexible work arrangements",
+      "Access to the latest Apple hardware and software",
+      "Opportunities for career growth and specialization",
+      "Company-sponsored training and conferences",
+    ],
   },
   {
     id: "10",
     title: "UX/UI Designer",
     company: "Volaro Group",
+    companyWebsite: "https://volaro.com",
     location: "Brisbane, Australia",
     type: "Full-time",
     salary: "$70k - $95k",
@@ -171,12 +344,28 @@ const mockJobListings: JobListing[] = [
     description: "Create intuitive and visually appealing user experiences.",
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
+    saved: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    status: "draft",
+    skillMatch: 86,
+    jobSummary:
+      "• Design intuitive and engaging user interfaces for web and mobile applications\n• Conduct user research and usability testing to inform design decisions\n• Create wireframes, mockups, and interactive prototypes using Figma\n• Develop and maintain design systems and style guides\n• Collaborate with product and engineering teams to ensure design feasibility",
+    aboutClient:
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia. Established in 2015, we've grown from a small startup to a publicly-traded company serving over 2,000 enterprise customers. Our comprehensive suite of business management tools helps organizations streamline operations, improve productivity, and drive growth. We're committed to innovation and customer success, investing heavily in R&D and maintaining a customer satisfaction rate of over 95%. Our Sydney headquarters houses our product development, sales, and customer success teams, creating a collaborative environment where ideas flourish. We've been recognized as one of Australia's fastest-growing tech companies for three consecutive years. Join us to be part of a dynamic team that's shaping the future of enterprise software.",
+    benefits: [
+      "Competitive salary and annual performance incentives",
+      "Comprehensive health and wellness benefits",
+      "Flexible work arrangements",
+      "Professional development opportunities and workshops",
+      "Access to the latest design software and tools",
+      "Collaborative and creative work environment",
+    ],
   },
   {
     id: "11",
     title: "Solutions Architect",
     company: "Fortify",
+    companyWebsite: "https://fortifytech.io",
     location: "Galle, Sri Lanka",
     type: "Full-time",
     salary: "$50k - $70k",
@@ -185,11 +374,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    status: "open",
+    skillMatch: 89,
+    jobSummary:
+      "• Design and architect scalable and resilient cloud-based solutions on AWS/Azure\n• Define technical standards and best practices for cloud adoption\n• Collaborate with development teams to ensure solutions meet business requirements\n• Provide technical leadership and guidance on cloud technologies\n• Evaluate and recommend new cloud services and tools",
+    aboutClient:
+      "Fortify is a data analytics firm empowering businesses with data-driven decision-making, operating primarily in India and Southeast Asia. Since 2017, we have been helping organizations harness the power of their data to uncover hidden patterns, optimize operations, and gain a competitive edge. Our expertise spans data engineering, business intelligence, machine learning, and advanced analytics. We partner with companies across various sectors, including e-commerce, finance, and healthcare, to deliver bespoke data solutions. Our team of 100+ data scientists and engineers is committed to delivering tangible business value through data. We believe in fostering a culture of curiosity and continuous learning, encouraging our team to explore new technologies and methodologies. Join Fortify to work on challenging data problems and make a significant impact on our clients' success.",
+    benefits: [
+      "Excellent salary package and performance bonuses",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible remote and hybrid work options",
+      "Professional certification and training support",
+      "Opportunities to work on challenging and innovative projects",
+      "Generous paid time off",
+    ],
   },
   {
     id: "12",
     title: "Scrum Master",
     company: "Thriday",
+    companyWebsite: "https://thriday.com.au",
     location: "Makati, Philippines",
     type: "Full-time",
     salary: "$40k - $55k",
@@ -198,11 +402,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    status: "closed",
+    skillMatch: 77,
+    jobSummary:
+      "• Facilitate Scrum ceremonies including sprint planning, daily stand-ups, sprint reviews, and retrospectives\n• Coach and mentor the development team on Agile principles and practices\n• Remove impediments and obstacles that hinder team progress\n• Foster a collaborative and self-organizing team environment\n• Track team progress and report on key agile metrics",
+    aboutClient:
+      "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    benefits: [
+      "Competitive salary and performance incentives",
+      "Comprehensive health and wellness benefits",
+      "Flexible work schedule and remote options",
+      "Opportunities for professional development and certifications",
+      "Supportive team environment and collaborative culture",
+      "Annual performance bonuses",
+    ],
   },
   {
     id: "13",
     title: "Security Engineer",
     company: "Archa",
+    companyWebsite: "https://archa.ai",
     location: "Hyderabad, India",
     type: "Full-time",
     salary: "$45k - $65k",
@@ -211,11 +430,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    status: "open",
+    skillMatch: 83,
+    jobSummary:
+      "• Implement and maintain security controls to protect systems and data\n• Conduct vulnerability assessments and penetration testing\n• Monitor security alerts and respond to incidents\n• Develop and enforce security policies and procedures\n• Stay up-to-date with the latest security threats and technologies",
+    aboutClient:
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+    benefits: [
+      "Competitive salary and regular performance reviews",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible work hours and remote options",
+      "Professional development budget for certifications and training",
+      "Opportunities to work with advanced security technologies",
+      "Generous paid time off",
+    ],
   },
   {
     id: "14",
     title: "Technical Writer",
     company: "Teamified",
+    companyWebsite: "https://teamified.com",
     location: "Remote (Australia)",
     type: "Contract",
     salary: "$60k - $80k",
@@ -224,11 +458,25 @@ const mockJobListings: JobListing[] = [
     requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    status: "draft",
+    skillMatch: 74,
+    jobSummary:
+      "• Create and maintain technical documentation, including user guides, API documentation, and release notes\n• Collaborate with engineering and product teams to understand product features and requirements\n• Ensure documentation is accurate, clear, and concise\n• Manage documentation projects and timelines\n• Adhere to company style guides and quality standards",
+    aboutClient:
+      "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce across the Asia-Pacific region. Founded in 2020, we've grown to serve over 500 enterprise clients and process millions of employee interactions monthly. Our platform combines cutting-edge AI technology with intuitive design to streamline hiring, onboarding, and team management processes. We're backed by leading venture capital firms and have recently closed our Series B funding round. Our diverse team of 150+ professionals spans across Manila, Singapore, and Sydney, working together to build the future of work. We pride ourselves on our innovative culture, commitment to work-life balance, and dedication to helping businesses unlock their full potential. Join us in our mission to make workforce management effortless and empower organizations to focus on what truly matters - their people.",
+    benefits: [
+      "Competitive contract rate",
+      "Flexible remote working arrangement",
+      "Opportunity to work with a leading HR tech company",
+      "Exposure to diverse technical projects",
+      "Support for professional development",
+    ],
   },
   {
     id: "15",
     title: "Business Analyst",
     company: "Zai",
+    companyWebsite: "https://hellozai.com",
     location: "Davao, Philippines",
     type: "Full-time",
     salary: "$35k - $50k",
@@ -237,11 +485,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Requirements gathering", "Process modeling", "SQL", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    status: "open",
+    skillMatch: 79,
+    jobSummary:
+      "• Gather and document business requirements from stakeholders\n• Analyze and model business processes to identify areas for improvement\n• Translate business needs into technical specifications for development teams\n• Facilitate communication between business users and technical teams\n• Support user acceptance testing and system implementation",
+    aboutClient:
+      "Zai is a fintech company revolutionizing payment solutions across Asia, with a mission to make financial services accessible to everyone. Founded in 2019, we've rapidly grown to process over $2 billion in transactions annually and serve millions of users across 12 countries. Our innovative payment platform combines security, speed, and simplicity to deliver seamless financial experiences. We're backed by prominent investors including Sequoia Capital and have recently expanded our operations to Sri Lanka, establishing a world-class engineering center in Colombo. Our team of 200+ professionals is passionate about leveraging technology to solve real-world financial challenges. We maintain the highest standards of security and compliance, holding licenses from multiple regulatory authorities. Join us in our journey to democratize financial services and build the payment infrastructure of tomorrow.",
+    benefits: [
+      "Competitive salary and annual bonuses",
+      "Comprehensive health insurance coverage",
+      "Hybrid work model with office and remote days",
+      "Opportunities for professional development and training",
+      "Collaborative work environment",
+      "Career advancement opportunities",
+    ],
   },
   {
     id: "16",
     title: "Machine Learning Engineer",
     company: "Fortify",
+    companyWebsite: "https://fortifytech.io",
     location: "Chennai, India",
     type: "Full-time",
     salary: "$42k - $62k",
@@ -250,11 +513,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Python", "TensorFlow", "MLOps", "Model deployment", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    status: "closed",
+    skillMatch: 81,
+    jobSummary:
+      "• Develop, train, and deploy machine learning models using TensorFlow and other frameworks\n• Implement MLOps practices for model versioning, deployment, and monitoring\n• Optimize model performance and efficiency for production environments\n• Collaborate with data scientists and engineers to build end-to-end ML solutions\n• Stay current with advancements in machine learning and AI",
+    aboutClient:
+      "Fortify is a data analytics firm empowering businesses with data-driven decision-making, operating primarily in India and Southeast Asia. Since 2017, we have been helping organizations harness the power of their data to uncover hidden patterns, optimize operations, and gain a competitive edge. Our expertise spans data engineering, business intelligence, machine learning, and advanced analytics. We partner with companies across various sectors, including e-commerce, finance, and healthcare, to deliver bespoke data solutions. Our team of 100+ data scientists and engineers is committed to delivering tangible business value through data. We believe in fostering a culture of curiosity and continuous learning, encouraging our team to explore new technologies and methodologies. Join Fortify to work on challenging data problems and make a significant impact on our clients' success.",
+    benefits: [
+      "Highly competitive salary and stock options",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible work hours and remote work opportunities",
+      "Generous budget for conferences and training",
+      "Access to state-of-the-art hardware and cloud resources",
+      "Collaborative environment with leading AI researchers",
+    ],
   },
   {
     id: "17",
     title: "Site Reliability Engineer",
     company: "Volaro Group",
+    companyWebsite: "https://volaro.com",
     location: "Perth, Australia",
     type: "Full-time",
     salary: "$95k - $125k",
@@ -263,11 +541,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["Linux", "Monitoring tools", "Incident management", "5+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    status: "open",
+    skillMatch: 91,
+    jobSummary:
+      "• Design, build, and maintain highly available and scalable production systems\n• Implement robust monitoring, alerting, and logging solutions\n• Respond to and resolve production incidents and outages\n• Automate operational tasks and infrastructure management\n• Collaborate with development teams to improve system reliability and performance",
+    aboutClient:
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia. Established in 2015, we've grown from a small startup to a publicly-traded company serving over 2,000 enterprise customers. Our comprehensive suite of business management tools helps organizations streamline operations, improve productivity, and drive growth. We're committed to innovation and customer success, investing heavily in R&D and maintaining a customer satisfaction rate of over 95%. Our Sydney headquarters houses our product development, sales, and customer success teams, creating a collaborative environment where ideas flourish. We've been recognized as one of Australia's fastest-growing tech companies for three consecutive years. Join us to be part of a dynamic team that's shaping the future of enterprise software.",
+    benefits: [
+      "Highly competitive salary and stock options",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible work arrangements and remote possibilities",
+      "Annual budget for professional development and conferences",
+      "Opportunity to work with cutting-edge infrastructure technologies",
+      "Generous paid time off and holidays",
+    ],
   },
   {
     id: "18",
     title: "Database Administrator",
     company: "Thriday",
+    companyWebsite: "https://thriday.com.au",
     location: "Kandy, Sri Lanka",
     type: "Full-time",
     salary: "$35k - $50k",
@@ -276,11 +569,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["PostgreSQL/MySQL", "Database tuning", "Backup strategies", "5+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    status: "draft",
+    skillMatch: 76,
+    jobSummary:
+      "• Install, configure, and maintain database systems (PostgreSQL/MySQL)\n• Optimize database performance through tuning and indexing\n• Implement and manage database backup and recovery strategies\n• Ensure database security and integrity\n• Troubleshoot database issues and provide support",
+    aboutClient:
+      "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    benefits: [
+      "Competitive salary and performance bonuses",
+      "Comprehensive health and wellness benefits",
+      "Flexible work hours and remote options",
+      "Training and certification opportunities",
+      "Supportive team and collaborative culture",
+      "Annual performance reviews and salary adjustments",
+    ],
   },
   {
     id: "19",
     title: "Cloud Engineer",
     company: "Archa",
+    companyWebsite: "https://archa.ai",
     location: "Remote (India)",
     type: "Full-time",
     salary: "$40k - $58k",
@@ -289,11 +597,26 @@ const mockJobListings: JobListing[] = [
     requirements: ["AWS/Azure", "Infrastructure as Code", "CI/CD", "4+ years experience"],
     applied: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    status: "open",
+    skillMatch: 87,
+    jobSummary:
+      "• Design, deploy, and manage cloud infrastructure on AWS and Azure\n• Implement Infrastructure as Code (IaC) using tools like Terraform or CloudFormation\n• Develop and maintain CI/CD pipelines for automated deployments\n• Monitor cloud resources for performance, security, and cost optimization\n• Troubleshoot and resolve cloud infrastructure issues",
+    aboutClient:
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+    benefits: [
+      "Competitive salary and performance incentives",
+      "Comprehensive health and wellness benefits",
+      "Fully remote work environment",
+      "Professional development budget for certifications and training",
+      "Access to cutting-edge cloud technologies",
+      "Generous paid time off",
+    ],
   },
   {
     id: "20",
     title: "Engineering Manager",
     company: "Teamified",
+    companyWebsite: "https://teamified.com",
     location: "Adelaide, Australia",
     type: "Full-time",
     salary: "$110k - $145k",
@@ -302,6 +625,20 @@ const mockJobListings: JobListing[] = [
     requirements: ["Team leadership", "Technical expertise", "Agile", "7+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    status: "closed",
+    skillMatch: 93,
+    jobSummary:
+      "• Lead, mentor, and manage a team of software engineers\n• Oversee the design, development, and delivery of software projects\n• Foster a culture of collaboration, innovation, and continuous improvement\n• Ensure adherence to agile methodologies and best practices\n• Work closely with product management and other stakeholders to define strategy",
+    aboutClient:
+      "Teamified is a fast-growing HR tech company revolutionizing how businesses manage their workforce across the Asia-Pacific region. Founded in 2020, we've grown to serve over 500 enterprise clients and process millions of employee interactions monthly. Our platform combines cutting-edge AI technology with intuitive design to streamline hiring, onboarding, and team management processes. We're backed by leading venture capital firms and have recently closed our Series B funding round. Our diverse team of 150+ professionals spans across Manila, Singapore, and Sydney, working together to build the future of work. We pride ourselves on our innovative culture, commitment to work-life balance, and dedication to helping businesses unlock their full potential. Join us in our mission to make workforce management effortless and empower organizations to focus on what truly matters - their people.",
+    benefits: [
+      "Highly competitive salary and stock options",
+      "Comprehensive health, dental, and vision insurance",
+      "Flexible work arrangements and remote options",
+      "Significant budget for professional development and leadership training",
+      "Opportunity to shape the engineering culture and strategy",
+      "Annual performance bonuses",
+    ],
   },
 ]
 
@@ -381,7 +718,16 @@ const mockCandidateData = [
   { name: "Ashley Wright", position: "Data Scientist", experience: "7 years", status: "Interview", match: "91%" },
 ]
 
-export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) {
+export function WorkspacePane({
+  isOpen,
+  onClose,
+  content,
+  onProfileSave,
+  onUpgradePlan,
+  onHiringManagerStepChange,
+  onViewJob, // Added onViewJob prop
+  onBackToJobBoard, // Added onBackToJobBoard prop
+}: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
   const [pdfZoom, setPdfZoom] = useState(100)
@@ -397,6 +743,44 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
   })
 
   const mockImages = ["/dashboard-analytics.png", "/user-interface-design.png", "/data-visualization-abstract.png"]
+
+  const handleViewJobDetails = (job: JobListing) => {
+    if (onViewJob) {
+      onViewJob(job)
+    }
+  }
+
+  const getWorkspaceTitle = () => {
+    switch (content.type) {
+      case "candidate-profile":
+        return "Edit Candidate Profile"
+      case "hiring-manager-profile":
+        return "Edit Hiring Manager Profile"
+      case "candidate-pricing":
+        return "Upgrade to Premium"
+      case "payment-success":
+        return "Payment Successful"
+      case "pdf":
+        return "Document Viewer"
+      case "image":
+        return "Image Gallery"
+      case "video":
+        return "Video Player"
+      case "code":
+        return "Code Editor"
+      case "job-board":
+        const user = getCurrentUser()
+        return user?.role === "candidate" ? "My Jobs" : "Available Positions"
+      case "table":
+        return "Candidate Overview"
+      case "analytics":
+        return "Analytics Dashboard"
+      case "job-view":
+        return content.job?.title || "Job Details"
+      default:
+        return "Workspace"
+    }
+  }
 
   const filteredAndSortedData = useMemo(() => {
     let data = [...mockCandidateData]
@@ -464,10 +848,28 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
     )
   }
 
-  if (!isOpen || !content.type) return null
-
   const renderContent = () => {
     switch (content.type) {
+      case "candidate-profile":
+        return <CandidateProfileForm onSave={onProfileSave} onClose={onClose} onUpgradePlan={onUpgradePlan} />
+
+      case "hiring-manager-profile":
+        return (
+          <HiringManagerProfileForm onSave={onProfileSave} onClose={onClose} onStepChange={onHiringManagerStepChange} />
+        )
+
+      case "candidate-pricing":
+        return <CandidatePricing onClose={onClose} />
+
+      case "payment-success":
+        return (
+          <PaymentSuccess
+            planName={content.planName || "Enterprise Plan"}
+            amount={content.amount || "$500/mo"}
+            onClose={onClose}
+          />
+        )
+
       case "pdf":
         return (
           <div className="h-full flex flex-col">
@@ -630,7 +1032,7 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
                           <ul className="list-disc ml-6 space-y-1">
                             <li>20 days of paid vacation per year</li>
                             <li>10 days of paid sick leave per year</li>
-                            <li>All Company-recognized holidays</li>
+                            <li>All Company- recognized holidays</li>
                             <li>5 days of personal leave per year</li>
                           </ul>
                           <p>
@@ -1088,67 +1490,368 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
         )
 
       case "job-board":
+        const user = getCurrentUser()
+
+        let displayedJobs = mockJobListings
+
+        if (user?.role === "candidate") {
+          // Candidates can only see open and closed jobs (not draft or cancelled)
+          displayedJobs = mockJobListings.filter(
+            (job) => (job.applied || job.saved) && (job.status === "open" || job.status === "closed"),
+          )
+        }
+
+        const appliedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.applied) : []
+        const savedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.saved && !job.applied) : []
+
+        const getSkillMatchInfo = (score: number | undefined) => {
+          if (!score) return { label: "N/A", color: "bg-gray-500/10 text-gray-600 border-gray-500/20" }
+          if (score >= 90) return { label: "STRONG FIT", color: "bg-green-500/10 text-green-600 border-green-500/20" }
+          if (score >= 70) return { label: "GOOD FIT", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" }
+          return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border-red-500/20" }
+        }
+
         return (
           <div className="h-full overflow-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {mockJobListings.map((job) => (
-                <div
-                  key={job.id}
-                  className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
-                >
-                  <div className="absolute top-6 right-6">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
-                      <img
-                        src={job.logo || "/placeholder.svg"}
-                        alt={`${job.company} logo`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start justify-between mb-4 pr-16">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
-                      <p className="text-sm text-muted-foreground">{job.company}</p>
-                    </div>
-                    {job.applied && (
-                      <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                        Applied
+            {user?.role === "candidate" && displayedJobs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <Briefcase className="w-16 h-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Jobs Yet</h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  You haven't applied to or saved any jobs yet. Start exploring available positions and apply to jobs
+                  that match your skills!
+                </p>
+              </div>
+            ) : user?.role === "candidate" ? (
+              <div className="space-y-8">
+                {/* Applied Jobs Section */}
+                {appliedJobs.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <h3 className="text-xl font-semibold">Applied Jobs</h3>
+                      <span className="px-3 py-1 text-sm rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                        {appliedJobs.length}
                       </span>
-                    )}
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {appliedJobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
+                        >
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              {job.status && (
+                                <span
+                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                    job.status === "open"
+                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                  }`}
+                                >
+                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                </span>
+                              )}
+                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                Applied
+                              </span>
+                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <img
+                                  src={job.logo || "/placeholder.svg"}
+                                  alt={`${job.company} logo`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-6">
+                            {/* Left side - 80% width */}
+                            <div className="flex-[8] flex flex-col gap-4">
+                              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {job.location}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Briefcase className="w-4 h-4" />
+                                  {job.type}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="w-4 h-4" />
+                                  {job.salary}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {job.posted}
+                                </div>
+                              </div>
+
+                              <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">
+                                {job.description}
+                              </p>
+
+                              <button
+                                onClick={() => handleViewJobDetails(job)}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
+                              >
+                                View Application
+                              </button>
+                            </div>
+
+                            {/* Right side - 20% width */}
+                            <div className="flex-[2] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
+                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                Applied
+                              </span>
+                              {job.skillMatch && (
+                                <div className="text-center">
+                                  <div
+                                    className={`text-4xl font-bold mb-2 ${
+                                      job.skillMatch >= 90
+                                        ? "text-green-600"
+                                        : job.skillMatch >= 70
+                                          ? "text-amber-600"
+                                          : "text-red-600"
+                                    }`}
+                                  >
+                                    {job.skillMatch}%
+                                  </div>
+                                  <div
+                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                      job.skillMatch >= 90
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : job.skillMatch >= 70
+                                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                    }`}
+                                  >
+                                    {job.skillMatch >= 90
+                                      ? "STRONG FIT"
+                                      : job.skillMatch >= 70
+                                        ? "GOOD FIT"
+                                        : "NOT FIT"}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {job.location}
+                )}
+
+                {/* Saved Jobs Section */}
+                {savedJobs.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <h3 className="text-xl font-semibold">Saved Jobs</h3>
+                      <span className="px-3 py-1 text-sm rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                        {savedJobs.length}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Briefcase className="w-4 h-4" />
-                      {job.type}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
-                      {job.salary}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {job.posted}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {savedJobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
+                        >
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              {job.status && (
+                                <span
+                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                    job.status === "open"
+                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                  }`}
+                                >
+                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                </span>
+                              )}
+                              <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                Saved
+                              </span>
+                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <img
+                                  src={job.logo || "/placeholder.svg"}
+                                  alt={`${job.company} logo`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-6">
+                            {/* Left side - 80% width */}
+                            <div className="flex-[8] flex flex-col gap-4">
+                              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {job.location}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Briefcase className="w-4 h-4" />
+                                  {job.type}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="w-4 h-4" />
+                                  {job.salary}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {job.posted}
+                                </div>
+                              </div>
+
+                              <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">
+                                {job.description}
+                              </p>
+
+                              <button
+                                onClick={() => handleViewJobDetails(job)}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
+                              >
+                                Submit Application
+                              </button>
+                            </div>
+
+                            {/* Right side - 20% width */}
+                            <div className="flex-[2] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
+                              <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                Saved
+                              </span>
+                              {job.skillMatch && (
+                                <div className="text-center">
+                                  <div
+                                    className={`text-4xl font-bold mb-2 ${
+                                      job.skillMatch >= 90
+                                        ? "text-green-600"
+                                        : job.skillMatch >= 70
+                                          ? "text-amber-600"
+                                          : "text-red-600"
+                                    }`}
+                                  >
+                                    {job.skillMatch}%
+                                  </div>
+                                  <div
+                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                      job.skillMatch >= 90
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : job.skillMatch >= 70
+                                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                    }`}
+                                  >
+                                    {job.skillMatch >= 90
+                                      ? "STRONG FIT"
+                                      : job.skillMatch >= 70
+                                        ? "GOOD FIT"
+                                        : "NOT FIT"}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
-                  <div className="flex gap-2">
-                    <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
-                      {job.applied ? "View Application" : "Apply Now"}
-                    </button>
-                    <button className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors">
-                      Details
-                    </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {displayedJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
+                  >
+                    <div className="absolute top-6 right-6">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                        <img
+                          src={job.logo || "/placeholder.svg"}
+                          alt={`${job.company} logo`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-start justify-between mb-4 pr-16">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                        <p className="text-sm text-muted-foreground">{job.company}</p>
+                      </div>
+                      <div className="flex flex-col gap-2 items-end">
+                        {job.status && (
+                          <span
+                            className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              job.status === "open"
+                                ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                : job.status === "draft"
+                                  ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
+                                  : job.status === "closed"
+                                    ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                    : "bg-red-500/10 text-red-600 border border-red-500/20"
+                            }`}
+                          >
+                            {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                          </span>
+                        )}
+                        {job.applied && (
+                          <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                            Applied
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3 mb-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {job.location}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Briefcase className="w-4 h-4" />
+                        {job.type}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" />
+                        {job.salary}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {job.posted}
+                      </div>
+                    </div>
+                    <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
+                    <div className="flex gap-2">
+                      <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
+                        {job.applied ? "View Application" : "Apply Now"}
+                      </button>
+                      <button
+                        onClick={() => handleViewJobDetails(job)}
+                        className="px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors"
+                      >
+                        Details
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )
+
+      case "job-view":
+        return content.job ? <JobView job={content.job} onBack={onBackToJobBoard} /> : <div>No job data available</div>
 
       case "table":
         return (
@@ -1395,7 +2098,22 @@ export function WorkspacePane({ isOpen, onClose, content }: WorkspacePaneProps) 
   return (
     <div className="h-full flex flex-col border-l border-border bg-background">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-lg font-semibold">Workspace</h2>
+        <div className="flex items-center gap-3">
+          {content.type === "job-view" && onBackToJobBoard && (
+            <button
+              onClick={() => {
+                console.log("[v0] Back button clicked in workspace header")
+                onBackToJobBoard()
+              }}
+              className="p-2 rounded-lg hover:bg-accent transition-colors flex items-center justify-center"
+              aria-label="Back to My Jobs"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 -ml-3" />
+            </button>
+          )}
+          <h2 className="text-lg font-semibold">{getWorkspaceTitle()}</h2>
+        </div>
         <button
           onClick={onClose}
           className="p-2 rounded-lg hover:bg-accent transition-colors"

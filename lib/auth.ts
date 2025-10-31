@@ -1,0 +1,166 @@
+"use client"
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  avatar: string
+  provider: "google" | "github" | "email"
+  role: "candidate" | "hiring_manager"
+  company?: string
+  isNewSignup?: boolean
+}
+
+export const mockUsers = {
+  google: {
+    id: "google-user-1",
+    name: "Robert Downey Jr.",
+    email: "robert@example.com",
+    avatar: "RD",
+    provider: "google" as const,
+    role: "candidate" as const,
+  },
+  github: {
+    id: "github-user-1",
+    name: "Steve Rogers",
+    email: "steve@github.com",
+    avatar: "SR",
+    provider: "github" as const,
+    role: "hiring_manager" as const,
+    company: "TechCorp",
+  },
+}
+
+export function getCurrentUser(): User | null {
+  if (typeof window === "undefined") return null
+  const userJson = localStorage.getItem("teamified_user")
+  if (!userJson) return null
+  try {
+    return JSON.parse(userJson)
+  } catch {
+    return null
+  }
+}
+
+export function setCurrentUser(user: User): void {
+  localStorage.setItem("teamified_user", JSON.stringify(user))
+}
+
+export function clearCurrentUser(): void {
+  localStorage.removeItem("teamified_user")
+}
+
+function hasOAuthUserLoggedInBefore(provider: "google" | "github"): boolean {
+  if (typeof window === "undefined") return false
+  const registeredUsers = JSON.parse(localStorage.getItem("teamified_oauth_users") || "[]")
+  return registeredUsers.includes(provider)
+}
+
+function markOAuthUserAsRegistered(provider: "google" | "github"): void {
+  if (typeof window === "undefined") return
+  const registeredUsers = JSON.parse(localStorage.getItem("teamified_oauth_users") || "[]")
+  if (!registeredUsers.includes(provider)) {
+    registeredUsers.push(provider)
+    localStorage.setItem("teamified_oauth_users", JSON.stringify(registeredUsers))
+  }
+}
+
+export async function mockSignIn(
+  provider: "google" | "github",
+  isSignup = false,
+  role?: "candidate" | "hiring_manager",
+): Promise<User> {
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+
+  const baseUser = mockUsers[provider]
+  const userRole = role || baseUser.role
+
+  const user: User = {
+    ...baseUser,
+    role: userRole,
+    // If isSignup is true, this is a new signup. If false, this is a login (no onboarding)
+    isNewSignup: isSignup,
+    ...(userRole === "hiring_manager" && { company: baseUser.company || "Your Company" }),
+  }
+
+  // Mark user as registered for future reference
+  if (isSignup) {
+    markOAuthUserAsRegistered(provider)
+  }
+
+  setCurrentUser(user)
+  return user
+}
+
+export async function mockSignUp(
+  email: string,
+  password: string,
+  name: string,
+  role: "candidate" | "hiring_manager",
+): Promise<User> {
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+
+  const user: User = {
+    id: `email-user-${Date.now()}`,
+    name: name,
+    email: email,
+    avatar: name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2),
+    provider: "email",
+    role: role,
+    isNewSignup: true,
+    ...(role === "hiring_manager" && { company: "Your Company" }),
+  }
+
+  const credentials = JSON.parse(localStorage.getItem("teamified_credentials") || "{}")
+  credentials[email] = { password, user }
+  localStorage.setItem("teamified_credentials", JSON.stringify(credentials))
+
+  setCurrentUser(user)
+  return user
+}
+
+export async function mockLogin(email: string, password: string): Promise<User> {
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+
+  const credentials = JSON.parse(localStorage.getItem("teamified_credentials") || "{}")
+  const storedCredential = credentials[email]
+
+  if (!storedCredential || storedCredential.password !== password) {
+    throw new Error("Invalid email or password")
+  }
+
+  const user = { ...storedCredential.user, isNewSignup: false }
+  setCurrentUser(user)
+  return user
+}
+
+export function signOut(): void {
+  clearCurrentUser()
+}
+
+export function clearUserOnInitialLoad(): void {
+  if (typeof window === "undefined") return
+
+  // Check if this is the first load of the session
+  const hasInitialized = sessionStorage.getItem("teamified_initialized")
+
+  if (!hasInitialized) {
+    // First load - clear any existing user
+    clearCurrentUser()
+    // Mark as initialized for this session
+    sessionStorage.setItem("teamified_initialized", "true")
+  }
+}
+
+export function clearNewSignupFlag(): void {
+  const user = getCurrentUser()
+  if (user && user.isNewSignup) {
+    const updatedUser = { ...user, isNewSignup: false }
+    setCurrentUser(updatedUser)
+  }
+}

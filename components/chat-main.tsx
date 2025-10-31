@@ -1,16 +1,38 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
-import { Menu, Plus, Mic, ArrowUp, Copy, Download, FileText, ChevronDown } from "lucide-react"
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react"
+import {
+  Menu,
+  Plus,
+  Mic,
+  ArrowUp,
+  Copy,
+  Download,
+  FileText,
+  ChevronDown,
+  Sparkles,
+  Briefcase,
+  Building2,
+  Calculator,
+  Scale,
+  Info,
+  PanelRight,
+  Crown,
+  Users,
+} from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
 import { MarkdownRenderer } from "./markdown-renderer"
+import { useChat } from "@ai-sdk/react"
+import { DefaultChatTransport } from "ai"
 
 interface ChatMainProps {
   isSidebarOpen: boolean
   onToggleSidebar: () => void
   onOpenWorkspace: (content: WorkspaceContent) => void
+  initialAgentId?: string | null
+  shouldShowWelcome?: boolean
 }
 
 interface Message {
@@ -22,6 +44,8 @@ interface Message {
   thinkingTime?: number
   agentId?: string
   isAgentSwitch?: boolean // Added flag to indicate agent switch messages
+  isWelcome?: boolean
+  promptSuggestions?: Array<{ text: string; icon: React.ReactNode }>
 }
 
 const welcomeQuestions = [
@@ -133,17 +157,149 @@ Simply type any command (e.g., \`*service-overview\`) or just ask your questions
 ${agent.callToAction}`
 }
 
-export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: ChatMainProps) {
-  const [message, setMessage] = useState("")
+type SuggestionCategory = "suggested" | "apply-to-jobs" | "hiring" | "quote-me" | "legal" | "about-us"
+
+const suggestionsByCategory: Record<SuggestionCategory, Array<{ text: string; emoji: string }>> = {
+  suggested: [
+    { text: "Tell me more about Teamified AI", emoji: "🤖" },
+    { text: "Show me available AI agents", emoji: "👥" },
+    { text: "What can you help me with?", emoji: "💡" },
+    { text: "Explain your capabilities", emoji: "✨" },
+  ],
+  "apply-to-jobs": [
+    { text: "Help me land a job offer for an open role", emoji: "💼" },
+    { text: "Show me open positions matching my skills", emoji: "🎯" },
+    { text: "Review my resume and suggest improvements", emoji: "📄" },
+    { text: "Prepare me for upcoming interviews", emoji: "🎤" },
+  ],
+  hiring: [
+    { text: "Open a job for my company", emoji: "📢" },
+    { text: "Show me qualified candidates for my role", emoji: "👔" },
+    { text: "Help me write a job description", emoji: "✍️" },
+    { text: "Schedule interviews with shortlisted candidates", emoji: "📅" },
+  ],
+  "quote-me": [
+    { text: "Calculate sample quotation for me", emoji: "💰" },
+    { text: "Show me pricing for recruitment services", emoji: "💵" },
+    { text: "Generate an employment contract", emoji: "📋" },
+    { text: "Explain your service packages", emoji: "📦" },
+  ],
+  legal: [
+    { text: "Show me your privacy policy", emoji: "🔒" },
+    { text: "Explain your terms and conditions", emoji: "📜" },
+    { text: "What are your data protection policies?", emoji: "🛡️" },
+    { text: "Generate a non-disclosure agreement", emoji: "🤝" },
+  ],
+  "about-us": [
+    { text: "Tell me about Teamified's mission and values", emoji: "🎯" },
+    { text: "Who are the people behind Teamified?", emoji: "👥" },
+    { text: "What services does Teamified offer?", emoji: "🚀" },
+    { text: "How can I contact Teamified?", emoji: "📞" },
+  ],
+}
+
+const categoryTabs: Array<{ id: SuggestionCategory; label: string; icon: React.ReactNode }> = [
+  { id: "suggested", label: "Suggested", icon: <Sparkles className="w-4 h-4" /> },
+  { id: "apply-to-jobs", label: "Apply to Jobs", icon: <Briefcase className="w-4 h-4" /> },
+  { id: "hiring", label: "Hiring", icon: <Building2 className="w-4 h-4" /> },
+  { id: "quote-me", label: "Pricing", icon: <Calculator className="w-4 h-4" /> },
+  { id: "legal", label: "Legal", icon: <Scale className="w-4 h-4" /> },
+  { id: "about-us", label: "About Us", icon: <Info className="w-4 h-4" /> },
+]
+
+const generateWelcomeMessage = (agent: AIAgent, userRole: "candidate" | "hiring_manager"): string => {
+  if (userRole === "candidate") {
+    return `Hello! Welcome to Teamified AI! I'm **${agent.firstName}**, your **${agent.name}** AI Agent. ${agent.icon}
+
+I'm excited to help you find your next great opportunity! To get started, I've opened a Candidate Profile form in the workspace on the right where you can share your information with me.
+
+${loremParagraphs[0]}
+
+${loremParagraphs[1]}
+
+## Here's what I can help you with:
+
+${loremParagraphs[2]}
+
+${loremParagraphs[3]}
+
+Please take a moment to complete your profile, and then we can start exploring opportunities that match your skills and experience!
+
+What would you like to know about the opportunities we have available?`
+  } else {
+    return `Hello! Welcome to Teamified AI! I'm **${agent.firstName}**, your **${agent.name}** AI Agent. ${agent.icon}
+
+I'm excited to help you build your team with Teamified! To get started, I've opened the Enterprise Account Setup in the workspace on the right.
+
+## Let's Get Your Company Profile Set Up
+
+${loremParagraphs[0]}
+
+${loremParagraphs[1]}
+
+I'm here to guide you through the setup process and answer any questions you might have about:
+
+- Setting up your company information
+- Configuring your hiring preferences
+- Understanding our enterprise solutions
+- Exploring features that match your needs
+
+${loremParagraphs[2]}
+
+Please take a moment to complete your company profile, and then we can discuss which Teamified solutions would work best for your organization!
+
+What would you like to know as you get started?`
+  }
+}
+
+const generateProfileSavedMessage = (): string => {
+  return `Excellent! Your profile has been saved successfully. 🎉
+
+${loremParagraphs[0]}
+
+Now that I have your information, I can help you in several ways. Here are some things we can do together:`
+}
+
+export const ChatMain = forwardRef<
+  {
+    handleProfileSaved: () => void
+    switchAgent: (agentId: string) => void
+    showPricingGuidance: () => void
+    showPaymentSuccess: () => void
+    showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
+    showJobViewSummary: (job: any) => void // Added showJobViewSummary
+  },
+  ChatMainProps
+>(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
+  const [inputMessage, setInputMessage] = useState("")
   const [welcomeQuestion, setWelcomeQuestion] = useState("")
-  const [messages, setMessages] = useState<Message[]>([])
-  const [isThinking, setIsThinking] = useState(false)
-  const [activeAgent, setActiveAgent] = useState<AIAgent>(AI_AGENTS[0])
+  const [activeAgent, setActiveAgent] = useState<AIAgent>(() => {
+    if (initialAgentId) {
+      return AI_AGENTS.find((agent) => agent.id === initialAgentId) || AI_AGENTS[0]
+    }
+    return AI_AGENTS[0]
+  })
   const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
+  const [activeSuggestionTab, setActiveSuggestionTab] = useState<SuggestionCategory>("suggested")
+  const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
+  const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
+  const [localMessages, setLocalMessages] = useState<Message[]>([])
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
-  const lastMessageRef = useRef<HTMLDivElement>(null) // Added ref for last message (any type)
+  const lastMessageRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const agentDropdownRef = useRef<HTMLDivElement>(null)
+
+  const {
+    messages: aiMessages,
+    sendMessage,
+    status,
+  } = useChat({
+    transport: new DefaultChatTransport({ api: "/api/chat" }),
+    body: {
+      agentId: activeAgent.id,
+    },
+    initialMessages: [], // Start with an empty array, welcome messages are handled separately
+  })
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
@@ -151,8 +307,86 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
   }, [])
 
   useEffect(() => {
-    if (messages.length > 0 && messagesContainerRef.current) {
-      if (messages.length === 1) {
+    if (initialAgentId) {
+      const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
+      if (agent && agent.id !== activeAgent.id) {
+        console.log("[v0] Syncing activeAgent with initialAgentId:", initialAgentId)
+        setActiveAgent(agent)
+      }
+    }
+  }, [initialAgentId])
+
+  useEffect(() => {
+    if (shouldShowWelcome && initialAgentId) {
+      const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
+      if (agent) {
+        console.log("[v0] Adding welcome message for agent:", agent.name)
+        const userRole = agent.id === "technical-recruiter" ? "candidate" : "hiring_manager"
+        setLocalMessages([
+          {
+            id: `welcome-${Date.now()}`,
+            type: "ai",
+            content: generateWelcomeMessage(agent, userRole),
+            agentId: agent.id,
+            isAgentSwitch: false,
+            isWelcome: true, // Mark as welcome message
+          },
+        ])
+      }
+    }
+  }, [shouldShowWelcome, initialAgentId])
+
+  useEffect(() => {
+    const convertedMessages: Message[] = aiMessages.map((msg) => {
+      // Find the corresponding agent if it's an AI message. If not, use the active agent.
+      const messageAgent = AI_AGENTS.find((a) => a.id === msg.extra?.agentId) || activeAgent
+      return {
+        id: msg.id,
+        type: msg.role === "user" ? "user" : "ai",
+        content: msg.parts.map((part) => (part.type === "text" ? part.text : "")).join(""),
+        agentId: messageAgent.id,
+        responseType: msg.extra?.responseType,
+        thinkingTime: msg.extra?.thinkingTime,
+        promptSuggestions: msg.extra?.promptSuggestions,
+      }
+    })
+
+    const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
+
+    // Preserve welcome messages, agent switch messages, and any local messages not from AI
+    const preservedLocalMessages = localMessages.filter(
+      (m) => !aiMessageIds.has(m.id) && (m.isWelcome || m.isAgentSwitch || m.type === "user"),
+    )
+
+    const hasWelcomeMessages = localMessages.some((m) => m.isWelcome)
+    const wouldClearWelcome =
+      hasWelcomeMessages && preservedLocalMessages.length === 0 && convertedMessages.length === 0
+
+    if (wouldClearWelcome) {
+      console.log("[v0] Skipping localMessages update to preserve welcome message")
+      return
+    }
+
+    const newMessages = [...preservedLocalMessages, ...convertedMessages]
+
+    const messagesChanged =
+      newMessages.length !== localMessages.length ||
+      newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content)
+
+    if (messagesChanged) {
+      console.log(
+        "[v0] Updating localMessages. Preserved:",
+        preservedLocalMessages.length,
+        "AI:",
+        convertedMessages.length,
+      )
+      setLocalMessages(newMessages)
+    }
+  }, [aiMessages, activeAgent])
+
+  useEffect(() => {
+    if (localMessages.length > 0 && messagesContainerRef.current) {
+      if (localMessages.length === 1) {
         requestAnimationFrame(() => {
           if (messagesContainerRef.current) {
             messagesContainerRef.current.scrollTop = 0
@@ -160,7 +394,6 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
         })
       } else {
         const timer = setTimeout(() => {
-          // Check if last message is a user message, scroll to it
           if (lastUserMessageRef.current) {
             lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
           } else if (lastMessageRef.current && messagesContainerRef.current) {
@@ -173,7 +406,7 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
         return () => clearTimeout(timer)
       }
     }
-  }, [messages, isThinking])
+  }, [localMessages, status])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -187,129 +420,607 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isAgentDropdownOpen])
 
-  const simulateAIResponse = (userMessage: string) => {
-    const lowerMessage = userMessage.toLowerCase().trim()
-    let responseType: "text" | "code" | "table" | "file" | "image" = "text"
-    let content = ""
-    let shouldOpenWorkspace = false
-    let workspaceContent: WorkspaceContent | null = null
-
-    // Command routing
-    if (lowerMessage === "*help") {
-      content = generateHelpMessage(activeAgent)
-    } else if (lowerMessage === "large text") {
-      content = generateLargeResponse()
-    } else if (lowerMessage === "bullet text") {
-      content = generateBulletResponse()
-    } else if (lowerMessage === "pdf") {
-      responseType = "file"
-      content = generateShortResponse()
-    } else if (lowerMessage === "pdf preview") {
-      content = generateLargeResponse()
-      shouldOpenWorkspace = true
-      workspaceContent = { type: "pdf", title: "employment-contract.pdf" }
-    } else if (lowerMessage === "table") {
-      responseType = "table"
-      content = generateShortResponse()
-    } else if (lowerMessage === "table preview") {
-      content = generateLargeResponse()
-      shouldOpenWorkspace = true
-      workspaceContent = { type: "table", title: "Candidate Data" }
-    } else if (lowerMessage === "image") {
-      responseType = "image"
-      content = generateShortResponse()
-    } else if (lowerMessage === "image preview") {
-      content = generateLargeResponse()
-      shouldOpenWorkspace = true
-      workspaceContent = { type: "image", title: "Dashboard Screenshot" }
-    } else if (lowerMessage === "video preview") {
-      content = generateLargeResponse()
-      shouldOpenWorkspace = true
-      workspaceContent = { type: "video", title: "Product Demo Video" }
-    } else if (lowerMessage === "code") {
-      responseType = "code"
-      content = generateShortResponse()
-    } else if (lowerMessage === "code preview") {
-      content = generateLargeResponse()
-      shouldOpenWorkspace = true
-      workspaceContent = { type: "code", title: "server.js", data: codeSnippet }
-    } else if (lowerMessage === "job board") {
-      content = generateLargeResponse()
-      shouldOpenWorkspace = true
-      workspaceContent = { type: "job-board", title: "Open Positions" }
-    } else if (lowerMessage === "data") {
-      content = generateLargeResponse()
-      shouldOpenWorkspace = true
-      workspaceContent = { type: "analytics", title: "Recruitment Analytics" }
-    } else {
-      // Default: simple text response
-      content = generateShortResponse()
-    }
-
-    setIsThinking(true)
-    const thinkingTime = Math.floor(Math.random() * 20) + 15
-
-    setTimeout(() => {
-      setIsThinking(false)
-      setMessages((prev) => [
+  useImperativeHandle(ref, () => ({
+    handleProfileSaved: () => {
+      setLocalMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
           type: "ai",
-          content,
-          responseType,
-          thinkingTime,
+          content: generateProfileSavedMessage(),
           agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Search for jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Review and improve my CV", icon: <FileText className="w-4 h-4" /> },
+            { text: "Help me prepare for interviews", icon: <Sparkles className="w-4 h-4" /> },
+            {
+              text: "Upgrade to Premium for unlimited access",
+              icon: <Sparkles className="w-4 h-4 text-[#A16AE8]" />,
+            },
+          ],
         },
       ])
-
-      // Open workspace if needed
-      if (shouldOpenWorkspace && workspaceContent) {
-        setTimeout(() => onOpenWorkspace(workspaceContent), 100)
+    },
+    switchAgent: (agentId: string) => {
+      console.log("[v0] switchAgent called with agentId:", agentId)
+      const agent = AI_AGENTS.find((a) => a.id === agentId)
+      if (agent) {
+        console.log("[v0] Agent found:", agent.name)
+        handleAgentChange(agent)
+      } else {
+        console.log("[v0] Agent not found for id:", agentId)
       }
-    }, 2000)
-  }
+    },
+    showPricingGuidance: () => {
+      console.log("[v0] showPricingGuidance called")
+      const pricingMessage = `Great! Let's find the perfect plan for your organization. 🎯
+
+I've analyzed our enterprise offerings, and here's what each plan provides:
+
+## 💼 **Basic Plan** - $300/month
+Perfect for **small teams** needing payroll and HR essentials. Best if you:
+- Need global payroll and tax management
+- Want HR record keeping without complexity
+- Have a limited budget but need core services
+
+## 🎯 **Recruiter Plan** - 9% of base salary per hire
+Ideal for **growing companies** focused on hiring. Best if you:
+- Only want to pay when you successfully hire
+- Need full recruitment lifecycle support
+- Require compliance and onboarding assistance
+
+## ⚡ **Enterprise Plan** - $500/month ⭐ MOST POPULAR
+Our **most popular choice**! Best if you:
+- Need equipment (laptops, accessories) for your team
+- Want smart office locations and workspace setup
+- Require full access to all Teamified AI Agents
+
+## 👑 **Premium Plan** - 30% + $300/month 🏆 ALL-IN
+The **complete solution** with everything included. Best if you:
+- Want dedicated account management
+- Need continuous HR and compliance support
+- Require equipment, office space, AND premium AI features
+- Want dashboarding and analytics capabilities
+
+**Which aspects are most important for your organization?** I can help you compare specific features or answer questions about any plan!`
+
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "ai",
+          content: pricingMessage,
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Compare Basic vs Enterprise plans", icon: <Building2 className="w-4 h-4" /> },
+            { text: "What's included in the Premium plan?", icon: <Crown className="w-4 h-4" /> },
+            { text: "How does the Recruiter plan pricing work?", icon: <Users className="w-4 h-4" /> },
+            { text: "Which plan is best for a 50-person team?", icon: <Briefcase className="w-4 h-4" /> },
+          ],
+        },
+      ])
+    },
+    showPaymentSuccess: () => {
+      console.log("[v0] showPaymentSuccess called")
+      const congratsMessage = `Congratulations! Your payment has been successfully processed! 🎉
+
+Welcome to Teamified Enterprise! You now have full access to all our premium features and AI agents.
+
+## What's Next?
+
+Now that your account is set up, let's get you started with building your team! Here are some things we can do together:
+
+**Create Your First Job Opening** - I can help you craft compelling job descriptions that attract top talent. Just tell me about the role you're looking to fill.
+
+**Set Up Your Hiring Pipeline** - Let's configure your recruitment workflow, interview stages, and evaluation criteria.
+
+**Explore AI Agent Capabilities** - Discover how our specialized AI agents can streamline your entire hiring process.
+
+**Import Existing Job Postings** - Already have job descriptions? I can help you import and optimize them for better results.
+
+${loremParagraphs[0]}
+
+I'm here to help you every step of the way. What would you like to start with?`
+
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "ai",
+          content: congratsMessage,
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Create a new job opening", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Show me how to write a job description", icon: <FileText className="w-4 h-4" /> },
+            { text: "Set up my hiring pipeline", icon: <Building2 className="w-4 h-4" /> },
+            { text: "Explore all AI agent features", icon: <Sparkles className="w-4 h-4" /> },
+          ],
+        },
+      ])
+    },
+    showMyJobsSummary: (appliedCount: number, savedCount: number) => {
+      console.log("[v0] showMyJobsSummary called with applied:", appliedCount, "saved:", savedCount)
+
+      const summaryMessage = `Great to see you exploring opportunities! Let me give you a quick summary of your job activity. 📊
+
+## Your Job Activity
+
+**Applied Jobs:** ${appliedCount} ${appliedCount === 1 ? "position" : "positions"}
+${appliedCount > 0 ? "You've taken the first step by applying to these roles. I'll help you track your applications and prepare for interviews." : "You haven't applied to any jobs yet. Let me help you find positions that match your skills!"}
+
+**Saved Jobs:** ${savedCount} ${savedCount === 1 ? "position" : "positions"}
+${savedCount > 0 ? "These are jobs you're interested in but haven't applied to yet. Ready to take the next step?" : "You haven't saved any jobs yet. When you find interesting positions, save them to review later!"}
+
+${loremParagraphs[0]}
+
+## What Would You Like to Do Next?
+
+I can help you with your job search in several ways. Whether you want to refine your applications, prepare for interviews, or explore new opportunities, I'm here to assist!
+
+${loremParagraphs[1]}`
+
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "ai",
+          content: summaryMessage,
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Help me apply to my saved jobs", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Find more jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Prepare me for upcoming interviews", icon: <Sparkles className="w-4 h-4" /> },
+            { text: "Review and improve my resume", icon: <FileText className="w-4 h-4" /> },
+          ],
+        },
+      ])
+    },
+    showJobViewSummary: (job: any) => {
+      console.log("[v0] showJobViewSummary called for job:", job.title)
+
+      const skillMatchText =
+        job.skillMatch >= 80 ? "excellent match" : job.skillMatch >= 60 ? "good match" : "moderate match"
+
+      const summaryMessage = `Great choice! Let me give you a quick overview of this opportunity. 📋
+
+## ${job.title} at ${job.company}
+
+**Location:** ${job.location} | **Type:** ${job.type} | **Salary:** ${job.salary}
+
+**Your Skill Match:** ${job.skillMatch}% - This is ${skillMatchText === "excellent match" ? "an" : "a"} **${skillMatchText}** for your profile! ${job.skillMatch >= 80 ? "🎯" : job.skillMatch >= 60 ? "✨" : "💡"}
+
+### Quick Summary
+
+${job.jobSummary ? job.jobSummary.split("\n").slice(0, 3).join("\n") : job.description}
+
+${loremParagraphs[0]}
+
+### What I Can Help You With
+
+I'm here to support you through every step of the application process. Whether you want to apply now, save this for later, or prepare yourself better, I've got you covered!
+
+${loremParagraphs[1]}`
+
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "ai",
+          content: summaryMessage,
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "Apply to this Job", icon: <Briefcase className="w-4 h-4" /> },
+            { text: "Save this job for later", icon: <FileText className="w-4 h-4" /> },
+            { text: "Take AI Assessments to increase Skill Match Score", icon: <Sparkles className="w-4 h-4" /> },
+            { text: "Take Mock AI Interviews to prepare for this job", icon: <Sparkles className="w-4 h-4" /> },
+          ],
+        },
+      ])
+    },
+  }))
 
   const handlePreviewClick = (fileType: string) => {
     onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
   }
 
+  const handleReopenWorkspace = () => {
+    if (lastWorkspaceContent) {
+      onOpenWorkspace(lastWorkspaceContent)
+    }
+  }
+
+  const handleCommandOrMessage = (text: string) => {
+    const lowerText = text.toLowerCase().trim()
+
+    // 1. Simple Text - handled at the end (default case)
+
+    // 2. Large Text
+    if (lowerText === "large text") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 3. Bullet Text
+    if (lowerText === "bullet text") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateBulletResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 4. PDF (with file attachment, no preview change)
+    if (lowerText === "pdf") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateShortResponse(),
+        responseType: "file",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 5. PDF Preview (opens PDF viewer in workspace)
+    if (lowerText === "pdf preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open PDF viewer in workspace
+      onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" })
+
+      return true
+    }
+
+    // 6. Table (with tabular data, no preview change)
+    if (lowerText === "table") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateShortResponse(),
+        responseType: "table",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 7. Table Preview (opens table workspace)
+    if (lowerText === "table preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open table workspace
+      onOpenWorkspace({ type: "table", title: "Candidate Table" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "table", title: "Candidate Table" })
+
+      return true
+    }
+
+    // 8. Image (with image thumbnail, no preview change)
+    if (lowerText === "image") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateShortResponse(),
+        responseType: "image",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 9. Image Preview (opens large image preview with next/prev)
+    if (lowerText === "image preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open image preview workspace
+      onOpenWorkspace({ type: "image", title: "Image Gallery" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "image", title: "Image Gallery" })
+
+      return true
+    }
+
+    // 10. Video Preview (opens video player with transcriptions)
+    if (lowerText === "video preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open video player workspace
+      onOpenWorkspace({ type: "video", title: "Video Player" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "video", title: "Video Player" })
+
+      return true
+    }
+
+    // 11. Code (with code snippet, no preview change)
+    if (lowerText === "code" || lowerText === "show code") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateShortResponse(),
+        responseType: "code",
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 12. Code Preview (opens code preview with file structure)
+    if (lowerText === "code preview") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open code preview workspace
+      onOpenWorkspace({ type: "code", title: "server.js", data: codeSnippet })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "code", title: "server.js", data: codeSnippet })
+
+      return true
+    }
+
+    // 13. Job Board (opens job board grid)
+    if (lowerText === "job board") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open job board workspace
+      onOpenWorkspace({ type: "job-board", title: "Available Positions" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "job-board", title: "Available Positions" })
+
+      return true
+    }
+
+    // 14. Data Analytics (opens data analytics with charts)
+    if (lowerText === "data") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: generateLargeResponse(),
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+      // Open data analytics workspace
+      onOpenWorkspace({ type: "analytics", title: "Recruitment Analytics" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" })
+
+      return true
+    }
+
+    // Not a command, return false to send to OpenAI
+    return false
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (message.trim()) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: "user",
-          content: message,
-        },
-      ])
-      simulateAIResponse(message)
-      setMessage("")
+    if (inputMessage.trim()) {
+      const isCommand = handleCommandOrMessage(inputMessage)
+      if (!isCommand) {
+        sendMessage({ text: inputMessage, agentId: activeAgent.id })
+      }
+      setInputMessage("")
     }
   }
 
   const handleSuggestionClick = (suggestionText: string) => {
-    setMessage(suggestionText)
+    setInputMessage(suggestionText)
+  }
+
+  const handlePromptSuggestionClick = (suggestionText: string) => {
+    const isCommand = handleCommandOrMessage(suggestionText)
+    if (!isCommand) {
+      sendMessage({ text: suggestionText, agentId: activeAgent.id })
+    }
   }
 
   const handleAgentChange = (agent: AIAgent) => {
+    console.log("[v0] handleAgentChange called with agent:", agent.name)
     setActiveAgent(agent)
     setIsAgentDropdownOpen(false)
-    setMessages((prev) => [
+
+    const introMessage = generateAgentIntroduction(agent)
+    console.log("[v0] Adding agent introduction message to chat")
+
+    setLocalMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: `agent-switch-${Date.now()}`,
         type: "ai",
-        content: generateAgentIntroduction(agent),
+        content: introMessage,
         agentId: agent.id,
         isAgentSwitch: true,
       },
     ])
   }
 
-  const isCentered = messages.length === 0
+  const isCentered = localMessages.length === 0 && aiMessages.length === 0
+  const isThinking = status === "in_progress"
+
+  const renderSuggestions = () => (
+    <>
+      <div className="flex items-center justify-center gap-2 mb-4 overflow-x-auto pb-2">
+        {categoryTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveSuggestionTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              activeSuggestionTab === tab.id
+                ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-md"
+                : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {suggestionsByCategory[activeSuggestionTab].map((suggestion) => (
+          <button
+            key={suggestion.text}
+            onClick={() => handleSuggestionClick(suggestion.text)}
+            className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
+          >
+            <span className="mr-2">{suggestion.emoji}</span>
+            {suggestion.text}
+          </button>
+        ))}
+      </div>
+    </>
+  )
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden h-full">
@@ -328,7 +1039,18 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
             Teamified AI
           </h2>
         </div>
-        <div className="w-10 flex-shrink-0" />
+        <div className="flex-shrink-0">
+          {hasOpenedWorkspace && (
+            <button
+              onClick={handleReopenWorkspace}
+              className="p-2 rounded-lg hover:bg-accent transition-colors group"
+              aria-label="Reopen workspace"
+              title="Reopen workspace"
+            >
+              <PanelRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            </button>
+          )}
+        </div>
       </header>
 
       <main
@@ -415,8 +1137,8 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                   </div>
                   <input
                     type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
                     placeholder="Ask anything or type *help to know what I can do!"
                     className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
                   />
@@ -430,33 +1152,19 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                     </button>
                     <button
                       type="submit"
-                      disabled={!message.trim()}
-                      className={`p-2.5 rounded-full transition-all ${message.trim() ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
+                      disabled={!inputMessage.trim() || isThinking}
+                      className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
                       aria-label="Send message"
                     >
-                      <ArrowUp className={`w-5 h-5 ${message.trim() ? "text-white" : "text-muted-foreground"}`} />
+                      <ArrowUp
+                        className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
+                      />
                     </button>
                   </div>
                 </div>
               </form>
 
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                {[
-                  { text: "Help me land a job offer for an open role", emoji: "💼" },
-                  { text: "Calculate sample quotation for me", emoji: "💰" },
-                  { text: "Open a job for my company", emoji: "📢" },
-                  { text: "Tell me more about Teamified AI", emoji: "🤖" },
-                ].map((suggestion) => (
-                  <button
-                    key={suggestion.text}
-                    onClick={() => handleSuggestionClick(suggestion.text)}
-                    className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
-                  >
-                    <span className="mr-2">{suggestion.emoji}</span>
-                    {suggestion.text}
-                  </button>
-                ))}
-              </div>
+              <div className="mt-6">{renderSuggestions()}</div>
 
               <footer className="mt-4 text-center">
                 <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
@@ -465,9 +1173,10 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
           </div>
         ) : (
           <div className="max-w-3xl mx-auto pt-8 pb-8 space-y-6">
-            {messages.map((msg, index) => {
-              const isLastUserMessage = msg.type === "user" && index === messages.map((m) => m.type).lastIndexOf("user")
-              const isLastMessage = index === messages.length - 1
+            {localMessages.map((msg, index) => {
+              const isLastUserMessage =
+                msg.type === "user" && index === localMessages.map((m) => m.type).lastIndexOf("user")
+              const isLastMessage = index === localMessages.length - 1
               const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
               return (
                 <div
@@ -518,6 +1227,23 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                       )}
                       <div className="space-y-4">
                         <MarkdownRenderer content={msg.content} />
+
+                        {msg.promptSuggestions && msg.promptSuggestions.length > 0 && (
+                          <div className="grid grid-cols-2 gap-3 mt-4">
+                            {msg.promptSuggestions.map((suggestion, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handlePromptSuggestionClick(suggestion.text)}
+                                className="flex items-center gap-3 px-4 py-3 text-sm text-left rounded-xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all group"
+                              >
+                                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 flex items-center justify-center group-hover:from-[#A16AE8]/20 group-hover:to-[#8096FD]/20 transition-all">
+                                  {suggestion.icon}
+                                </div>
+                                <span className="flex-1">{suggestion.text}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
 
                         {msg.responseType === "code" && (
                           <div className="rounded-2xl overflow-hidden border border-border bg-card">
@@ -711,8 +1437,8 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                 </div>
                 <input
                   type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Ask anything or type *help to know what I can do!"
                   className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
                 />
@@ -726,33 +1452,17 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
                   </button>
                   <button
                     type="submit"
-                    disabled={!message.trim()}
-                    className={`p-2.5 rounded-full transition-all ${message.trim() ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
+                    disabled={!inputMessage.trim() || isThinking}
+                    className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
                     aria-label="Send message"
                   >
-                    <ArrowUp className={`w-5 h-5 ${message.trim() ? "text-white" : "text-muted-foreground"}`} />
+                    <ArrowUp
+                      className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
+                    />
                   </button>
                 </div>
               </div>
             </form>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              {[
-                { text: "Help me land a job offer for an open role", emoji: "💼" },
-                { text: "Calculate sample quotation for me", emoji: "💰" },
-                { text: "Open a job for my company", emoji: "📢" },
-                { text: "Tell me more about Teamified AI", emoji: "🤖" },
-              ].map((suggestion) => (
-                <button
-                  key={suggestion.text}
-                  onClick={() => handleSuggestionClick(suggestion.text)}
-                  className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
-                >
-                  <span className="mr-2">{suggestion.emoji}</span>
-                  {suggestion.text}
-                </button>
-              ))}
-            </div>
 
             <footer className="mt-4 text-center">
               <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
@@ -762,4 +1472,6 @@ export function ChatMain({ isSidebarOpen, onToggleSidebar, onOpenWorkspace }: Ch
       )}
     </div>
   )
-}
+})
+
+ChatMain.displayName = "ChatMain"
