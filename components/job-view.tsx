@@ -1,23 +1,12 @@
 "use client"
 
-import {
-  Briefcase,
-  MapPin,
-  DollarSign,
-  Clock,
-  Building2,
-  CheckCircle2,
-  ExternalLink,
-  AlertCircle,
-  BookOpen,
-  Target,
-  Sparkles,
-} from "lucide-react"
+import { Briefcase, MapPin, DollarSign, Clock, Building2, CheckCircle2, ExternalLink, HelpCircle } from "lucide-react"
 import type { JobListing, JobStatus } from "@/types/workspace"
 
 interface JobViewProps {
   job: JobListing
   onBack?: () => void
+  onRequestSkillGapAnalysis?: () => void // Added callback for skill gap analysis request
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -153,7 +142,7 @@ const generateSkillGapInsights = (matchPercentage: number) => {
   }
 }
 
-export function JobView({ job, onBack }: JobViewProps) {
+export function JobView({ job, onBack, onRequestSkillGapAnalysis }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
   const skillMatchConfig = job.skillMatch !== undefined ? getSkillMatchConfig(job.skillMatch) : null
   const skillGapInsights = job.skillMatch !== undefined ? generateSkillGapInsights(job.skillMatch) : null
@@ -294,7 +283,19 @@ export function JobView({ job, onBack }: JobViewProps) {
               {/* Right Pane - Skill Match Score (30%) */}
               {job.skillMatch !== undefined && (
                 <div className="flex-[3] flex flex-col items-center justify-center text-center space-y-2">
-                  <div className={`text-5xl font-bold ${skillMatchConfig?.color}`}>{job.skillMatch}%</div>
+                  <div className="flex items-center gap-2">
+                    <div className={`text-5xl font-bold ${skillMatchConfig?.color}`}>{job.skillMatch}%</div>
+                    {job.skillMatch < 100 && onRequestSkillGapAnalysis && (
+                      <button
+                        onClick={onRequestSkillGapAnalysis}
+                        className="p-1.5 rounded-full hover:bg-accent transition-colors group"
+                        aria-label="Get skill gap insights"
+                        title="Ask Technical Recruiter AI about your skill gaps"
+                      >
+                        <HelpCircle className="w-5 h-5 text-muted-foreground group-hover:text-[#A16AE8] transition-colors" />
+                      </button>
+                    )}
+                  </div>
                   <div className={`text-lg font-semibold ${skillMatchConfig?.color}`}>{skillMatchConfig?.label}</div>
                   <p className="text-xs text-muted-foreground mt-2">{skillMatchConfig?.description}</p>
                 </div>
@@ -303,74 +304,7 @@ export function JobView({ job, onBack }: JobViewProps) {
           </div>
         )}
 
-        {/* Skill Gap Analysis section */}
-        {skillGapInsights && job.skillMatch !== undefined && job.skillMatch < 100 && (
-          <div className="bg-card rounded-2xl border border-border p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 flex items-center justify-center">
-                <Target className="w-5 h-5 text-[#A16AE8]" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold">{skillGapInsights.title}</h2>
-                <p className="text-sm text-muted-foreground">{skillGapInsights.description}</p>
-              </div>
-            </div>
-
-            {/* Identified Gaps */}
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-500" />
-                Areas for Improvement
-              </h3>
-              <ul className="space-y-2">
-                {skillGapInsights.gaps.map((gap, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0 mt-2" />
-                    <span className="text-muted-foreground">{gap}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Recommendations */}
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#A16AE8]" />
-                Recommended Actions
-              </h3>
-              <div className="grid gap-3">
-                {skillGapInsights.recommendations.map((rec, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-border hover:border-[#A16AE8]/30 transition-colors"
-                  >
-                    <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-sm font-medium text-foreground mb-1">{rec.title}</h4>
-                      <p className="text-xs text-muted-foreground">{rec.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Assistance CTA */}
-            <div className="pt-4 border-t border-border">
-              <button className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8]/10 to-[#8096FD]/10 border border-[#A16AE8]/30 hover:from-[#A16AE8]/20 hover:to-[#8096FD]/20 transition-all group">
-                <div className="flex items-center justify-center gap-3">
-                  <Sparkles className="w-5 h-5 text-[#A16AE8] group-hover:scale-110 transition-transform" />
-                  <span className="font-medium text-foreground">
-                    Ask Technical Recruiter AI for Personalized Insights
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Get customized training recommendations and career guidance
-                </p>
-              </button>
-            </div>
-          </div>
-        )}
-
+        {/* Benefits */}
         <div className="bg-card rounded-2xl border border-border p-6">
           <h2 className="text-lg font-semibold mb-4">Benefits</h2>
           {job.benefits && job.benefits.length > 0 ? (
