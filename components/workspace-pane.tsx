@@ -1507,8 +1507,9 @@ export function WorkspacePane({
         const getSkillMatchInfo = (score: number | undefined) => {
           if (!score) return { label: "N/A", color: "bg-gray-500/10 text-gray-600 border-gray-500/20" }
           if (score >= 90) return { label: "STRONG FIT", color: "bg-green-500/10 text-green-600 border-green-500/20" }
-          if (score >= 70) return { label: "GOOD FIT", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" }
-          return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border-red-500/20" }
+          if (score >= 70)
+            return { label: "GOOD FIT", color: "bg-amber-500/10 text-amber-600 border border-amber-500/20" }
+          return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border border-red-500/20" }
         }
 
         return (
@@ -1540,32 +1541,36 @@ export function WorkspacePane({
                           className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
                         >
                           <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                                </span>
-                              )}
-                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                Applied
-                              </span>
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <img
-                                  src={job.logo || "/placeholder.svg"}
-                                  alt={`${job.company} logo`}
-                                  className="w-full h-full object-cover"
-                                />
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                                <p className="text-sm text-muted-foreground">{job.company}</p>
                               </div>
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
-                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                              <div className="flex items-start gap-2">
+                                <div className="flex flex-col gap-2">
+                                  {job.status && (
+                                    <span
+                                      className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                        job.status === "open"
+                                          ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                          : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                      }`}
+                                    >
+                                      {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                    </span>
+                                  )}
+                                  <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                    Applied
+                                  </span>
+                                </div>
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                                  <img
+                                    src={job.logo || "/placeholder.svg"}
+                                    alt={`${job.company} logo`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
 
@@ -1662,32 +1667,36 @@ export function WorkspacePane({
                           className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
                         >
                           <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                                </span>
-                              )}
-                              <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                                Saved
-                              </span>
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <img
-                                  src={job.logo || "/placeholder.svg"}
-                                  alt={`${job.company} logo`}
-                                  className="w-full h-full object-cover"
-                                />
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                                <p className="text-sm text-muted-foreground">{job.company}</p>
                               </div>
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
-                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                              <div className="flex items-start gap-2">
+                                <div className="flex flex-col gap-2">
+                                  {job.status && (
+                                    <span
+                                      className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                        job.status === "open"
+                                          ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                          : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                      }`}
+                                    >
+                                      {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                    </span>
+                                  )}
+                                  <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                    Saved
+                                  </span>
+                                </div>
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                                  <img
+                                    src={job.logo || "/placeholder.svg"}
+                                    alt={`${job.company} logo`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
 
