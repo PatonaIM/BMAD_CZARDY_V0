@@ -20,6 +20,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true)
     const savedTheme = localStorage.getItem("theme") as Theme | null
+    console.log("[v0] Initial theme from localStorage:", savedTheme)
     if (savedTheme) {
       setTheme(savedTheme)
     }
@@ -28,13 +29,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (mounted) {
       const root = document.documentElement
+      console.log("[v0] Applying theme:", theme)
+      console.log("[v0] Current classes before:", root.className)
       root.classList.remove("light", "dark")
       root.classList.add(theme)
+      console.log("[v0] Current classes after:", root.className)
+
+      // Check computed styles
+      const computedBg = getComputedStyle(root).getPropertyValue("--background")
+      console.log("[v0] Computed --background value:", computedBg)
+
       localStorage.setItem("theme", theme)
     }
   }, [theme, mounted])
 
   const toggleTheme = () => {
+    console.log("[v0] Toggling theme from:", theme)
     setTheme((prev) => (prev === "light" ? "dark" : "light"))
   }
 
