@@ -1545,21 +1545,23 @@ export function WorkspacePane({
                               <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                               <p className="text-sm text-muted-foreground">{job.company}</p>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                            <div className="flex items-start gap-3">
+                              <div className="flex flex-col gap-2">
+                                {job.status && (
+                                  <span
+                                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                      job.status === "open"
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                    }`}
+                                  >
+                                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                  </span>
+                                )}
+                                <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                  Applied
                                 </span>
-                              )}
-                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                Applied
-                              </span>
+                              </div>
                               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
@@ -1664,21 +1666,23 @@ export function WorkspacePane({
                               <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                               <p className="text-sm text-muted-foreground">{job.company}</p>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                            <div className="flex items-start gap-3">
+                              <div className="flex flex-col gap-2">
+                                {job.status && (
+                                  <span
+                                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                      job.status === "open"
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                    }`}
+                                  >
+                                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                  </span>
+                                )}
+                                <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                  Saved
                                 </span>
-                              )}
-                              <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                                Saved
-                              </span>
+                              </div>
                               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
