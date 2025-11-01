@@ -589,7 +589,7 @@ Good luck! I'm confident you'll do great. Remember, we're looking for your probl
         console.log("[v0] Loading code preview workspace for challenge")
         onOpenWorkspace({
           type: "code",
-          title: "server.js",
+          title: "Take Home Challenge",
           data: codeSnippet,
         })
         // The useEffect will update lastWorkspaceContent after showing the welcome message
