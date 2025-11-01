@@ -1598,7 +1598,7 @@ export function WorkspacePane({
                                   Applied
                                 </span>
                               </div>
-                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
@@ -1733,7 +1733,7 @@ export function WorkspacePane({
                                   Saved
                                 </span>
                               </div>
-                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
@@ -1839,7 +1839,7 @@ export function WorkspacePane({
                     className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
                   >
                     <div className="absolute top-6 right-6">
-                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                      <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
                         <img
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
