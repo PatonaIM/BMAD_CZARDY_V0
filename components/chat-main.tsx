@@ -1121,7 +1121,10 @@ Are you ready to begin your Take Home Challenge?`,
     }
 
     const handlePromptSuggestionClick = (suggestionText: string) => {
-      handleCommandOrMessage(suggestionText)
+      const isCommand = handleCommandOrMessage(suggestionText)
+      if (!isCommand) {
+        sendMessage({ text: suggestionText })
+      }
     }
 
     const handleAgentChange = (agent: AIAgent) => {
