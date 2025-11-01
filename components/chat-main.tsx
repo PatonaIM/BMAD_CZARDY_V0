@@ -20,6 +20,7 @@ import {
   PanelRight,
   Crown,
   Users,
+  Code,
 } from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
@@ -988,33 +989,42 @@ ${loremParagraphs[1]}`
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: `# AI Interview (Recommended)
+        content: `Thank you for your interest in this position! Here's how our application process works:
 
-Take an AI-powered interview that provides instant feedback and speeds up your application process. Our AI interviews are designed to assess your skills efficiently and give you immediate results.
+# Application Process
 
-**Benefits:**
-- ⚡ Instant scheduling - start immediately
-- 🎯 Personalized questions based on the role
-- 📊 Immediate feedback and results
-- 🚀 Priority consideration by hiring managers
+**Step 1: Take Home Challenge**
 
-# Traditional Interview
+First, you'll complete a take-home challenge that's designed to assess your technical skills and problem-solving abilities. This challenge is tailored to the role you're applying for and typically takes 2-4 hours to complete.
 
-Schedule a traditional interview with our hiring team. This option follows the standard recruitment process with human interviewers.
+**Step 2: Teamified AI Interviews**
 
-**What to expect:**
-- 📅 Scheduled at mutual convenience
-- 👥 Interview with hiring managers
-- ⏰ Standard processing time
-- 📋 Traditional evaluation process
+Once you've submitted your take-home challenge, you'll participate in our Teamified AI Interviews. These AI-powered interviews will assess your communication skills, technical knowledge, and cultural fit. The AI interviews are:
 
-**Please note:** We prioritize candidates who choose AI interviews as it significantly speeds up the hiring process and allows us to move faster with qualified candidates. AI interview candidates typically receive responses within 24-48 hours, while traditional interviews may take 1-2 weeks to schedule and complete.
+- ⚡ Available immediately after challenge submission
+- 🎯 Personalized based on your role and experience
+- 📊 Recorded for review by the hiring manager
+- 🚀 Completed at your convenience
 
-Which interview format would you prefer?`,
+**Step 3: Hiring Manager Review**
+
+After you complete both the take-home challenge and AI interviews, we'll compile your complete application package including:
+
+- Your resume and portfolio
+- Take-home challenge submission
+- Recording of your Teamified AI interviews
+
+This package will be sent directly to the hiring manager for review.
+
+**Step 4: Final Interview**
+
+If the hiring manager is impressed with your application, they will reach out to you directly to schedule a final interview. This is your opportunity to meet the team and discuss the role in more detail.
+
+**Ready to get started?** Let me know when you'd like to begin your take-home challenge!`,
         agentId: activeAgent.id,
         promptSuggestions: [
-          { text: "I'd like to schedule an AI interview", icon: <Sparkles className="w-4 h-4" /> },
-          { text: "I prefer a traditional interview", icon: <Users className="w-4 h-4" /> },
+          { text: "Start the take-home challenge", icon: <Code className="w-4 h-4" /> },
+          { text: "Tell me more about the AI interviews", icon: <Sparkles className="w-4 h-4" /> },
         ],
       }
 
@@ -1555,3 +1565,4 @@ Which interview format would you prefer?`,
 })
 
 ChatMain.displayName = "ChatMain"
+;("ChatMain")
