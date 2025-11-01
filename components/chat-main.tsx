@@ -35,6 +35,7 @@ interface ChatMainProps {
   onOpenWorkspace: (content: WorkspaceContent) => void
   initialAgentId?: string | null
   shouldShowWelcome?: boolean
+  currentWorkspaceContent?: WorkspaceContent
 }
 
 interface Message {
@@ -291,235 +292,293 @@ export const ChatMain = forwardRef<
     handleStartChallenge: () => void // Added handler for challenge button click
   },
   ChatMainProps
->(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
-  const [inputMessage, setInputMessage] = useState("")
-  const [welcomeQuestion, setWelcomeQuestion] = useState("")
-  const [activeAgent, setActiveAgent] = useState<AIAgent>(() => {
-    if (initialAgentId) {
-      return AI_AGENTS.find((agent) => agent.id === initialAgentId) || AI_AGENTS[0]
-    }
-    return AI_AGENTS[0]
-  })
-  const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
-  const [activeSuggestionTab, setActiveSuggestionTab] = useState<SuggestionCategory>("suggested")
-  const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
-  const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
-  const [localMessages, setLocalMessages] = useState<Message[]>([])
-  const lastUserMessageRef = useRef<HTMLDivElement>(null)
-  const lastMessageRef = useRef<HTMLDivElement>(null)
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const agentDropdownRef = useRef<HTMLDivElement>(null)
-
-  const {
-    messages: aiMessages,
-    sendMessage,
-    status,
-  } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
-    body: {
-      agentId: activeAgent.id,
-    },
-    initialMessages: [], // Start with an empty array, welcome messages are handled separately
-  })
-
-  useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
-    setWelcomeQuestion(welcomeQuestions[randomIndex])
-  }, [])
-
-  useEffect(() => {
-    if (initialAgentId) {
-      const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
-      if (agent && agent.id !== activeAgent.id) {
-        console.log("[v0] Syncing activeAgent with initialAgentId:", initialAgentId)
-        setActiveAgent(agent)
+>(
+  (
+    { isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome, currentWorkspaceContent },
+    ref,
+  ) => {
+    const [inputMessage, setInputMessage] = useState("")
+    const [welcomeQuestion, setWelcomeQuestion] = useState("")
+    const [activeAgent, setActiveAgent] = useState<AIAgent>(() => {
+      if (initialAgentId) {
+        return AI_AGENTS.find((agent) => agent.id === initialAgentId) || AI_AGENTS[0]
       }
-    }
-  }, [initialAgentId])
+      return AI_AGENTS[0]
+    })
+    const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
+    const [activeSuggestionTab, setActiveSuggestionTab] = useState<SuggestionCategory>("suggested")
+    const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
+    const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
+    const [localMessages, setLocalMessages] = useState<Message[]>([])
+    const lastUserMessageRef = useRef<HTMLDivElement>(null)
+    const lastMessageRef = useRef<HTMLDivElement>(null)
+    const messagesContainerRef = useRef<HTMLDivElement>(null)
+    const agentDropdownRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (shouldShowWelcome && initialAgentId) {
-      const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
-      if (agent) {
-        console.log("[v0] Adding welcome message for agent:", agent.name)
-        const userRole = agent.id === "technical-recruiter" ? "candidate" : "hiring_manager"
-        setLocalMessages([
-          {
-            id: `welcome-${Date.now()}`,
-            type: "ai",
-            content: generateWelcomeMessage(agent, userRole),
-            agentId: agent.id,
-            isAgentSwitch: false,
-            isWelcome: true, // Mark as welcome message
-          },
-        ])
-      }
-    }
-  }, [shouldShowWelcome, initialAgentId])
-
-  useEffect(() => {
-    if (!aiMessages) return
-
-    const convertedMessages: Message[] = aiMessages.map((msg) => {
-      // Find the corresponding agent if it's an AI message. If not, use the active agent.
-      const messageAgent = AI_AGENTS.find((a) => a.id === msg.extra?.agentId) || activeAgent
-
-      let content = ""
-      if (msg.parts && msg.parts.length > 0) {
-        // Extract from parts array (typical for AI responses)
-        content = msg.parts.map((part) => (part.type === "text" ? part.text : "")).join("")
-      } else if (msg.content) {
-        // Use content directly if parts don't exist (typical for user messages)
-        content = typeof msg.content === "string" ? msg.content : ""
-      }
-
-      return {
-        id: msg.id,
-        type: msg.role === "user" ? "user" : "ai",
-        content,
-        agentId: messageAgent.id,
-        responseType: msg.extra?.responseType,
-        thinkingTime: msg.extra?.thinkingTime,
-        promptSuggestions: msg.extra?.promptSuggestions,
-        // Added for action button
-        hasActionButton: msg.extra?.hasActionButton,
-        actionButtonText: msg.extra?.actionButtonText,
-        actionButtonHandler: msg.extra?.actionButtonHandler,
-      }
+    const {
+      messages: aiMessages,
+      sendMessage,
+      status,
+    } = useChat({
+      transport: new DefaultChatTransport({ api: "/api/chat" }),
+      body: {
+        agentId: activeAgent.id,
+      },
+      initialMessages: [], // Start with an empty array, welcome messages are handled separately
     })
 
-    const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
+    useEffect(() => {
+      const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
+      setWelcomeQuestion(welcomeQuestions[randomIndex])
+    }, [])
 
-    // Preserve welcome messages, agent switch messages, and any local messages not from AI
-    const preservedLocalMessages = localMessages.filter(
-      (m) => !aiMessageIds.has(m.id) && (m.isWelcome || m.isAgentSwitch || m.type === "user"),
-    )
-
-    const hasWelcomeMessages = localMessages.some((m) => m.isWelcome)
-    const wouldClearWelcome =
-      hasWelcomeMessages && preservedLocalMessages.length === 0 && convertedMessages.length === 0
-
-    if (wouldClearWelcome) {
-      console.log("[v0] Skipping localMessages update to preserve welcome message")
-      return
-    }
-
-    const newMessages = [...preservedLocalMessages, ...convertedMessages]
-
-    const messagesChanged =
-      newMessages.length !== localMessages.length ||
-      newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content)
-
-    if (messagesChanged) {
-      console.log(
-        "[v0] Updating localMessages. Preserved:",
-        preservedLocalMessages.length,
-        "AI:",
-        convertedMessages.length,
-      )
-      setLocalMessages(newMessages)
-    }
-  }, [aiMessages, activeAgent])
-
-  useEffect(() => {
-    if (localMessages.length > 0 && messagesContainerRef.current) {
-      if (localMessages.length === 1) {
-        requestAnimationFrame(() => {
-          if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = 0
-          }
-        })
-      } else {
-        const timer = setTimeout(() => {
-          if (lastUserMessageRef.current) {
-            lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
-          } else if (lastMessageRef.current && messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTo({
-              top: messagesContainerRef.current.scrollHeight,
-              behavior: "smooth",
-            })
-          }
-        }, 100)
-        return () => clearTimeout(timer)
+    useEffect(() => {
+      if (initialAgentId) {
+        const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
+        if (agent && agent.id !== activeAgent.id) {
+          console.log("[v0] Syncing activeAgent with initialAgentId:", initialAgentId)
+          setActiveAgent(agent)
+        }
       }
-    }
-  }, [localMessages, status])
+    }, [initialAgentId])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (agentDropdownRef.current && !agentDropdownRef.current.contains(event.target as Node)) {
-        setIsAgentDropdownOpen(false)
-      }
-    }
-    if (isAgentDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [isAgentDropdownOpen])
-
-  // Declare handleStartChallenge here
-  const handleStartChallenge = () => {
-    console.log("[v0] Starting take home challenge")
-
-    // Show loading animation
-    onOpenWorkspace({ type: "challenge-loading", title: "Take Home Challenge" })
-    setHasOpenedWorkspace(true)
-    setLastWorkspaceContent({ type: "challenge-loading", title: "Take Home Challenge" })
-
-    // After 3 seconds, show the actual challenge
-    setTimeout(() => {
-      console.log("[v0] Loading challenge workspace")
-      onOpenWorkspace({
-        type: "challenge",
-        title: "Take Home Challenge",
-        data: {
-          job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
-        },
-      })
-      setLastWorkspaceContent({
-        type: "challenge",
-        title: "Take Home Challenge",
-        data: {
-          job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
-        },
-      })
-    }, 3000)
-  }
-
-  useImperativeHandle(ref, () => ({
-    handleProfileSaved: () => {
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: "ai",
-          content: generateProfileSavedMessage(),
-          agentId: activeAgent.id,
-          promptSuggestions: [
-            { text: "Search for jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
-            { text: "Review and improve my CV", icon: <FileText className="w-4 h-4" /> },
-            { text: "Help me prepare for interviews", icon: <Sparkles className="w-4 h-4" /> },
+    useEffect(() => {
+      if (shouldShowWelcome && initialAgentId) {
+        const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
+        if (agent) {
+          console.log("[v0] Adding welcome message for agent:", agent.name)
+          const userRole = agent.id === "technical-recruiter" ? "candidate" : "hiring_manager"
+          setLocalMessages([
             {
-              text: "Upgrade to Premium for unlimited access",
-              icon: <Sparkles className="w-4 h-4 text-[#A16AE8]" />,
+              id: `welcome-${Date.now()}`,
+              type: "ai",
+              content: generateWelcomeMessage(agent, userRole),
+              agentId: agent.id,
+              isAgentSwitch: false,
+              isWelcome: true, // Mark as welcome message
             },
-          ],
-        },
-      ])
-    },
-    switchAgent: (agentId: string) => {
-      console.log("[v0] switchAgent called with agentId:", agentId)
-      const agent = AI_AGENTS.find((a) => a.id === agentId)
-      if (agent) {
-        console.log("[v0] Agent found:", agent.name)
-        handleAgentChange(agent)
-      } else {
-        console.log("[v0] Agent not found for id:", agentId)
+          ])
+        }
       }
-    },
-    showPricingGuidance: () => {
-      console.log("[v0] showPricingGuidance called")
-      const pricingMessage = `Great! Let's find the perfect plan for your organization. 🎯
+    }, [shouldShowWelcome, initialAgentId])
+
+    useEffect(() => {
+      if (currentWorkspaceContent?.type === "challenge") {
+        console.log("[v0] Challenge workspace detected, resetting conversation")
+
+        // Clear existing messages
+        setLocalMessages([])
+
+        // Switch to Technical Recruiter if not already active
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
+          setActiveAgent(technicalRecruiter)
+        }
+
+        // Add welcome message from Technical Recruiter
+        setTimeout(() => {
+          const welcomeMessage: Message = {
+            id: `challenge-welcome-${Date.now()}`,
+            type: "ai",
+            agentId: "technical-recruiter",
+            content: `Welcome to your **Take Home Challenge**! 🎯
+
+I'm excited to see what you'll build. Here are the details for your challenge:
+
+**Challenge Overview:**
+Build a Task Management API with the following features:
+- Create, read, update, and delete tasks
+- Mark tasks as complete/incomplete
+- Filter tasks by status
+- RESTful API design
+
+**Requirements:**
+- Use Node.js with Express or similar framework
+- Implement proper error handling
+- Include input validation
+- Write clean, maintainable code
+- Add comments explaining your approach
+
+**Evaluation Criteria:**
+- Code quality and organization
+- API design and best practices
+- Error handling and validation
+- Documentation and comments
+
+**Time Limit:** You have **4 hours** to complete this challenge. Your time starts now!
+
+**Submission:** When you're done, click the "Submit Challenge" button in the workspace. Your code will be automatically saved and submitted.
+
+Good luck! I'm confident you'll do great. Remember, we're looking for your problem-solving approach and code quality, not perfection. 💪`,
+          }
+          setLocalMessages([welcomeMessage])
+        }, 500)
+      }
+    }, [currentWorkspaceContent?.type])
+
+    useEffect(() => {
+      if (!aiMessages) return
+
+      const convertedMessages: Message[] = aiMessages.map((msg) => {
+        // Find the corresponding agent if it's an AI message. If not, use the active agent.
+        const messageAgent = AI_AGENTS.find((a) => a.id === msg.extra?.agentId) || activeAgent
+
+        let content = ""
+        if (msg.parts && msg.parts.length > 0) {
+          // Extract from parts array (typical for AI responses)
+          content = msg.parts.map((part) => (part.type === "text" ? part.text : "")).join("")
+        } else if (msg.content) {
+          // Use content directly if parts don't exist (typical for user messages)
+          content = typeof msg.content === "string" ? msg.content : ""
+        }
+
+        return {
+          id: msg.id,
+          type: msg.role === "user" ? "user" : "ai",
+          content,
+          agentId: messageAgent.id,
+          responseType: msg.extra?.responseType,
+          thinkingTime: msg.extra?.thinkingTime,
+          promptSuggestions: msg.extra?.promptSuggestions,
+          // Added for action button
+          hasActionButton: msg.extra?.hasActionButton,
+          actionButtonText: msg.extra?.actionButtonText,
+          actionButtonHandler: msg.extra?.actionButtonHandler,
+        }
+      })
+
+      const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
+
+      // Preserve welcome messages, agent switch messages, and any local messages not from AI
+      const preservedLocalMessages = localMessages.filter(
+        (m) => !aiMessageIds.has(m.id) && (m.isWelcome || m.isAgentSwitch || m.type === "user"),
+      )
+
+      const hasWelcomeMessages = localMessages.some((m) => m.isWelcome)
+      const wouldClearWelcome =
+        hasWelcomeMessages && preservedLocalMessages.length === 0 && convertedMessages.length === 0
+
+      if (wouldClearWelcome) {
+        console.log("[v0] Skipping localMessages update to preserve welcome message")
+        return
+      }
+
+      const newMessages = [...preservedLocalMessages, ...convertedMessages]
+
+      const messagesChanged =
+        newMessages.length !== localMessages.length ||
+        newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content)
+
+      if (messagesChanged) {
+        console.log(
+          "[v0] Updating localMessages. Preserved:",
+          preservedLocalMessages.length,
+          "AI:",
+          convertedMessages.length,
+        )
+        setLocalMessages(newMessages)
+      }
+    }, [aiMessages, activeAgent])
+
+    useEffect(() => {
+      if (localMessages.length > 0 && messagesContainerRef.current) {
+        if (localMessages.length === 1) {
+          requestAnimationFrame(() => {
+            if (messagesContainerRef.current) {
+              messagesContainerRef.current.scrollTop = 0
+            }
+          })
+        } else {
+          const timer = setTimeout(() => {
+            if (lastUserMessageRef.current) {
+              lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+            } else if (lastMessageRef.current && messagesContainerRef.current) {
+              messagesContainerRef.current.scrollTo({
+                top: messagesContainerRef.current.scrollHeight,
+                behavior: "smooth",
+              })
+            }
+          }, 100)
+          return () => clearTimeout(timer)
+        }
+      }
+    }, [localMessages, status])
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (agentDropdownRef.current && !agentDropdownRef.current.contains(event.target as Node)) {
+          setIsAgentDropdownOpen(false)
+        }
+      }
+      if (isAgentDropdownOpen) {
+        document.addEventListener("mousedown", handleClickOutside)
+      }
+      return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [isAgentDropdownOpen])
+
+    // Declare handleStartChallenge here
+    const handleStartChallenge = () => {
+      console.log("[v0] Starting take home challenge")
+
+      // Show loading animation
+      onOpenWorkspace({ type: "challenge-loading", title: "Take Home Challenge" })
+      setHasOpenedWorkspace(true)
+      setLastWorkspaceContent({ type: "challenge-loading", title: "Take Home Challenge" })
+
+      // After 3 seconds, show the actual challenge
+      setTimeout(() => {
+        console.log("[v0] Loading challenge workspace")
+        onOpenWorkspace({
+          type: "challenge",
+          title: "Take Home Challenge",
+          data: {
+            job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
+          },
+        })
+        setLastWorkspaceContent({
+          type: "challenge",
+          title: "Take Home Challenge",
+          data: {
+            job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
+          },
+        })
+      }, 3000)
+    }
+
+    useImperativeHandle(ref, () => ({
+      handleProfileSaved: () => {
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            type: "ai",
+            content: generateProfileSavedMessage(),
+            agentId: activeAgent.id,
+            promptSuggestions: [
+              { text: "Search for jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
+              { text: "Review and improve my CV", icon: <FileText className="w-4 h-4" /> },
+              { text: "Help me prepare for interviews", icon: <Sparkles className="w-4 h-4" /> },
+              {
+                text: "Upgrade to Premium for unlimited access",
+                icon: <Sparkles className="w-4 h-4 text-[#A16AE8]" />,
+              },
+            ],
+          },
+        ])
+      },
+      switchAgent: (agentId: string) => {
+        console.log("[v0] switchAgent called with agentId:", agentId)
+        const agent = AI_AGENTS.find((a) => a.id === agentId)
+        if (agent) {
+          console.log("[v0] Agent found:", agent.name)
+          handleAgentChange(agent)
+        } else {
+          console.log("[v0] Agent not found for id:", agentId)
+        }
+      },
+      showPricingGuidance: () => {
+        console.log("[v0] showPricingGuidance called")
+        const pricingMessage = `Great! Let's find the perfect plan for your organization. 🎯
 
 I've analyzed our enterprise offerings, and here's what each plan provides:
 
@@ -550,25 +609,25 @@ The **complete solution** with everything included. Best if you:
 
 **Which aspects are most important for your organization?** I can help you compare specific features or answer questions about any plan!`
 
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: "ai",
-          content: pricingMessage,
-          agentId: activeAgent.id,
-          promptSuggestions: [
-            { text: "Compare Basic vs Enterprise plans", icon: <Building2 className="w-4 h-4" /> },
-            { text: "What's included in the Premium plan?", icon: <Crown className="w-4 h-4" /> },
-            { text: "How does the Recruiter plan pricing work?", icon: <Users className="w-4 h-4" /> },
-            { text: "Which plan is best for a 50-person team?", icon: <Briefcase className="w-4 h-4" /> },
-          ],
-        },
-      ])
-    },
-    showPaymentSuccess: () => {
-      console.log("[v0] showPaymentSuccess called")
-      const congratsMessage = `Congratulations! Your payment has been successfully processed! 🎉
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            type: "ai",
+            content: pricingMessage,
+            agentId: activeAgent.id,
+            promptSuggestions: [
+              { text: "Compare Basic vs Enterprise plans", icon: <Building2 className="w-4 h-4" /> },
+              { text: "What's included in the Premium plan?", icon: <Crown className="w-4 h-4" /> },
+              { text: "How does the Recruiter plan pricing work?", icon: <Users className="w-4 h-4" /> },
+              { text: "Which plan is best for a 50-person team?", icon: <Briefcase className="w-4 h-4" /> },
+            ],
+          },
+        ])
+      },
+      showPaymentSuccess: () => {
+        console.log("[v0] showPaymentSuccess called")
+        const congratsMessage = `Congratulations! Your payment has been successfully processed! 🎉
 
 Welcome to Teamified Enterprise! You now have full access to all our premium features and AI agents.
 
@@ -588,26 +647,26 @@ ${loremParagraphs[0]}
 
 I'm here to help you every step of the way. What would you like to start with?`
 
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: "ai",
-          content: congratsMessage,
-          agentId: activeAgent.id,
-          promptSuggestions: [
-            { text: "Create a new job opening", icon: <Briefcase className="w-4 h-4" /> },
-            { text: "Show me how to write a job description", icon: <FileText className="w-4 h-4" /> },
-            { text: "Set up my hiring pipeline", icon: <Building2 className="w-4 h-4" /> },
-            { text: "Explore all AI agent features", icon: <Sparkles className="w-4 h-4" /> },
-          ],
-        },
-      ])
-    },
-    showMyJobsSummary: (appliedCount: number, savedCount: number) => {
-      console.log("[v0] showMyJobsSummary called with applied:", appliedCount, "saved:", savedCount)
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            type: "ai",
+            content: congratsMessage,
+            agentId: activeAgent.id,
+            promptSuggestions: [
+              { text: "Create a new job opening", icon: <Briefcase className="w-4 h-4" /> },
+              { text: "Show me how to write a job description", icon: <FileText className="w-4 h-4" /> },
+              { text: "Set up my hiring pipeline", icon: <Building2 className="w-4 h-4" /> },
+              { text: "Explore all AI agent features", icon: <Sparkles className="w-4 h-4" /> },
+            ],
+          },
+        ])
+      },
+      showMyJobsSummary: (appliedCount: number, savedCount: number) => {
+        console.log("[v0] showMyJobsSummary called with applied:", appliedCount, "saved:", savedCount)
 
-      const summaryMessage = `Great to see you exploring opportunities! Let me give you a quick summary of your job activity. 📊
+        const summaryMessage = `Great to see you exploring opportunities! Let me give you a quick summary of your job activity. 📊
 
 ## Your Job Activity
 
@@ -625,29 +684,29 @@ I can help you with your job search in several ways. Whether you want to refine 
 
 ${loremParagraphs[1]}`
 
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: "ai",
-          content: summaryMessage,
-          agentId: activeAgent.id,
-          promptSuggestions: [
-            { text: "Help me apply to my saved jobs", icon: <Briefcase className="w-4 h-4" /> },
-            { text: "Find more jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
-            { text: "Prepare me for upcoming interviews", icon: <Sparkles className="w-4 h-4" /> },
-            { text: "Review and improve my resume", icon: <FileText className="w-4 h-4" /> },
-          ],
-        },
-      ])
-    },
-    showJobViewSummary: (job: JobListing) => {
-      console.log("[v0] showJobViewSummary called for job:", job.title)
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            type: "ai",
+            content: summaryMessage,
+            agentId: activeAgent.id,
+            promptSuggestions: [
+              { text: "Help me apply to my saved jobs", icon: <Briefcase className="w-4 h-4" /> },
+              { text: "Find more jobs matching my profile", icon: <Briefcase className="w-4 h-4" /> },
+              { text: "Prepare me for upcoming interviews", icon: <Sparkles className="w-4 h-4" /> },
+              { text: "Review and improve my resume", icon: <FileText className="w-4 h-4" /> },
+            ],
+          },
+        ])
+      },
+      showJobViewSummary: (job: JobListing) => {
+        console.log("[v0] showJobViewSummary called for job:", job.title)
 
-      const skillMatchText =
-        job.skillMatch >= 80 ? "excellent match" : job.skillMatch >= 60 ? "good match" : "moderate match"
+        const skillMatchText =
+          job.skillMatch >= 80 ? "excellent match" : job.skillMatch >= 60 ? "good match" : "moderate match"
 
-      const summaryMessage = `Great choice! Let me give you a quick overview of this opportunity. 📋
+        const summaryMessage = `Great choice! Let me give you a quick overview of this opportunity. 📋
 
 ## ${job.title} at ${job.company}
 
@@ -667,369 +726,369 @@ I'm here to support you through every step of the application process. Whether y
 
 ${loremParagraphs[1]}`
 
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: "ai",
-          content: summaryMessage,
-          agentId: activeAgent.id,
-          promptSuggestions: [
-            { text: "Apply to this Job", icon: <Briefcase className="w-4 h-4" /> },
-            { text: "Save this job for later", icon: <FileText className="w-4 h-4" /> },
-            { text: "Take AI Assessments to increase Skill Match Score", icon: <Sparkles className="w-4 h-4" /> },
-            { text: "Take Mock AI Interviews to prepare for this job", icon: <Sparkles className="w-4 h-4" /> },
-          ],
-        },
-      ])
-    },
-    handleJobApplication: (job: JobListing) => {
-      console.log("[v0] handleJobApplication called for job:", job.title)
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            type: "ai",
+            content: summaryMessage,
+            agentId: activeAgent.id,
+            promptSuggestions: [
+              { text: "Apply to this Job", icon: <Briefcase className="w-4 h-4" /> },
+              { text: "Save this job for later", icon: <FileText className="w-4 h-4" /> },
+              { text: "Take AI Assessments to increase Skill Match Score", icon: <Sparkles className="w-4 h-4" /> },
+              { text: "Take Mock AI Interviews to prepare for this job", icon: <Sparkles className="w-4 h-4" /> },
+            ],
+          },
+        ])
+      },
+      handleJobApplication: (job: JobListing) => {
+        console.log("[v0] handleJobApplication called for job:", job.title)
 
-      console.log("[v0] Dispatching interview-option-selected event immediately")
-      window.dispatchEvent(new CustomEvent("interview-option-selected"))
-      console.log("[v0] Event dispatched: interview-option-selected")
+        console.log("[v0] Dispatching interview-option-selected event immediately")
+        window.dispatchEvent(new CustomEvent("interview-option-selected"))
+        console.log("[v0] Event dispatched: interview-option-selected")
 
-      // Send "Apply to this job" command to chat
-      handleCommandOrMessage("Apply to this job")
-    },
-    handleStartChallenge: handleStartChallenge, // Use the declared variable
-  }))
+        // Send "Apply to this job" command to chat
+        handleCommandOrMessage("Apply to this job")
+      },
+      handleStartChallenge: handleStartChallenge, // Use the declared variable
+    }))
 
-  const handlePreviewClick = (fileType: string) => {
-    onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
-  }
-
-  const handleReopenWorkspace = () => {
-    if (lastWorkspaceContent) {
-      onOpenWorkspace(lastWorkspaceContent)
-    }
-  }
-
-  const handleCommandOrMessage = (text: string) => {
-    const lowerText = text.toLowerCase().trim()
-
-    // 1. Simple Text - handled at the end (default case)
-
-    // 2. Large Text
-    if (lowerText === "large text") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateLargeResponse(),
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
-
-    // 3. Bullet Text
-    if (lowerText === "bullet text") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateBulletResponse(),
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
-
-    // 4. PDF (with file attachment, no preview change)
-    if (lowerText === "pdf") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateShortResponse(),
-        responseType: "file",
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
-
-    // 5. PDF Preview (opens PDF viewer in workspace)
-    if (lowerText === "pdf preview") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateLargeResponse(),
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-      // Open PDF viewer in workspace
+    const handlePreviewClick = (fileType: string) => {
       onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
-      setHasOpenedWorkspace(true)
-      setLastWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" })
-
-      return true
     }
 
-    // 6. Table (with tabular data, no preview change)
-    if (lowerText === "table") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
+    const handleReopenWorkspace = () => {
+      if (lastWorkspaceContent) {
+        onOpenWorkspace(lastWorkspaceContent)
       }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateShortResponse(),
-        responseType: "table",
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
     }
 
-    // 7. Table Preview (opens table workspace)
-    if (lowerText === "table preview") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
+    const handleCommandOrMessage = (text: string) => {
+      const lowerText = text.toLowerCase().trim()
+
+      // 1. Simple Text - handled at the end (default case)
+
+      // 2. Large Text
+      if (lowerText === "large text") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateLargeResponse(),
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
       }
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateLargeResponse(),
-        agentId: activeAgent.id,
+      // 3. Bullet Text
+      if (lowerText === "bullet text") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateBulletResponse(),
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
       }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      // 4. PDF (with file attachment, no preview change)
+      if (lowerText === "pdf") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
 
-      // Open table workspace
-      onOpenWorkspace({ type: "table", title: "Candidate Table" })
-      setHasOpenedWorkspace(true)
-      setLastWorkspaceContent({ type: "table", title: "Candidate Table" })
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateShortResponse(),
+          responseType: "file",
+          agentId: activeAgent.id,
+        }
 
-      return true
-    }
-
-    // 8. Image (with image thumbnail, no preview change)
-    if (lowerText === "image") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
       }
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateShortResponse(),
-        responseType: "image",
-        agentId: activeAgent.id,
+      // 5. PDF Preview (opens PDF viewer in workspace)
+      if (lowerText === "pdf preview") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateLargeResponse(),
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+        // Open PDF viewer in workspace
+        onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" })
+
+        return true
       }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
+      // 6. Table (with tabular data, no preview change)
+      if (lowerText === "table") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
 
-    // 9. Image Preview (opens large image preview with next/prev)
-    if (lowerText === "image preview") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateShortResponse(),
+          responseType: "table",
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
       }
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateLargeResponse(),
-        agentId: activeAgent.id,
+      // 7. Table Preview (opens table workspace)
+      if (lowerText === "table preview") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateLargeResponse(),
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+        // Open table workspace
+        onOpenWorkspace({ type: "table", title: "Candidate Table" })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({ type: "table", title: "Candidate Table" })
+
+        return true
       }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      // 8. Image (with image thumbnail, no preview change)
+      if (lowerText === "image") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
 
-      // Open image preview workspace
-      onOpenWorkspace({ type: "image", title: "Image Gallery" })
-      setHasOpenedWorkspace(true)
-      setLastWorkspaceContent({ type: "image", title: "Image Gallery" })
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateShortResponse(),
+          responseType: "image",
+          agentId: activeAgent.id,
+        }
 
-      return true
-    }
-
-    // 10. Video Preview (opens video player with transcriptions)
-    if (lowerText === "video preview") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
       }
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateLargeResponse(),
-        agentId: activeAgent.id,
+      // 9. Image Preview (opens large image preview with next/prev)
+      if (lowerText === "image preview") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateLargeResponse(),
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+        // Open image preview workspace
+        onOpenWorkspace({ type: "image", title: "Image Gallery" })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({ type: "image", title: "Image Gallery" })
+
+        return true
       }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      // 10. Video Preview (opens video player with transcriptions)
+      if (lowerText === "video preview") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
 
-      // Open video player workspace
-      onOpenWorkspace({ type: "video", title: "Video Player" })
-      setHasOpenedWorkspace(true)
-      setLastWorkspaceContent({ type: "video", title: "Video Player" })
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateLargeResponse(),
+          agentId: activeAgent.id,
+        }
 
-      return true
-    }
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
-    // 11. Code (with code snippet, no preview change)
-    if (lowerText === "code" || lowerText === "show code") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
+        // Open video player workspace
+        onOpenWorkspace({ type: "video", title: "Video Player" })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({ type: "video", title: "Video Player" })
+
+        return true
       }
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateShortResponse(),
-        responseType: "code",
-        agentId: activeAgent.id,
+      // 11. Code (with code snippet, no preview change)
+      if (lowerText === "code" || lowerText === "show code") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateShortResponse(),
+          responseType: "code",
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
       }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
+      // 12. Code Preview (opens code preview with file structure)
+      if (lowerText === "code preview") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
 
-    // 12. Code Preview (opens code preview with file structure)
-    if (lowerText === "code preview") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateLargeResponse(),
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+        // Open code preview workspace
+        onOpenWorkspace({ type: "code", title: "server.js", data: codeSnippet })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({ type: "code", title: "server.js", data: codeSnippet })
+
+        return true
       }
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateLargeResponse(),
-        agentId: activeAgent.id,
+      // 13. Job Board (opens job board grid)
+      if (lowerText === "job board") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateLargeResponse(),
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+        // Open job board workspace
+        onOpenWorkspace({ type: "job-board", title: "Available Positions" })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({ type: "job-board", title: "Available Positions" })
+
+        return true
       }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      // 14. Data Analytics (opens data analytics with charts)
+      if (lowerText === "data") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
 
-      // Open code preview workspace
-      onOpenWorkspace({ type: "code", title: "server.js", data: codeSnippet })
-      setHasOpenedWorkspace(true)
-      setLastWorkspaceContent({ type: "code", title: "server.js", data: codeSnippet })
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: generateLargeResponse(),
+          agentId: activeAgent.id,
+        }
 
-      return true
-    }
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
-    // 13. Job Board (opens job board grid)
-    if (lowerText === "job board") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
+        // Open data analytics workspace
+        onOpenWorkspace({ type: "analytics", title: "Recruitment Analytics" })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" })
+
+        return true
       }
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateLargeResponse(),
-        agentId: activeAgent.id,
-      }
+      // 15. Apply to this job (shows interview options)
+      if (lowerText === "apply to this job") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-      // Open job board workspace
-      onOpenWorkspace({ type: "job-board", title: "Available Positions" })
-      setHasOpenedWorkspace(true)
-      setLastWorkspaceContent({ type: "job-board", title: "Available Positions" })
-
-      return true
-    }
-
-    // 14. Data Analytics (opens data analytics with charts)
-    if (lowerText === "data") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: generateLargeResponse(),
-        agentId: activeAgent.id,
-      }
-
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-      // Open data analytics workspace
-      onOpenWorkspace({ type: "analytics", title: "Recruitment Analytics" })
-      setHasOpenedWorkspace(true)
-      setLastWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" })
-
-      return true
-    }
-
-    // 15. Apply to this job (shows interview options)
-    if (lowerText === "apply to this job") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: `Great! I'm excited to help you apply for this position.
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: `Great! I'm excited to help you apply for this position.
 
 Here's how our application process works:
 
@@ -1060,30 +1119,33 @@ This package will be sent directly to the hiring manager for review.
 If the hiring manager is impressed with your application package, they'll reach out to you directly to schedule a final interview. This is your opportunity to meet the team, ask questions, and discuss the role in more detail.
 
 Ready to get started? Let's begin with the take-home challenge!`,
-        agentId: activeAgent.id,
-        promptSuggestions: [
-          { text: "take home challenge", icon: <Code className="w-4 h-4 text-[#A16AE8]" /> },
-          { text: "Tell me more about the AI interviews", icon: <MessageSquare className="w-4 h-4 text-[#8096FD]" /> },
-        ],
+          agentId: activeAgent.id,
+          promptSuggestions: [
+            { text: "take home challenge", icon: <Code className="w-4 h-4 text-[#A16AE8]" /> },
+            {
+              text: "Tell me more about the AI interviews",
+              icon: <MessageSquare className="w-4 h-4 text-[#8096FD]" />,
+            },
+          ],
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
       }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
-    }
+      // Take Home Challenge - shows confirmation with button to start challenge
+      if (lowerText === "take home challenge") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
 
-    // Take Home Challenge - shows confirmation with button to start challenge
-    if (lowerText === "take home challenge") {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: text,
-        agentId: activeAgent.id,
-      }
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: `Great! You're about to start your **Take Home Challenge**. This is an important step in the application process where you'll demonstrate your technical skills.
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: `Great! You're about to start your **Take Home Challenge**. This is an important step in the application process where you'll demonstrate your technical skills.
 
 **Important Information:**
 - ⏱️ You'll have **4 hours** to complete the challenge once you begin
@@ -1097,147 +1159,473 @@ Once you start, the timer will begin immediately. Make sure you have:
 - Your development environment ready (if you want to test locally)
 
 Are you ready to begin your Take Home Challenge?`,
-        agentId: activeAgent.id,
-        hasActionButton: true,
-        actionButtonText: "Proceed to Take Home Challenge",
-        actionButtonHandler: "startChallenge",
+          agentId: activeAgent.id,
+          hasActionButton: true,
+          actionButtonText: "Proceed to Take Home Challenge",
+          actionButtonHandler: "startChallenge",
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
       }
 
-      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-      return true
+      // Not a command, return false to send to OpenAI
+      return false
     }
 
-    // Not a command, return false to send to OpenAI
-    return false
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (inputMessage.trim()) {
-      const isCommand = handleCommandOrMessage(inputMessage)
-      if (!isCommand) {
-        sendMessage(inputMessage)
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault()
+      if (inputMessage.trim()) {
+        const isCommand = handleCommandOrMessage(inputMessage)
+        if (!isCommand) {
+          sendMessage(inputMessage)
+        }
+        setInputMessage("")
       }
-      setInputMessage("")
     }
-  }
 
-  const handleSuggestionClick = (suggestionText: string) => {
-    setInputMessage(suggestionText)
-  }
+    const handleSuggestionClick = (suggestionText: string) => {
+      setInputMessage(suggestionText)
+    }
 
-  const handlePromptSuggestionClick = (suggestionText: string) => {
-    console.log("[v0] Prompt suggestion clicked:", suggestionText)
-    handleCommandOrMessage(suggestionText)
-  }
+    const handlePromptSuggestionClick = (suggestionText: string) => {
+      console.log("[v0] Prompt suggestion clicked:", suggestionText)
+      handleCommandOrMessage(suggestionText)
+    }
 
-  const handleAgentChange = (agent: AIAgent) => {
-    console.log("[v0] handleAgentChange called with agent:", agent.name)
-    setActiveAgent(agent)
-    setIsAgentDropdownOpen(false)
+    const handleAgentChange = (agent: AIAgent) => {
+      console.log("[v0] handleAgentChange called with agent:", agent.name)
+      setActiveAgent(agent)
+      setIsAgentDropdownOpen(false)
 
-    const introMessage = generateAgentIntroduction(agent)
-    console.log("[v0] Adding agent introduction message to chat")
+      const introMessage = generateAgentIntroduction(agent)
+      console.log("[v0] Adding agent introduction message to chat")
 
-    setLocalMessages((prev) => [
-      ...prev,
-      {
-        id: `agent-switch-${Date.now()}`,
-        type: "ai",
-        content: introMessage,
-        agentId: agent.id,
-        isAgentSwitch: true,
-      },
-    ])
-  }
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: `agent-switch-${Date.now()}`,
+          type: "ai",
+          content: introMessage,
+          agentId: agent.id,
+          isAgentSwitch: true,
+        },
+      ])
+    }
 
-  const isCentered = localMessages.length === 0 && aiMessages.length === 0
-  const isThinking = status === "in_progress"
+    const isCentered = localMessages.length === 0 && aiMessages.length === 0
+    const isThinking = status === "in_progress"
 
-  const renderSuggestions = () => (
-    <>
-      <div className="flex items-center justify-center gap-2 mb-4 overflow-x-auto pb-2">
-        {categoryTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSuggestionTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-              activeSuggestionTab === tab.id
-                ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-md"
-                : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {suggestionsByCategory[activeSuggestionTab].map((suggestion) => (
-          <button
-            key={suggestion.text}
-            onClick={() => handleSuggestionClick(suggestion.text)}
-            className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
-          >
-            <span className="mr-2">{suggestion.emoji}</span>
-            {suggestion.text}
-          </button>
-        ))}
-      </div>
-    </>
-  )
-
-  return (
-    <div className="flex-1 flex flex-col overflow-hidden h-full bg-background">
-      <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border bg-background">
-        {!isSidebarOpen && (
-          <button
-            onClick={onToggleSidebar}
-            className="p-2 rounded-lg hover:bg-accent transition-colors flex-shrink-0"
-            aria-label="Open sidebar"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        )}
-        <div className="flex-1 text-center">
-          <h2 className="text-lg font-semibold bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
-            Teamified AI
-          </h2>
-        </div>
-        <div className="flex-shrink-0">
-          {hasOpenedWorkspace && (
+    const renderSuggestions = () => (
+      <>
+        <div className="flex items-center justify-center gap-2 mb-4 overflow-x-auto pb-2">
+          {categoryTabs.map((tab) => (
             <button
-              onClick={handleReopenWorkspace}
-              className="p-2 rounded-lg hover:bg-accent transition-colors group"
-              aria-label="Reopen workspace"
-              title="Reopen workspace"
+              key={tab.id}
+              onClick={() => setActiveSuggestionTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSuggestionTab === tab.id
+                  ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-md"
+                  : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
             >
-              <PanelRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {suggestionsByCategory[activeSuggestionTab].map((suggestion) => (
+            <button
+              key={suggestion.text}
+              onClick={() => handleSuggestionClick(suggestion.text)}
+              className="px-4 py-3 text-sm text-left rounded-2xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all"
+            >
+              <span className="mr-2">{suggestion.emoji}</span>
+              {suggestion.text}
+            </button>
+          ))}
+        </div>
+      </>
+    )
+
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden h-full bg-background">
+        <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border bg-background">
+          {!isSidebarOpen && (
+            <button
+              onClick={onToggleSidebar}
+              className="p-2 rounded-lg hover:bg-accent transition-colors flex-shrink-0"
+              aria-label="Open sidebar"
+            >
+              <Menu className="w-5 h-5" />
             </button>
           )}
-        </div>
-      </header>
-
-      <main
-        ref={messagesContainerRef}
-        className={`flex-1 min-h-0 px-6 relative bg-background ${isCentered ? "flex items-center justify-center" : "flex flex-col overflow-y-auto"}`}
-      >
-        {isCentered ? (
-          <div className="w-full max-w-3xl">
-            <div className="text-center mb-12">
-              <div
-                className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-lg"
-                style={{ background: `linear-gradient(135deg, ${activeAgent.color}, ${activeAgent.color}dd)` }}
+          <div className="flex-1 text-center">
+            <h2 className="text-lg font-semibold bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
+              Teamified AI
+            </h2>
+          </div>
+          <div className="flex-shrink-0">
+            {hasOpenedWorkspace && (
+              <button
+                onClick={handleReopenWorkspace}
+                className="p-2 rounded-lg hover:bg-accent transition-colors group"
+                aria-label="Reopen workspace"
+                title="Reopen workspace"
               >
-                <span className="text-4xl">{activeAgent.icon}</span>
-              </div>
-              <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
-                Teamified AI
-              </h1>
-              <p className="text-2xl text-muted-foreground mb-8">{welcomeQuestion}</p>
-            </div>
+                <PanelRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </button>
+            )}
+          </div>
+        </header>
 
-            <div className="animate-in fade-in duration-500">
+        <main
+          ref={messagesContainerRef}
+          className={`flex-1 min-h-0 px-6 relative bg-background ${isCentered ? "flex items-center justify-center" : "flex flex-col overflow-y-auto"}`}
+        >
+          {isCentered ? (
+            <div className="w-full max-w-3xl">
+              <div className="text-center mb-12">
+                <div
+                  className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-lg"
+                  style={{ background: `linear-gradient(135deg, ${activeAgent.color}, ${activeAgent.color}dd)` }}
+                >
+                  <span className="text-4xl">{activeAgent.icon}</span>
+                </div>
+                <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
+                  Teamified AI
+                </h1>
+                <p className="text-2xl text-muted-foreground mb-8">{welcomeQuestion}</p>
+              </div>
+
+              <div className="animate-in fade-in duration-500">
+                <form onSubmit={handleSubmit} className="relative">
+                  <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="absolute left-4 flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="p-2 rounded-lg hover:bg-accent transition-colors"
+                        aria-label="Add attachment"
+                      >
+                        <Plus className="w-5 h-5 text-muted-foreground" />
+                      </button>
+                      <div className="relative" ref={agentDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+                          className="p-1.5 rounded-lg hover:bg-accent transition-all group"
+                          aria-label="Select AI Agent"
+                          title={activeAgent.name}
+                        >
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
+                            style={{ backgroundColor: activeAgent.color }}
+                          >
+                            <span className="text-base">{activeAgent.icon}</span>
+                          </div>
+                        </button>
+                        {isAgentDropdownOpen && (
+                          <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+                            <div className="p-3 border-b border-border bg-muted">
+                              <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                            </div>
+                            <div className="max-h-96 overflow-y-auto">
+                              {AI_AGENTS.map((agent) => (
+                                <button
+                                  key={agent.id}
+                                  type="button"
+                                  onClick={() => handleAgentChange(agent)}
+                                  className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${activeAgent.id === agent.id ? "bg-accent/50" : ""}`}
+                                >
+                                  <div
+                                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                                    style={{ backgroundColor: agent.color }}
+                                  >
+                                    <span className="text-xl">{agent.icon}</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                                      {activeAgent.id === agent.id && (
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                          Active
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      placeholder="Ask anything or type *help to know what I can do!"
+                      className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                    />
+                    <div className="flex items-center gap-2 pr-2">
+                      <button
+                        type="button"
+                        className="p-2 rounded-lg hover:bg-accent transition-colors"
+                        aria-label="Voice input"
+                      >
+                        <Mic className="w-5 h-5 text-muted-foreground" />
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!inputMessage.trim() || isThinking}
+                        className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
+                        aria-label="Send message"
+                      >
+                        <ArrowUp
+                          className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                <div className="mt-6">{renderSuggestions()}</div>
+
+                <footer className="mt-4 text-center">
+                  <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
+                </footer>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-3xl mx-auto pt-8 pb-8 space-y-6">
+              {localMessages.map((msg, index) => {
+                const isLastUserMessage =
+                  msg.type === "user" && index === localMessages.map((m) => m.type).lastIndexOf("user")
+                const isLastMessage = index === localMessages.length - 1
+                const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
+                return (
+                  <div
+                    key={msg.id}
+                    ref={isLastUserMessage ? lastUserMessageRef : isLastMessage ? lastMessageRef : null}
+                    className="message-enter"
+                  >
+                    {msg.isAgentSwitch && (
+                      <div className="flex items-center gap-4 mb-8 mt-8">
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border">
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: messageAgent?.color }}
+                          >
+                            <span className="text-xs">{messageAgent?.icon}</span>
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Switched to {messageAgent?.name}
+                          </span>
+                        </div>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                      </div>
+                    )}
+
+                    {msg.type === "user" ? (
+                      <div className="flex justify-end mb-6">
+                        <div className="max-w-[80%] px-5 py-3 rounded-3xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg">
+                          <p className="text-sm leading-relaxed">{msg.content}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                            style={{ backgroundColor: messageAgent?.color }}
+                          >
+                            <span className="text-lg">{messageAgent?.icon}</span>
+                          </div>
+                          <span className="text-sm font-medium text-foreground">{messageAgent?.name}</span>
+                        </div>
+                        {msg.thinkingTime && (
+                          <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                            <span className="font-medium">Thought for {msg.thinkingTime}s</span>
+                            <ChevronDown className="w-4 h-4" />
+                          </div>
+                        )}
+                        <div className="space-y-4">
+                          <MarkdownRenderer content={msg.content} />
+
+                          {msg.promptSuggestions && msg.promptSuggestions.length > 0 && (
+                            <div className="grid grid-cols-2 gap-3 mt-4">
+                              {msg.promptSuggestions.map((suggestion, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => handlePromptSuggestionClick(suggestion.text)}
+                                  className="flex items-center gap-3 px-4 py-3 text-sm text-left rounded-xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all group"
+                                >
+                                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 flex items-center justify-center group-hover:from-[#A16AE8]/20 group-hover:to-[#8096FD]/20 transition-all">
+                                    {suggestion.icon}
+                                  </div>
+                                  <span className="flex-1">{suggestion.text}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {msg.responseType === "code" && (
+                            <div className="rounded-2xl overflow-hidden border border-border bg-card">
+                              <div className="flex items-center justify-between px-4 py-2 bg-muted border-b border-border">
+                                <span className="text-xs font-mono text-muted-foreground">server.js</span>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText(codeSnippet)}
+                                  className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg hover:bg-accent transition-colors"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                  Copy code
+                                </button>
+                              </div>
+                              <div className="p-4 overflow-x-auto">
+                                <pre className="text-xs font-mono leading-relaxed">
+                                  <code className="text-foreground">{codeSnippet}</code>
+                                </pre>
+                              </div>
+                            </div>
+                          )}
+
+                          {msg.responseType === "table" && (
+                            <div className="rounded-2xl overflow-hidden border border-border bg-card">
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="border-b border-border bg-muted">
+                                      {tableData.headers.map((header) => (
+                                        <th key={header} className="px-4 py-3 text-left font-medium text-foreground">
+                                          {header}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {tableData.rows.map((row, idx) => (
+                                      <tr key={idx} className="border-b border-border last:border-0 hover:bg-accent/50">
+                                        {row.map((cell, cellIdx) => (
+                                          <td key={cellIdx} className="px-4 py-3 text-foreground">
+                                            {cell}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+
+                          {msg.responseType === "file" && (
+                            <div className="rounded-2xl border border-border bg-card p-4">
+                              <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center">
+                                  <FileText className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-foreground mb-1">candidate-resume.pdf</h4>
+                                  <p className="text-xs text-muted-foreground mb-3">2.4 MB • PDF Document</p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handlePreviewClick("pdf")}
+                                      className="px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white hover:shadow-lg transition-all"
+                                    >
+                                      Preview
+                                    </button>
+                                    <button className="px-4 py-2 text-sm font-medium rounded-xl border border-border hover:bg-accent transition-colors flex items-center gap-2">
+                                      <Download className="w-4 h-4" />
+                                      Download
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {msg.responseType === "image" && (
+                            <div className="rounded-2xl border border-border bg-card p-4">
+                              <img
+                                src="/dashboard-analytics-interface.png"
+                                alt="Dashboard preview"
+                                className="w-full rounded-xl"
+                              />
+                            </div>
+                          )}
+
+                          {msg.responseType === "challenge-button" && (
+                            <div className="mt-4">
+                              <button
+                                onClick={() => handleStartChallenge()}
+                                className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all"
+                              >
+                                Start Take Home Challenge
+                              </button>
+                            </div>
+                          )}
+
+                          {msg.hasActionButton && msg.actionButtonText && msg.actionButtonHandler && (
+                            <div className="mt-4 flex justify-center">
+                              <button
+                                onClick={() => {
+                                  if (msg.actionButtonHandler === "startChallenge") {
+                                    handleStartChallenge()
+                                  }
+                                }}
+                                className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
+                              >
+                                {msg.actionButtonText}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {isThinking && (
+                <div className="mb-6 message-enter">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                      style={{ backgroundColor: activeAgent.color }}
+                    >
+                      <span className="text-lg">{activeAgent.icon}</span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{activeAgent.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Thinking</span>
+                    <div className="flex gap-1">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-[#8096FD] animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+
+        {!isCentered && (
+          <div className="px-6 pb-6">
+            <div className="max-w-3xl mx-auto">
               <form onSubmit={handleSubmit} className="relative">
                 <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
                   <div className="absolute left-4 flex items-center gap-1">
@@ -1329,341 +1717,16 @@ Are you ready to begin your Take Home Challenge?`,
                 </div>
               </form>
 
-              <div className="mt-6">{renderSuggestions()}</div>
-
               <footer className="mt-4 text-center">
                 <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
               </footer>
             </div>
           </div>
-        ) : (
-          <div className="max-w-3xl mx-auto pt-8 pb-8 space-y-6">
-            {localMessages.map((msg, index) => {
-              const isLastUserMessage =
-                msg.type === "user" && index === localMessages.map((m) => m.type).lastIndexOf("user")
-              const isLastMessage = index === localMessages.length - 1
-              const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
-              return (
-                <div
-                  key={msg.id}
-                  ref={isLastUserMessage ? lastUserMessageRef : isLastMessage ? lastMessageRef : null}
-                  className="message-enter"
-                >
-                  {msg.isAgentSwitch && (
-                    <div className="flex items-center gap-4 mb-8 mt-8">
-                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border">
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: messageAgent?.color }}
-                        >
-                          <span className="text-xs">{messageAgent?.icon}</span>
-                        </div>
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Switched to {messageAgent?.name}
-                        </span>
-                      </div>
-                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                    </div>
-                  )}
-
-                  {msg.type === "user" ? (
-                    <div className="flex justify-end mb-6">
-                      <div className="max-w-[80%] px-5 py-3 rounded-3xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg">
-                        <p className="text-sm leading-relaxed">{msg.content}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mb-6">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
-                          style={{ backgroundColor: messageAgent?.color }}
-                        >
-                          <span className="text-lg">{messageAgent?.icon}</span>
-                        </div>
-                        <span className="text-sm font-medium text-foreground">{messageAgent?.name}</span>
-                      </div>
-                      {msg.thinkingTime && (
-                        <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="font-medium">Thought for {msg.thinkingTime}s</span>
-                          <ChevronDown className="w-4 h-4" />
-                        </div>
-                      )}
-                      <div className="space-y-4">
-                        <MarkdownRenderer content={msg.content} />
-
-                        {msg.promptSuggestions && msg.promptSuggestions.length > 0 && (
-                          <div className="grid grid-cols-2 gap-3 mt-4">
-                            {msg.promptSuggestions.map((suggestion, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => handlePromptSuggestionClick(suggestion.text)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm text-left rounded-xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all group"
-                              >
-                                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 flex items-center justify-center group-hover:from-[#A16AE8]/20 group-hover:to-[#8096FD]/20 transition-all">
-                                  {suggestion.icon}
-                                </div>
-                                <span className="flex-1">{suggestion.text}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {msg.responseType === "code" && (
-                          <div className="rounded-2xl overflow-hidden border border-border bg-card">
-                            <div className="flex items-center justify-between px-4 py-2 bg-muted border-b border-border">
-                              <span className="text-xs font-mono text-muted-foreground">server.js</span>
-                              <button
-                                onClick={() => navigator.clipboard.writeText(codeSnippet)}
-                                className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg hover:bg-accent transition-colors"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                                Copy code
-                              </button>
-                            </div>
-                            <div className="p-4 overflow-x-auto">
-                              <pre className="text-xs font-mono leading-relaxed">
-                                <code className="text-foreground">{codeSnippet}</code>
-                              </pre>
-                            </div>
-                          </div>
-                        )}
-
-                        {msg.responseType === "table" && (
-                          <div className="rounded-2xl overflow-hidden border border-border bg-card">
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-sm">
-                                <thead>
-                                  <tr className="border-b border-border bg-muted">
-                                    {tableData.headers.map((header) => (
-                                      <th key={header} className="px-4 py-3 text-left font-medium text-foreground">
-                                        {header}
-                                      </th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {tableData.rows.map((row, idx) => (
-                                    <tr key={idx} className="border-b border-border last:border-0 hover:bg-accent/50">
-                                      {row.map((cell, cellIdx) => (
-                                        <td key={cellIdx} className="px-4 py-3 text-foreground">
-                                          {cell}
-                                        </td>
-                                      ))}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
-
-                        {msg.responseType === "file" && (
-                          <div className="rounded-2xl border border-border bg-card p-4">
-                            <div className="flex items-start gap-4">
-                              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center">
-                                <FileText className="w-6 h-6 text-white" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-foreground mb-1">candidate-resume.pdf</h4>
-                                <p className="text-xs text-muted-foreground mb-3">2.4 MB • PDF Document</p>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handlePreviewClick("pdf")}
-                                    className="px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white hover:shadow-lg transition-all"
-                                  >
-                                    Preview
-                                  </button>
-                                  <button className="px-4 py-2 text-sm font-medium rounded-xl border border-border hover:bg-accent transition-colors flex items-center gap-2">
-                                    <Download className="w-4 h-4" />
-                                    Download
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {msg.responseType === "image" && (
-                          <div className="rounded-2xl border border-border bg-card p-4">
-                            <img
-                              src="/dashboard-analytics-interface.png"
-                              alt="Dashboard preview"
-                              className="w-full rounded-xl"
-                            />
-                          </div>
-                        )}
-
-                        {msg.responseType === "challenge-button" && (
-                          <div className="mt-4">
-                            <button
-                              onClick={() => handleStartChallenge()}
-                              className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all"
-                            >
-                              Start Take Home Challenge
-                            </button>
-                          </div>
-                        )}
-
-                        {msg.hasActionButton && msg.actionButtonText && msg.actionButtonHandler && (
-                          <div className="mt-4 flex justify-center">
-                            <button
-                              onClick={() => {
-                                if (msg.actionButtonHandler === "startChallenge") {
-                                  handleStartChallenge()
-                                }
-                              }}
-                              className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
-                            >
-                              {msg.actionButtonText}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-
-            {isThinking && (
-              <div className="mb-6 message-enter">
-                <div className="flex items-center gap-2 mb-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
-                    style={{ backgroundColor: activeAgent.color }}
-                  >
-                    <span className="text-lg">{activeAgent.icon}</span>
-                  </div>
-                  <span className="text-sm font-medium text-foreground">{activeAgent.name}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>Thinking</span>
-                  <div className="flex gap-1">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-[#8096FD] animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
         )}
-      </main>
-
-      {!isCentered && (
-        <div className="px-6 pb-6">
-          <div className="max-w-3xl mx-auto">
-            <form onSubmit={handleSubmit} className="relative">
-              <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="absolute left-4 flex items-center gap-1">
-                  <button
-                    type="button"
-                    className="p-2 rounded-lg hover:bg-accent transition-colors"
-                    aria-label="Add attachment"
-                  >
-                    <Plus className="w-5 h-5 text-muted-foreground" />
-                  </button>
-                  <div className="relative" ref={agentDropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
-                      className="p-1.5 rounded-lg hover:bg-accent transition-all group"
-                      aria-label="Select AI Agent"
-                      title={activeAgent.name}
-                    >
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
-                        style={{ backgroundColor: activeAgent.color }}
-                      >
-                        <span className="text-base">{activeAgent.icon}</span>
-                      </div>
-                    </button>
-                    {isAgentDropdownOpen && (
-                      <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-                        <div className="p-3 border-b border-border bg-muted">
-                          <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
-                        </div>
-                        <div className="max-h-96 overflow-y-auto">
-                          {AI_AGENTS.map((agent) => (
-                            <button
-                              key={agent.id}
-                              type="button"
-                              onClick={() => handleAgentChange(agent)}
-                              className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${activeAgent.id === agent.id ? "bg-accent/50" : ""}`}
-                            >
-                              <div
-                                className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-                                style={{ backgroundColor: agent.color }}
-                              >
-                                <span className="text-xl">{agent.icon}</span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
-                                  {activeAgent.id === agent.id && (
-                                    <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                      Active
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Ask anything or type *help to know what I can do!"
-                  className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-                />
-                <div className="flex items-center gap-2 pr-2">
-                  <button
-                    type="button"
-                    className="p-2 rounded-lg hover:bg-accent transition-colors"
-                    aria-label="Voice input"
-                  >
-                    <Mic className="w-5 h-5 text-muted-foreground" />
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!inputMessage.trim() || isThinking}
-                    className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
-                    aria-label="Send message"
-                  >
-                    <ArrowUp
-                      className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </form>
-
-            <footer className="mt-4 text-center">
-              <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
-            </footer>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-})
+      </div>
+    )
+  },
+)
 
 ChatMain.displayName = "ChatMain"
 ;("ChatMain")

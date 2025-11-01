@@ -202,6 +202,7 @@ export default function ChatPage() {
               onOpenWorkspace={setWorkspaceContent}
               initialAgentId={initialAgent}
               shouldShowWelcome={shouldShowWelcome}
+              currentWorkspaceContent={workspaceContent}
             />
           </div>
           {workspaceContent.type && (
