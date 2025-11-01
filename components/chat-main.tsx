@@ -327,239 +327,7 @@ export const ChatMain = forwardRef<
       initialMessages: [], // Start with an empty array, welcome messages are handled separately
     })
 
-    useEffect(() => {
-      if (aiMessages.length === 0) {
-        return
-      }
-
-      const lastAiMessage = aiMessages[aiMessages.length - 1]
-
-      if (lastAiMessage.role !== "assistant") {
-        return
-      }
-
-      // Check if message is still streaming - if so, skip processing
-      const isStreaming = lastAiMessage.parts?.some((part: any) => part.state === "streaming")
-      if (isStreaming) {
-        return
-      }
-
-      // Extract content from parts array
-      let content = ""
-      if (lastAiMessage.parts && Array.isArray(lastAiMessage.parts)) {
-        content = lastAiMessage.parts
-          .filter((part: any) => part.type === "text")
-          .map((part: any) => part.text || "")
-          .join("")
-      } else if (typeof lastAiMessage.content === "string") {
-        content = lastAiMessage.content
-      }
-
-      if (!content) {
-        return
-      }
-
-      // Check if the message contains code blocks
-      const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
-      const matches = [...content.matchAll(codeBlockRegex)]
-
-      if (matches.length > 0) {
-        // Extract the first code block
-        const firstMatch = matches[0]
-        const language = firstMatch[1] || "javascript"
-        const code = firstMatch[2].trim()
-
-        // Determine filename based on language
-        const filenameMap: Record<string, string> = {
-          javascript: "code.js",
-          typescript: "code.ts",
-          python: "code.py",
-          java: "Code.java",
-          cpp: "code.cpp",
-          c: "code.c",
-          go: "code.go",
-          rust: "code.rs",
-          html: "index.html",
-          css: "styles.css",
-          jsx: "component.jsx",
-          tsx: "component.tsx",
-          bash: "script.sh",
-          sh: "script.sh",
-        }
-
-        const filename = filenameMap[language.toLowerCase()] || "code.txt"
-
-        console.log(
-          "[v0] Code block detected - Language:",
-          language,
-          "| Filename:",
-          filename,
-          "| Lines:",
-          code.split("\n").length,
-        )
-
-        // Open code workspace with the extracted code
-        onOpenWorkspace({
-          type: "code",
-          title: filename,
-          data: code,
-        })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({
-          type: "code",
-          title: filename,
-          data: code,
-        })
-      }
-    }, [aiMessages, onOpenWorkspace])
-
-    useEffect(() => {
-      const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
-      setWelcomeQuestion(welcomeQuestions[randomIndex])
-    }, [])
-
-    useEffect(() => {
-      if (initialAgentId) {
-        const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
-        if (agent && agent.id !== activeAgent.id) {
-          console.log("[v0] Syncing activeAgent with initialAgentId:", initialAgentId)
-          setActiveAgent(agent)
-        }
-      }
-    }, [initialAgentId])
-
-    useEffect(() => {
-      if (shouldShowWelcome && initialAgentId) {
-        const agent = AI_AGENTS.find((a) => a.id === initialAgentId)
-        if (agent) {
-          console.log("[v0] Adding welcome message for agent:", agent.name)
-          const userRole = agent.id === "technical-recruiter" ? "candidate" : "hiring_manager"
-          setLocalMessages([
-            {
-              id: `welcome-${Date.now()}`,
-              type: "ai",
-              content: generateWelcomeMessage(agent, userRole),
-              agentId: agent.id,
-              isAgentSwitch: false,
-              isWelcome: true, // Mark as welcome message
-            },
-          ])
-        }
-      }
-    }, [shouldShowWelcome, initialAgentId])
-
-    useEffect(() => {
-      // WATCH FOR CODE WORKSPACE WHEN IT'S OPENED FROM "TAKE HOME CHALLENGE" (AFTER LOADING)
-      // CHECK IF WE JUST TRANSITIONED FROM CHALLENGE-LOADING TO CODE WORKSPACE
-      if (currentWorkspaceContent?.type === "code" && lastWorkspaceContent?.type === "challenge-loading") {
-        console.log("[v0] Challenge code workspace detected, resetting conversation")
-
-        // Clear existing messages
-        setLocalMessages([])
-
-        // Switch to Technical Recruiter if not already active
-        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-          setActiveAgent(technicalRecruiter)
-        }
-
-        // Add welcome message from Technical Recruiter
-        setTimeout(() => {
-          const welcomeMessage: Message = {
-            id: `challenge-welcome-${Date.now()}`,
-            type: "ai",
-            content: `Welcome to your Take Home Challenge! 🎯
-
-I'm excited to see what you'll build! This is your opportunity to showcase your technical skills and problem-solving abilities.
-
-## Challenge Instructions
-
-**Your Task:** Build a RESTful API for a Task Management System
-
-**Requirements:**
-- Create endpoints for CRUD operations (Create, Read, Update, Delete tasks)
-- Implement proper error handling and validation
-- Use appropriate HTTP status codes
-- Include basic authentication (can be simple token-based)
-- Write clean, well-documented code
-
-**Time Limit:** You have 4 hours to complete this challenge. The timer starts now!
-
-**Evaluation Criteria:**
-- Code quality and organization
-- API design and RESTful principles
-- Error handling and edge cases
-- Documentation and code comments
-- Bonus: Unit tests
-
-**Getting Started:**
-I've provided a starter template in the code editor on the right. Feel free to modify it as needed. Your work is automatically saved as you type.
-
-Good luck! I'm here if you have any questions. 🚀`,
-            agentId: "technical-recruiter",
-            isWelcome: true,
-          }
-
-          setLocalMessages([welcomeMessage])
-
-          setLastWorkspaceContent(currentWorkspaceContent)
-        }, 500)
-      }
-    }, [currentWorkspaceContent, lastWorkspaceContent, activeAgent])
-
-    useEffect(() => {
-      if (currentWorkspaceContent?.type === "challenge") {
-        console.log("[v0] Challenge workspace detected, resetting conversation")
-
-        // Clear existing messages
-        setLocalMessages([])
-
-        // Switch to Technical Recruiter if not already active
-        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-          setActiveAgent(technicalRecruiter)
-        }
-
-        // Add welcome message from Technical Recruiter
-        setTimeout(() => {
-          const welcomeMessage: Message = {
-            id: `challenge-welcome-${Date.now()}`,
-            type: "ai",
-            agentId: "technical-recruiter",
-            content: `Welcome to your **Take Home Challenge**! 🎯
-
-I'm excited to see what you'll build. Here are the details for your challenge:
-
-**Challenge Overview:**
-Build a Task Management API with the following features:
-- Create, read, update, and delete tasks
-- Mark tasks as complete/incomplete
-- Filter tasks by status
-- RESTful API design
-
-**Requirements:**
-- Use Node.js with Express or similar framework
-- Implement proper error handling
-- Include input validation
-- Write clean, maintainable code
-- Add comments explaining your approach
-
-**Evaluation Criteria:**
-- Code quality and organization
-- API design and best practices
-- Error handling and validation
-- Documentation and comments
-
-**Time Limit:** You have **4 hours** to complete this challenge. Your time starts now!
-
-**Submission:** When you're done, click the "Submit Challenge" button in the workspace. Your code will be automatically saved and submitted.
-
-Good luck! I'm confident you'll do great. Remember, we're looking for your problem-solving approach and code quality, not perfection. 💪`,
-          }
-          setLocalMessages([welcomeMessage])
-        }, 500)
-      }
-    }, [currentWorkspaceContent?.type])
+    // REMOVED CODE DETECTION USE EFFECT (LINES 325-395)
 
     useEffect(() => {
       if (!aiMessages) return
@@ -577,12 +345,24 @@ Good luck! I'm confident you'll do great. Remember, we're looking for your probl
           content = typeof msg.content === "string" ? msg.content : ""
         }
 
+        let responseType = msg.extra?.responseType
+        if (msg.role === "assistant" && content && !responseType) {
+          // Check if the message contains code blocks (\`\`\`language ... \`\`\`)
+          const codeBlockRegex = /```[\w]*\n[\s\S]*?\n```/g
+          const hasCodeBlocks = codeBlockRegex.test(content)
+
+          if (hasCodeBlocks) {
+            responseType = "code"
+            console.log("[v0] Detected code blocks in AI response, setting responseType to 'code'")
+          }
+        }
+
         return {
           id: msg.id,
           type: msg.role === "user" ? "user" : "ai",
           content,
           agentId: messageAgent.id,
-          responseType: msg.extra?.responseType,
+          responseType,
           thinkingTime: msg.extra?.thinkingTime,
           promptSuggestions: msg.extra?.promptSuggestions,
           // Added for action button
@@ -1612,9 +1392,9 @@ Are you ready to begin your Take Home Challenge?`,
                           {msg.responseType === "code" && (
                             <div className="rounded-2xl overflow-hidden border border-border bg-card">
                               <div className="flex items-center justify-between px-4 py-2 bg-muted border-b border-border">
-                                <span className="text-xs font-mono text-muted-foreground">server.js</span>
+                                <span className="text-xs font-mono text-muted-foreground">code.js</span>
                                 <button
-                                  onClick={() => navigator.clipboard.writeText(codeSnippet)}
+                                  onClick={() => navigator.clipboard.writeText(msg.content)}
                                   className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg hover:bg-accent transition-colors"
                                 >
                                   <Copy className="w-3.5 h-3.5" />
@@ -1623,7 +1403,7 @@ Are you ready to begin your Take Home Challenge?`,
                               </div>
                               <div className="p-4 overflow-x-auto">
                                 <pre className="text-xs font-mono leading-relaxed">
-                                  <code className="text-foreground">{codeSnippet}</code>
+                                  <code className="text-foreground">{msg.content}</code>
                                 </pre>
                               </div>
                             </div>
