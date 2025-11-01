@@ -1,13 +1,11 @@
-import { convertToModelMessages, streamText, type UIMessage } from "ai"
-import { createOpenAI } from "@ai-sdk/openai"
+import { OpenAI } from "openai"
+import { OpenAIStream, StreamingTextResponse } from "ai"
 
 export const maxDuration = 30
 
 export async function POST(req: Request) {
   try {
-    const { messages, agentId }: { messages: UIMessage[]; agentId: string } = await req.json()
-
-    const modelMessages = convertToModelMessages(messages)
+    const { messages, agentId }: { messages: any[]; agentId: string } = await req.json()
 
     const systemPrompts: Record<string, string> = {
       "technical-recruiter": `You are a friendly and professional Technical Recruiter AI assistant helping candidates find their dream jobs.
@@ -162,35 +160,29 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
 
     const systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
 
-    const openai = createOpenAI({
+    const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    const result = await streamText({
-      model: openai("gpt-4o-mini"),
-      system: systemMessage,
-      messages: modelMessages,
+    // Convert messages to OpenAI format
+    const openaiMessages = [
+      { role: "system" as const, content: systemMessage },
+      ...messages.map((msg: any) => ({
+        role: msg.role as "user" | "assistant",
+        content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+      })),
+    ]
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: openaiMessages,
+      stream: true,
     })
 
-    const lastUserMessage = messages[messages.length - 1]?.content?.toLowerCase() || ""
-    const isJobApplication =
-      lastUserMessage.includes("apply") ||
-      lastUserMessage.includes("application") ||
-      lastUserMessage.includes("i want to apply")
+    // Convert OpenAI stream to Vercel AI SDK format
+    const stream = OpenAIStream(response)
 
-    // If it's a job application, add prompt suggestions
-    if (isJobApplication && agentId === "technical-recruiter") {
-      return result.toUIMessageStreamResponse({
-        data: {
-          promptSuggestions: [
-            { text: "I'd like to schedule an AI interview", icon: "Sparkles" },
-            { text: "I prefer a traditional interview", icon: "Users" },
-          ],
-        },
-      })
-    }
-
-    return result.toUIMessageStreamResponse()
+    return new StreamingTextResponse(stream)
   } catch (error) {
     console.error("Chat API error:", error)
     return new Response(JSON.stringify({ error: "Internal server error" }), {
