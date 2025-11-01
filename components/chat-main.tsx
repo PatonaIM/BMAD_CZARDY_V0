@@ -304,12 +304,12 @@ export const ChatMain = forwardRef<
   const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
   const [activeSuggestionTab, setActiveSuggestionTab] = useState<SuggestionCategory>("suggested")
   const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
-  const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
   const [localMessages, setLocalMessages] = useState<Message[]>([])
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const agentDropdownRef = useRef<HTMLDivElement>(null)
+  const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null) // Initialize state
 
   const {
     messages: aiMessages,
@@ -457,6 +457,15 @@ export const ChatMain = forwardRef<
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isAgentDropdownOpen])
+
+  // Fix for undeclared variables
+  useEffect(() => {
+    if (lastWorkspaceContent) {
+      // Use the state variable lastWorkspaceContent
+      console.log("[v0] Syncing workspace content:", lastWorkspaceContent.type)
+      // No need to setLastWorkspaceContent here, it's already managed by state
+    }
+  }, [lastWorkspaceContent])
 
   // Declare handleStartChallenge here
   const handleStartChallenge = () => {
