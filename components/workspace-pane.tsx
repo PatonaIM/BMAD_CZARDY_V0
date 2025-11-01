@@ -907,6 +907,10 @@ export function WorkspacePane({
         return "Video Player"
       case "code":
         return "Code Editor"
+      case "challenge-loading":
+        return "Take Home Challenge"
+      case "challenge":
+        return "Take Home Challenge"
       case "job-board":
         const user = getCurrentUser()
         return user?.role === "candidate" ? "My Jobs" : "Available Positions"
@@ -1623,6 +1627,75 @@ export function WorkspacePane({
                     <code className="text-foreground">{content.data || "// Code content here"}</code>
                   </pre>
                 </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case "challenge-loading":
+        return (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 mx-auto">
+                <div className="w-full h-full border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground">Preparing Take Home Challenge</h3>
+              <p className="text-muted-foreground">Setting up your coding environment...</p>
+            </div>
+          </div>
+        )
+
+      case "challenge":
+        return (
+          <div className="flex-1 flex flex-col">
+            <div className="border-b border-border bg-muted/30 px-6 py-4">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Take Home Challenge - {content.data?.job?.title || "Position"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Build a responsive landing page component using React and Tailwind CSS
+              </p>
+            </div>
+
+            <div className="flex-1 flex flex-col p-6 space-y-4">
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h4 className="font-medium text-foreground mb-2">Challenge Instructions</h4>
+                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                  <li>Create a modern, responsive landing page component</li>
+                  <li>Use React functional components and hooks</li>
+                  <li>Style with Tailwind CSS utility classes</li>
+                  <li>Ensure mobile responsiveness</li>
+                  <li>Include at least one interactive element</li>
+                </ul>
+              </div>
+
+              <div className="flex-1 bg-card border border-border rounded-lg overflow-hidden">
+                <div className="bg-muted/50 px-4 py-2 border-b border-border flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">app/page.tsx</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Time remaining: 3:45:22</span>
+                  </div>
+                </div>
+                <div className="p-4 font-mono text-sm">
+                  <pre className="text-foreground">
+                    {`export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Your code here */}
+    </div>
+  )
+}`}
+                  </pre>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-accent transition-colors">
+                  Save Draft
+                </button>
+                <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg transition-all">
+                  Submit Challenge
+                </button>
               </div>
             </div>
           </div>

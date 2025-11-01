@@ -20,7 +20,6 @@ import {
   PanelRight,
   Crown,
   Users,
-  Code,
 } from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
@@ -47,6 +46,10 @@ interface Message {
   isAgentSwitch?: boolean // Added flag to indicate agent switch messages
   isWelcome?: boolean
   promptSuggestions?: Array<{ text: string; icon: React.ReactNode }>
+  // Added for action button
+  hasActionButton?: boolean
+  actionButtonText?: string
+  actionButtonHandler?: string
 }
 
 // Define JobListing type for clarity in handleJobApplication
@@ -283,6 +286,7 @@ export const ChatMain = forwardRef<
     showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
     showJobViewSummary: (job: any) => void // Added showJobViewSummary
     handleJobApplication: (job: JobListing) => void // Added handler for job application
+    handleStartChallenge: () => void // Added handler for challenge button click
   },
   ChatMainProps
 >(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
@@ -375,6 +379,10 @@ export const ChatMain = forwardRef<
         responseType: msg.extra?.responseType,
         thinkingTime: msg.extra?.thinkingTime,
         promptSuggestions: msg.extra?.promptSuggestions,
+        // Added for action button
+        hasActionButton: msg.extra?.hasActionButton,
+        actionButtonText: msg.extra?.actionButtonText,
+        actionButtonHandler: msg.extra?.actionButtonHandler,
       }
     })
 
@@ -446,6 +454,27 @@ export const ChatMain = forwardRef<
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isAgentDropdownOpen])
+
+  // Declare handleStartChallenge here
+  const handleStartChallenge = () => {
+    console.log("[v0] Starting take home challenge")
+
+    // Show loading state in workspace
+    onOpenWorkspace({ type: "challenge-loading", title: "Preparing Take Home Challenge" })
+
+    // After 3 seconds, show the code editor
+    setTimeout(() => {
+      const jobTitle = lastWorkspaceContent?.job?.title || "Position"
+      onOpenWorkspace({
+        type: "challenge",
+        title: `Take Home Challenge - ${jobTitle}`,
+        data: {
+          job: lastWorkspaceContent?.job,
+          challengeStartTime: Date.now(),
+        },
+      })
+    }, 3000)
+  }
 
   useImperativeHandle(ref, () => ({
     handleProfileSaved: () => {
@@ -654,6 +683,7 @@ ${loremParagraphs[1]}`
       // Send "Apply to this job" command to chat
       handleCommandOrMessage("Apply to this job")
     },
+    handleStartChallenge: handleStartChallenge, // Use the declared variable
   }))
 
   const handlePreviewClick = (fileType: string) => {
@@ -1018,14 +1048,81 @@ This package will be sent directly to the hiring manager for review.
 
 **Step 4: Final Interview**
 
-If the hiring manager is impressed with your application, they will reach out to you directly to schedule a final interview. This is your opportunity to meet the team and discuss the role in more detail.
+If the hiring manager is impressed with your application package, they'll reach out to you directly to schedule a final interview. This is your opportunity to meet the team, ask questions, and discuss the role in more detail.
 
-**Ready to get started?** Let me know when you'd like to begin your take-home challenge!`,
+Ready to get started? Let's begin with the take-home challenge!`,
         agentId: activeAgent.id,
-        promptSuggestions: [
-          { text: "Start the take-home challenge", icon: <Code className="w-4 h-4" /> },
-          { text: "Tell me more about the AI interviews", icon: <Sparkles className="w-4 h-4" /> },
-        ],
+        promptSuggestions: ["take home challenge", "Tell me more about the AI interviews"],
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+      return true
+    }
+
+    // 16. Take home challenge
+    if (lowerText === "take home challenge") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      // Check if a job view is currently open
+      const isJobViewOpen = lastWorkspaceContent?.type === "job-view"
+
+      let aiContent: string
+      let aiMsg: Message
+
+      if (!isJobViewOpen) {
+        // No job view open - inform user to open a job first
+        aiContent = `I notice you don't have a job listing open in your workspace. To start a take-home challenge, please first:
+
+1. Open the **Job Board** by typing "job board" or "my jobs"
+2. Select a job you'd like to apply for
+3. Then you can start the take-home challenge for that specific role
+
+Would you like me to open the job board for you?`
+
+        aiMsg = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: aiContent,
+          agentId: activeAgent.id,
+          promptSuggestions: ["job board", "my jobs"],
+        }
+      } else {
+        // Job view is open - show confirmation
+        const jobTitle = lastWorkspaceContent?.job?.title || "this position"
+        aiContent = `Perfect! You're about to start the **Take Home Challenge** for the **${jobTitle}** role.
+
+# Important Information
+
+⚠️ **This challenge can only be taken once.** Once you begin, you'll have a limited time to complete and submit your solution.
+
+The challenge will test your:
+- Technical skills and problem-solving abilities
+- Code quality and best practices
+- Ability to work independently
+- Time management skills
+
+**What to expect:**
+- Estimated time: 2-4 hours
+- You'll work in an interactive code editor
+- Your code will be automatically saved
+- You can submit when you're ready
+
+Are you ready to proceed?`
+
+        aiMsg = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: aiContent,
+          agentId: activeAgent.id,
+          hasActionButton: true, // Added flag for action button
+          actionButtonText: "Proceed to Take Home Challenge",
+          actionButtonHandler: "start-challenge", // Added handler identifier
+        }
       }
 
       setLocalMessages((prev) => [...prev, userMsg, aiMsg])
@@ -1417,6 +1514,21 @@ If the hiring manager is impressed with your application, they will reach out to
                               alt="Dashboard preview"
                               className="w-full rounded-xl"
                             />
+                          </div>
+                        )}
+
+                        {msg.hasActionButton && msg.actionButtonText && (
+                          <div className="mt-4">
+                            <button
+                              onClick={() => {
+                                if (msg.actionButtonHandler === "start-challenge") {
+                                  handleStartChallenge()
+                                }
+                              }}
+                              className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all"
+                            >
+                              {msg.actionButtonText}
+                            </button>
                           </div>
                         )}
                       </div>
