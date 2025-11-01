@@ -333,6 +333,13 @@ export const ChatMain = forwardRef<
     const isThinking = status === "in_progress"
 
     useEffect(() => {
+      console.log("[v0] aiMessages updated:", aiMessages.length, "messages")
+      if (aiMessages.length > 0) {
+        console.log("[v0] Last message:", aiMessages[aiMessages.length - 1])
+      }
+    }, [aiMessages])
+
+    useEffect(() => {
       if (aiMessages.length === 0) return
 
       const convertedMessages: Message[] = aiMessages.map((msg) => {
@@ -1093,13 +1100,16 @@ Are you ready to begin your Take Home Challenge?`,
       return false
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
-      if (inputMessage.trim()) {
-        const isCommand = handleCommandOrMessage(inputMessage)
-        if (!isCommand) {
-          sendMessage({ text: inputMessage })
-        }
+      if (!inputMessage.trim()) return
+
+      console.log("[v0] handleSubmit: Sending message:", inputMessage)
+
+      const isCommand = handleCommandOrMessage(inputMessage)
+      if (!isCommand) {
+        console.log("[v0] handleSubmit: Not a command, calling sendMessage")
+        sendMessage({ text: inputMessage })
         setInputMessage("")
       }
     }

@@ -5,7 +5,9 @@ export const maxDuration = 30
 
 export async function POST(req: Request) {
   try {
+    console.log("[v0] Chat API: Request received")
     const { messages, agentId }: { messages: any[]; agentId: string } = await req.json()
+    console.log("[v0] Chat API: Messages count:", messages.length, "Agent:", agentId)
 
     const systemPrompts: Record<string, string> = {
       "technical-recruiter": `You are a friendly and professional Technical Recruiter AI assistant helping candidates find their dream jobs.
@@ -173,18 +175,20 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
       })),
     ]
 
+    console.log("[v0] Chat API: Calling OpenAI with", openaiMessages.length, "messages")
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: openaiMessages,
       stream: true,
     })
 
+    console.log("[v0] Chat API: OpenAI response received, creating stream")
     // Convert OpenAI stream to Vercel AI SDK format
     const stream = OpenAIStream(response)
 
     return new StreamingTextResponse(stream)
   } catch (error) {
-    console.error("Chat API error:", error)
+    console.error("[v0] Chat API error:", error)
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
