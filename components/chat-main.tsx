@@ -622,8 +622,11 @@ ${loremParagraphs[1]}`
     },
     handleJobApplication: (job: any) => {
       console.log("[v0] handleJobApplication called for job:", job.title)
+      console.log("[v0] Full job object:", job)
 
       const applicationMessage = `I want to apply for the ${job.title} position at ${job.company}.`
+      console.log("[v0] Application message:", applicationMessage)
+      console.log("[v0] Message length:", applicationMessage.length)
 
       sendMessage({ content: applicationMessage })
     },
