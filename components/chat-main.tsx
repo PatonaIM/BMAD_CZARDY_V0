@@ -268,6 +268,7 @@ export const ChatMain = forwardRef<
     showPaymentSuccess: () => void
     showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
     showJobViewSummary: (job: any) => void // Added showJobViewSummary
+    handleJobApplication: (job: any) => void // Added handler for job application
   },
   ChatMainProps
 >(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
@@ -616,6 +617,14 @@ ${loremParagraphs[1]}`
           ],
         },
       ])
+    },
+    handleJobApplication: (job: any) => {
+      console.log("[v0] handleJobApplication called for job:", job.title)
+
+      const applicationMessage = `I want to apply for the ${job.title} position at ${job.company}.`
+
+      // Send the application message to the AI
+      sendMessage({ text: applicationMessage, agentId: activeAgent.id })
     },
   }))
 

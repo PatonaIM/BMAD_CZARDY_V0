@@ -54,6 +54,7 @@ interface WorkspacePaneProps {
   onViewJob?: (job: JobListing) => void // Added callback for viewing job details
   onBackToJobBoard?: () => void // Added onBackToJobBoard prop
   activeWorkspace?: string // Added activeWorkspace prop for context
+  onApplyForJob?: (job: JobListing) => void // Added callback for job application
 }
 
 const mockJobListings: JobListing[] = [
@@ -786,6 +787,7 @@ export function WorkspacePane({
   onViewJob, // Added onViewJob prop
   onBackToJobBoard, // Added onBackToJobBoard prop
   activeWorkspace, // Added activeWorkspace prop for context
+  onApplyForJob, // Added prop
 }: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
@@ -822,6 +824,13 @@ export function WorkspacePane({
   const handleViewJobDetails = (job: JobListing) => {
     if (onViewJob) {
       onViewJob(job)
+    }
+  }
+
+  const handleApplyForJob = (job: JobListing) => {
+    console.log("[v0] handleApplyForJob called for:", job.title)
+    if (onApplyForJob) {
+      onApplyForJob(job)
     }
   }
 
@@ -1953,7 +1962,10 @@ export function WorkspacePane({
                     </div>
                     <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
                     <div className="flex gap-2">
-                      <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
+                      <button
+                        onClick={() => handleApplyForJob(job)} // Trigger apply job handler
+                        className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
+                      >
                         {job.applied ? "View Application" : "Apply Now"}
                       </button>
                       <button
@@ -1976,6 +1988,7 @@ export function WorkspacePane({
             job={content.job}
             onBack={onBackToJobBoard}
             onRequestSkillGapAnalysis={handleSkillGapAnalysisRequest} // Pass the callback
+            onApplyForJob={handleApplyForJob} // Pass callback to JobView
           />
         ) : (
           <div>No job data available</div>

@@ -7,6 +7,7 @@ interface JobViewProps {
   job: JobListing
   onBack?: () => void
   onRequestSkillGapAnalysis?: () => void // Added callback for skill gap analysis request
+  onApplyForJob?: (job: JobListing) => void // Added callback for job application
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -142,7 +143,7 @@ const generateSkillGapInsights = (matchPercentage: number) => {
   }
 }
 
-export function JobView({ job, onBack, onRequestSkillGapAnalysis }: JobViewProps) {
+export function JobView({ job, onBack, onRequestSkillGapAnalysis, onApplyForJob }: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
   const skillMatchConfig = job.skillMatch !== undefined ? getSkillMatchConfig(job.skillMatch) : null
   const skillGapInsights = job.skillMatch !== undefined ? generateSkillGapInsights(job.skillMatch) : null
@@ -169,6 +170,13 @@ export function JobView({ job, onBack, onRequestSkillGapAnalysis }: JobViewProps
     }
 
     return <p className="text-sm leading-relaxed text-muted-foreground">{summary}</p>
+  }
+
+  const handleApplyClick = () => {
+    console.log("[v0] Apply button clicked for job:", job.title)
+    if (onApplyForJob) {
+      onApplyForJob(job)
+    }
   }
 
   return (
@@ -332,7 +340,10 @@ export function JobView({ job, onBack, onRequestSkillGapAnalysis }: JobViewProps
         {/* Action Buttons (only show for open positions) */}
         {job.status === "open" && (
           <div className="bg-card rounded-2xl border border-border p-6">
-            <button className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
+            <button
+              onClick={handleApplyClick} // Added onClick handler
+              className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
+            >
               {job.applied ? "View Application" : "Apply for this Position"}
             </button>
           </div>

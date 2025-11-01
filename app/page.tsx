@@ -21,6 +21,7 @@ export default function ChatPage() {
     showPaymentSuccess: () => void
     showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary to ref type
     showJobViewSummary: (job: any) => void // Added showJobViewSummary to ref type
+    handleJobApplication: (job: any) => void // Added method for job application
   } | null>(null)
 
   useEffect(() => {
@@ -175,6 +176,13 @@ export default function ChatPage() {
     })
   }
 
+  const handleApplyForJob = (job: any) => {
+    console.log("[v0] handleApplyForJob called for:", job.title)
+    if (chatMainRef.current) {
+      chatMainRef.current.handleJobApplication(job)
+    }
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -207,6 +215,7 @@ export default function ChatPage() {
                 onHiringManagerStepChange={handleHiringManagerStepChange}
                 onViewJob={handleViewJob}
                 onBackToJobBoard={handleBackToJobBoard}
+                onApplyForJob={handleApplyForJob} // Pass callback to WorkspacePane
               />
             </div>
           )}
