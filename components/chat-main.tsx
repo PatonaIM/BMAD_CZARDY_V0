@@ -1187,15 +1187,7 @@ Are you ready to begin your Take Home Challenge?`,
             </h2>
           </div>
           <div className="flex-shrink-0">
-            {(() => {
-              console.log("[v0] Reopen button check:", {
-                hasOpenedWorkspace,
-                currentWorkspaceContent,
-                shouldShow: hasOpenedWorkspace && !currentWorkspaceContent,
-              })
-              return null
-            })()}
-            {hasOpenedWorkspace && !currentWorkspaceContent && (
+            {hasOpenedWorkspace && (!currentWorkspaceContent || !currentWorkspaceContent.type) && (
               <button
                 onClick={handleReopenWorkspace}
                 className="p-2 rounded-lg hover:bg-accent transition-colors group"
