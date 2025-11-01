@@ -623,8 +623,7 @@ ${loremParagraphs[1]}`
 
       const applicationMessage = `I want to apply for the ${job.title} position at ${job.company}.`
 
-      // The agentId is already included in the useChat body configuration
-      sendMessage(applicationMessage)
+      sendMessage({ content: applicationMessage })
     },
   }))
 
