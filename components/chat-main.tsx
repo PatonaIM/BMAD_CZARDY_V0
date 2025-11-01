@@ -328,10 +328,27 @@ export const ChatMain = forwardRef<
     })
 
     useEffect(() => {
-      if (aiMessages.length === 0) return
+      console.log("[v0] Code detection useEffect triggered. aiMessages length:", aiMessages.length)
+
+      if (aiMessages.length === 0) {
+        console.log("[v0] No AI messages yet, returning early")
+        return
+      }
 
       const lastAiMessage = aiMessages[aiMessages.length - 1]
-      if (lastAiMessage.role !== "assistant") return
+      console.log("[v0] Last message role:", lastAiMessage.role)
+      console.log("[v0] Last message content type:", typeof lastAiMessage.content)
+      console.log(
+        "[v0] Last message content preview:",
+        typeof lastAiMessage.content === "string"
+          ? lastAiMessage.content.substring(0, 100)
+          : JSON.stringify(lastAiMessage.content).substring(0, 100),
+      )
+
+      if (lastAiMessage.role !== "assistant") {
+        console.log("[v0] Last message is not from assistant, returning")
+        return
+      }
 
       // Extract content as string, handling different message formats
       let content = ""
@@ -342,11 +359,19 @@ export const ChatMain = forwardRef<
         content = lastAiMessage.content.map((part: any) => (typeof part === "string" ? part : part.text || "")).join("")
       }
 
-      if (!content) return
+      console.log("[v0] Extracted content length:", content.length)
+      console.log("[v0] Content preview:", content.substring(0, 200))
+
+      if (!content) {
+        console.log("[v0] No content found, returning")
+        return
+      }
 
       // Check if the message contains code blocks
       const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
       const matches = [...content.matchAll(codeBlockRegex)]
+
+      console.log("[v0] Code block matches found:", matches.length)
 
       if (matches.length > 0) {
         console.log("[v0] Detected code blocks in AI response:", matches.length)
@@ -355,6 +380,9 @@ export const ChatMain = forwardRef<
         const firstMatch = matches[0]
         const language = firstMatch[1] || "javascript"
         const code = firstMatch[2].trim()
+
+        console.log("[v0] First code block language:", language)
+        console.log("[v0] First code block length:", code.length)
 
         // Determine filename based on language
         const filenameMap: Record<string, string> = {
@@ -373,6 +401,8 @@ export const ChatMain = forwardRef<
         }
 
         const filename = filenameMap[language.toLowerCase()] || "code.txt"
+
+        console.log("[v0] Opening code workspace with filename:", filename)
 
         // Open code workspace with the extracted code
         onOpenWorkspace({
