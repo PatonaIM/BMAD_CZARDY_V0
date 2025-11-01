@@ -1,5 +1,5 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { createOpenAI } from "@ai-sdk/openai"
 
 export const maxDuration = 30
 
@@ -161,6 +161,10 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
     }
 
     const systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
+
+    const openai = createOpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
 
     const result = await streamText({
       model: openai("gpt-4o-mini"),
