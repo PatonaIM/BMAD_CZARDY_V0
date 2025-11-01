@@ -347,12 +347,19 @@ export const ChatMain = forwardRef<
 
         let responseType = msg.extra?.responseType
         if (msg.role === "assistant" && content && !responseType) {
+          console.log("[v0] Checking for code blocks in message:", msg.id)
+          console.log("[v0] Content preview:", content.substring(0, 200))
+          console.log("[v0] Content includes triple backticks:", content.includes("```"))
+
           // Check if the message contains code blocks (\`\`\`language ... \`\`\`)
           const codeBlockRegex = /```[\w]*\n[\s\S]*?\n```/g
           const hasCodeBlocks = codeBlockRegex.test(content)
 
+          console.log("[v0] Regex matched code blocks:", hasCodeBlocks)
+
           if (hasCodeBlocks) {
             responseType = "code"
+            console.log("[v0] Set responseType to 'code'")
           }
         }
 
