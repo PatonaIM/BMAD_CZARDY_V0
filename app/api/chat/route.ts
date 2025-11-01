@@ -6,8 +6,11 @@ export const maxDuration = 30
 export async function POST(req: Request) {
   try {
     console.log("[v0] Chat API: Request received")
-    const { messages, agentId }: { messages: any[]; agentId: string } = await req.json()
-    console.log("[v0] Chat API: Messages count:", messages.length, "Agent:", agentId)
+    const body = await req.json()
+    console.log("[v0] Chat API: Request body:", JSON.stringify(body))
+
+    const { messages, agentId } = body
+    console.log("[v0] Chat API: Messages count:", messages?.length, "Agent:", agentId)
 
     const systemPrompts: Record<string, string> = {
       "technical-recruiter": `You are a friendly and professional Technical Recruiter AI assistant helping candidates find their dream jobs.
@@ -166,16 +169,37 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    // Convert messages to OpenAI format
     const openaiMessages = [
       { role: "system" as const, content: systemMessage },
-      ...messages.map((msg: any) => ({
-        role: msg.role as "user" | "assistant",
-        content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
-      })),
+      ...messages.map((msg: any) => {
+        let content = ""
+
+        // Handle AI SDK format with parts array
+        if (msg.parts && Array.isArray(msg.parts)) {
+          content = msg.parts
+            .filter((part: any) => part.type === "text")
+            .map((part: any) => part.text)
+            .join("\n")
+        }
+        // Handle standard format with content field
+        else if (msg.content) {
+          content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)
+        }
+        // Fallback to text field
+        else if (msg.text) {
+          content = msg.text
+        }
+
+        return {
+          role: msg.role as "user" | "assistant",
+          content,
+        }
+      }),
     ]
 
     console.log("[v0] Chat API: Calling OpenAI with", openaiMessages.length, "messages")
+    console.log("[v0] Chat API: First user message:", openaiMessages[openaiMessages.length - 1]?.content)
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: openaiMessages,
@@ -189,9 +213,16 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
     return new StreamingTextResponse(stream)
   } catch (error) {
     console.error("[v0] Chat API error:", error)
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    })
+    console.error("[v0] Chat API error stack:", error instanceof Error ? error.stack : "No stack trace")
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    )
   }
 }
