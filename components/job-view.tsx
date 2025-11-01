@@ -190,7 +190,7 @@ export function JobView({ job, onBack, onRequestSkillGapAnalysis }: JobViewProps
                   <img
                     src={job.logo || "/placeholder.svg"}
                     alt={`${job.company} logo`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-2"
                   />
                 ) : (
                   <Building2 className="w-8 h-8 text-[#A16AE8]" />

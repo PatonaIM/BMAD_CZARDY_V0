@@ -1598,15 +1598,11 @@ export function WorkspacePane({
                                   Applied
                                 </span>
                               </div>
-                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0 p-2">
+                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
-                                  className="w-full h-full object-contain"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement
-                                    target.src = "/placeholder.svg"
-                                  }}
+                                  className="w-full h-full object-contain p-2"
                                 />
                               </div>
                             </div>
@@ -1737,15 +1733,11 @@ export function WorkspacePane({
                                   Saved
                                 </span>
                               </div>
-                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0 p-2">
+                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
-                                  className="w-full h-full object-contain"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement
-                                    target.src = "/placeholder.svg"
-                                  }}
+                                  className="w-full h-full object-contain p-2"
                                 />
                               </div>
                             </div>
@@ -1851,11 +1843,7 @@ export function WorkspacePane({
                         <img
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.src = "/placeholder.svg"
-                          }}
+                          className="w-full h-full object-contain p-2"
                         />
                       </div>
                     </div>
@@ -2185,7 +2173,7 @@ export function WorkspacePane({
           {content.type === "job-view" && onBackToJobBoard && (
             <button
               onClick={() => {
-                console.log("[v0] Back button clicked in header")
+                console.log("[v0] Back button clicked in workspace header")
                 onBackToJobBoard()
               }}
               className="p-2 rounded-lg hover:bg-accent transition-colors flex items-center justify-center"
