@@ -184,30 +184,40 @@ export default function ChatPage() {
   }
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-      <div className="flex h-screen bg-background">
+    <ThemeProvider>
+      <div className="flex h-screen overflow-hidden bg-background">
         <ChatSidebar
           isOpen={isSidebarOpen}
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           onEditProfile={handleEditProfile}
           onUpgradePlan={handleUpgradePlan}
+          onMyJobs={handleMyJobs}
         />
-        <div className="flex flex-1 overflow-hidden">
-          <ChatMain
-            ref={chatMainRef}
-            onOpenWorkspace={setWorkspaceContent}
-            initialAgent={initialAgent}
-            shouldShowWelcome={shouldShowWelcome}
-            currentWorkspaceContent={workspaceContent} // Pass current workspace content to ChatMain
-          />
-          {workspaceContent.type && (
-            <WorkspacePane
-              content={workspaceContent}
-              onProfileSave={handleProfileSave}
-              onHiringManagerStepChange={handleHiringManagerStepChange}
-              onViewJob={handleViewJob}
-              onApplyForJob={handleApplyForJob}
+        <div className="flex-1 flex overflow-hidden">
+          <div className={`${workspaceContent.type ? "w-2/5" : "w-full"} transition-all duration-300`}>
+            <ChatMain
+              ref={chatMainRef}
+              isSidebarOpen={isSidebarOpen}
+              onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+              onOpenWorkspace={setWorkspaceContent}
+              initialAgentId={initialAgent}
+              shouldShowWelcome={shouldShowWelcome}
             />
+          </div>
+          {workspaceContent.type && (
+            <div className="w-3/5 animate-in slide-in-from-right duration-300">
+              <WorkspacePane
+                isOpen={!!workspaceContent.type}
+                onClose={() => setWorkspaceContent({ type: null })}
+                content={workspaceContent}
+                onProfileSave={handleProfileSave}
+                onUpgradePlan={handleUpgradePlan}
+                onHiringManagerStepChange={handleHiringManagerStepChange}
+                onViewJob={handleViewJob}
+                onBackToJobBoard={handleBackToJobBoard}
+                onApplyForJob={handleApplyForJob} // Pass callback to WorkspacePane
+              />
+            </div>
           )}
         </div>
       </div>

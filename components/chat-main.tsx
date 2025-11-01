@@ -22,7 +22,6 @@ import {
   Users,
   Code,
   MessageSquare,
-  User,
 } from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
@@ -304,12 +303,12 @@ export const ChatMain = forwardRef<
   const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
   const [activeSuggestionTab, setActiveSuggestionTab] = useState<SuggestionCategory>("suggested")
   const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
+  const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
   const [localMessages, setLocalMessages] = useState<Message[]>([])
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const agentDropdownRef = useRef<HTMLDivElement>(null)
-  const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null) // Initialize state
 
   const {
     messages: aiMessages,
@@ -458,31 +457,30 @@ export const ChatMain = forwardRef<
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isAgentDropdownOpen])
 
-  // Fix for undeclared variables
-  useEffect(() => {
-    if (lastWorkspaceContent) {
-      // Use the state variable lastWorkspaceContent
-      console.log("[v0] Syncing workspace content:", lastWorkspaceContent.type)
-      // No need to setLastWorkspaceContent here, it's already managed by state
-    }
-  }, [lastWorkspaceContent])
-
   // Declare handleStartChallenge here
   const handleStartChallenge = () => {
     console.log("[v0] Starting take home challenge")
 
-    // Show loading state in workspace
-    onOpenWorkspace({ type: "challenge-loading", title: "Preparing Take Home Challenge" })
+    // Show loading animation
+    onOpenWorkspace({ type: "challenge-loading", title: "Take Home Challenge" })
+    setHasOpenedWorkspace(true)
+    setLastWorkspaceContent({ type: "challenge-loading", title: "Take Home Challenge" })
 
-    // After 3 seconds, show the code editor
+    // After 3 seconds, show the actual challenge
     setTimeout(() => {
-      const jobTitle = lastWorkspaceContent?.job?.title || "Position"
+      console.log("[v0] Loading challenge workspace")
       onOpenWorkspace({
         type: "challenge",
-        title: `Take Home Challenge - ${jobTitle}`,
+        title: "Take Home Challenge",
         data: {
-          job: lastWorkspaceContent?.job,
-          challengeStartTime: Date.now(),
+          job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
+        },
+      })
+      setLastWorkspaceContent({
+        type: "challenge",
+        title: "Take Home Challenge",
+        data: {
+          job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
         },
       })
     }, 3000)
@@ -1031,7 +1029,7 @@ ${loremParagraphs[1]}`
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: `Great! I'm excited to help you apply for this position. 
+        content: `Great! I'm excited to help you apply for this position.
 
 Here's how our application process works:
 
@@ -1073,7 +1071,7 @@ Ready to get started? Let's begin with the take-home challenge!`,
       return true
     }
 
-    // 16. Take home challenge
+    // Take Home Challenge - shows confirmation with button to start challenge
     if (lowerText === "take home challenge") {
       const userMsg: Message = {
         id: Date.now().toString(),
@@ -1082,39 +1080,27 @@ Ready to get started? Let's begin with the take-home challenge!`,
         agentId: activeAgent.id,
       }
 
-      // Check if a job view is open
-      if (!lastWorkspaceContent || lastWorkspaceContent.type !== "job-view") {
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: `I'd love to help you start the take-home challenge! However, I need you to open a job listing first so I can prepare the appropriate challenge for that specific role.
-
-Please go to the Job Board and select a position you'd like to apply for, then we can begin your take-home challenge.`,
-          agentId: activeAgent.id,
-          promptSuggestions: [
-            { text: "job board", icon: <Briefcase className="w-4 h-4 text-[#A16AE8]" /> },
-            { text: "my jobs", icon: <User className="w-4 h-4 text-[#8096FD]" /> },
-          ],
-        }
-
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // Job view is open, show confirmation
-      const jobTitle = lastWorkspaceContent.job?.title || "this position"
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: `Perfect! You're about to start the Take Home Challenge for **${jobTitle}**.
+        content: `Great! You're about to start your **Take Home Challenge**. This is an important step in the application process where you'll demonstrate your technical skills.
 
-⚠️ **Important:** This challenge can only be taken once, so make sure you're ready before proceeding.
+**Important Information:**
+- ⏱️ You'll have **4 hours** to complete the challenge once you begin
+- 📝 The challenge can only be taken **once** - make sure you're ready before proceeding
+- 💻 You'll work in an interactive code editor with all the tools you need
+- ✅ Your submission will be automatically saved when you click "Submit Challenge"
 
-The challenge will test your skills in a real-world scenario and typically takes 2-4 hours to complete. You'll have access to a code editor where you can write, test, and submit your solution.
+Once you start, the timer will begin immediately. Make sure you have:
+- A stable internet connection
+- Enough uninterrupted time to focus
+- Your development environment ready (if you want to test locally)
 
-When you're ready, click the button below to begin your challenge.`,
+Are you ready to begin your Take Home Challenge?`,
         agentId: activeAgent.id,
-        responseType: "challenge-button",
+        hasActionButton: true,
+        actionButtonText: "Proceed to Take Home Challenge",
+        actionButtonHandler: "startChallenge",
       }
 
       setLocalMessages((prev) => [...prev, userMsg, aiMsg])
@@ -1520,15 +1506,15 @@ When you're ready, click the button below to begin your challenge.`,
                           </div>
                         )}
 
-                        {msg.hasActionButton && msg.actionButtonText && (
-                          <div className="mt-4">
+                        {msg.hasActionButton && msg.actionButtonText && msg.actionButtonHandler && (
+                          <div className="mt-4 flex justify-center">
                             <button
                               onClick={() => {
-                                if (msg.actionButtonHandler === "start-challenge") {
+                                if (msg.actionButtonHandler === "startChallenge") {
                                   handleStartChallenge()
                                 }
                               }}
-                              className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all"
+                              className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
                             >
                               {msg.actionButtonText}
                             </button>

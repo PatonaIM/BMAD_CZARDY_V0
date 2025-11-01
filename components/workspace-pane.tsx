@@ -1707,8 +1707,10 @@ export function WorkspacePane({
         let displayedJobs = mockJobListings
 
         if (user?.role === "candidate") {
-          // Candidates should see all jobs they've interacted with, even if status changed
-          displayedJobs = mockJobListings.filter((job) => job.applied || job.saved)
+          // Candidates can only see open and closed jobs (not draft or cancelled)
+          displayedJobs = mockJobListings.filter(
+            (job) => (job.applied || job.saved) && (job.status === "open" || job.status === "closed"),
+          )
         }
 
         const appliedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.applied) : []
