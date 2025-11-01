@@ -373,7 +373,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement enterprise-level cloud solutions.",
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "open",
     skillMatch: 89,
     jobSummary:
@@ -401,7 +401,7 @@ const mockJobListings: JobListing[] = [
     description: "Facilitate agile processes and remove impediments for development teams.",
     requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "closed",
     skillMatch: 77,
     jobSummary:
@@ -429,7 +429,7 @@ const mockJobListings: JobListing[] = [
     description: "Protect our systems and data through robust security measures.",
     requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 83,
     jobSummary:
@@ -457,7 +457,7 @@ const mockJobListings: JobListing[] = [
     description: "Create clear and comprehensive technical documentation.",
     requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "draft",
     skillMatch: 74,
     jobSummary:
@@ -484,7 +484,7 @@ const mockJobListings: JobListing[] = [
     description: "Bridge the gap between business needs and technical solutions.",
     requirements: ["Requirements gathering", "Process modeling", "SQL", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 79,
     jobSummary:
@@ -512,7 +512,7 @@ const mockJobListings: JobListing[] = [
     description: "Develop and deploy machine learning models at scale.",
     requirements: ["Python", "TensorFlow", "MLOps", "Model deployment", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "closed",
     skillMatch: 81,
     jobSummary:
@@ -540,7 +540,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure high availability and reliability of production systems.",
     requirements: ["Linux", "Monitoring tools", "Incident management", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "open",
     skillMatch: 91,
     jobSummary:
@@ -568,7 +568,7 @@ const mockJobListings: JobListing[] = [
     description: "Manage and optimize database systems for performance and reliability.",
     requirements: ["PostgreSQL/MySQL", "Database tuning", "Backup strategies", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "draft",
     skillMatch: 76,
     jobSummary:
@@ -596,7 +596,7 @@ const mockJobListings: JobListing[] = [
     description: "Build and maintain cloud infrastructure on AWS and Azure.",
     requirements: ["AWS/Azure", "Infrastructure as Code", "CI/CD", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 87,
     jobSummary:
@@ -624,7 +624,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead and mentor a team of software engineers to deliver high-quality products.",
     requirements: ["Team leadership", "Technical expertise", "Agile", "7+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "closed",
     skillMatch: 93,
     jobSummary:
@@ -1547,6 +1547,14 @@ export function WorkspacePane({
           return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border border-red-500/20" }
         }
 
+        // Added handleJobClick function
+        const handleJobClick = (job: JobListing) => {
+          console.log("[v0] Job clicked:", job.title)
+          if (onViewJob) {
+            onViewJob(job)
+          }
+        }
+
         return (
           <div className="h-full overflow-auto">
             {user?.role === "candidate" && displayedJobs.length === 0 ? (
@@ -1573,37 +1581,39 @@ export function WorkspacePane({
                       {appliedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
+                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative cursor-pointer"
+                          onClick={() => handleJobClick(job)}
                         >
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
+                          <div className="absolute top-6 right-6">
+                            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-2.5">
+                              <img
+                                src={job.logo || "/placeholder.svg"}
+                                alt={`${job.company} logo`}
+                                className="w-full h-full object-contain rounded-lg"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-start justify-between mb-4 pr-16">
+                            <div>
                               <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                               <p className="text-sm text-muted-foreground">{job.company}</p>
                             </div>
-                            <div className="flex items-start gap-3">
-                              <div className="flex flex-col gap-2">
-                                {job.status && (
-                                  <span
-                                    className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                      job.status === "open"
-                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                        : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                    }`}
-                                  >
-                                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                                  </span>
-                                )}
-                                <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                  Applied
+                            <div className="flex flex-col gap-2 items-end">
+                              {job.status && (
+                                <span
+                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                    job.status === "open"
+                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                  }`}
+                                >
+                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                                 </span>
-                              </div>
-                              <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <img
-                                  src={job.logo || "/placeholder.svg"}
-                                  alt={`${job.company} logo`}
-                                  className="w-full h-full object-contain rounded-lg"
-                                />
-                              </div>
+                              )}
+                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                Applied
+                              </span>
                             </div>
                           </div>
 
@@ -1708,37 +1718,39 @@ export function WorkspacePane({
                       {savedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
+                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative cursor-pointer"
+                          onClick={() => handleJobClick(job)}
                         >
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
+                          <div className="absolute top-6 right-6">
+                            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-2.5">
+                              <img
+                                src={job.logo || "/placeholder.svg"}
+                                alt={`${job.company} logo`}
+                                className="w-full h-full object-contain rounded-lg"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-start justify-between mb-4 pr-16">
+                            <div>
                               <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                               <p className="text-sm text-muted-foreground">{job.company}</p>
                             </div>
-                            <div className="flex items-start gap-3">
-                              <div className="flex flex-col gap-2">
-                                {job.status && (
-                                  <span
-                                    className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                      job.status === "open"
-                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                        : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                    }`}
-                                  >
-                                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                                  </span>
-                                )}
-                                <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                                  Saved
+                            <div className="flex flex-col gap-2 items-end">
+                              {job.status && (
+                                <span
+                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                    job.status === "open"
+                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                  }`}
+                                >
+                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                                 </span>
-                              </div>
-                              <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <img
-                                  src={job.logo || "/placeholder.svg"}
-                                  alt={`${job.company} logo`}
-                                  className="w-full h-full object-contain rounded-lg"
-                                />
-                              </div>
+                              )}
+                              <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                Saved
+                              </span>
                             </div>
                           </div>
 
@@ -1835,10 +1847,11 @@ export function WorkspacePane({
                 {displayedJobs.map((job) => (
                   <div
                     key={job.id}
-                    className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
+                    className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative cursor-pointer"
+                    onClick={() => handleJobClick(job)}
                   >
                     <div className="absolute top-6 right-6">
-                      <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-2.5">
                         <img
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
