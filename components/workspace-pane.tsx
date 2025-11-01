@@ -1603,14 +1603,6 @@ export function WorkspacePane({
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
                                   className="w-full h-full object-contain p-2"
-                                  onError={(e) => {
-                                    console.log("[v0] Logo failed to load:", job.logo, "for company:", job.company)
-                                    const target = e.target as HTMLImageElement
-                                    target.src = "/placeholder.svg"
-                                  }}
-                                  onLoad={() => {
-                                    console.log("[v0] Logo loaded successfully:", job.logo, "for company:", job.company)
-                                  }}
                                 />
                               </div>
                             </div>
@@ -1746,14 +1738,6 @@ export function WorkspacePane({
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
                                   className="w-full h-full object-contain p-2"
-                                  onError={(e) => {
-                                    console.log("[v0] Logo failed to load:", job.logo, "for company:", job.company)
-                                    const target = e.target as HTMLImageElement
-                                    target.src = "/placeholder.svg"
-                                  }}
-                                  onLoad={() => {
-                                    console.log("[v0] Logo loaded successfully:", job.logo, "for company:", job.company)
-                                  }}
                                 />
                               </div>
                             </div>
@@ -1860,14 +1844,6 @@ export function WorkspacePane({
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
                           className="w-full h-full object-contain p-2"
-                          onError={(e) => {
-                            console.log("[v0] Logo failed to load:", job.logo, "for company:", job.company)
-                            const target = e.target as HTMLImageElement
-                            target.src = "/placeholder.svg"
-                          }}
-                          onLoad={() => {
-                            console.log("[v0] Logo loaded successfully:", job.logo, "for company:", job.company)
-                          }}
                         />
                       </div>
                     </div>
