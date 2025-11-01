@@ -70,7 +70,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
     status: "open",
     skillMatch: 88,
     jobSummary:
@@ -121,7 +121,7 @@ const mockJobListings: JobListing[] = [
     description: "Join our AI team to build cutting-edge machine learning solutions.",
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
     status: "draft",
     skillMatch: 75,
     jobSummary:
@@ -149,7 +149,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
     status: "open",
     skillMatch: 82,
     jobSummary:
@@ -1598,11 +1598,15 @@ export function WorkspacePane({
                                   Applied
                                 </span>
                               </div>
-                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0 p-2">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "/placeholder.svg"
+                                  }}
                                 />
                               </div>
                             </div>
@@ -1733,11 +1737,15 @@ export function WorkspacePane({
                                   Saved
                                 </span>
                               </div>
-                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0 p-2">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "/placeholder.svg"
+                                  }}
                                 />
                               </div>
                             </div>
@@ -1843,7 +1851,11 @@ export function WorkspacePane({
                         <img
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = "/placeholder.svg"
+                          }}
                         />
                       </div>
                     </div>
@@ -2173,7 +2185,7 @@ export function WorkspacePane({
           {content.type === "job-view" && onBackToJobBoard && (
             <button
               onClick={() => {
-                console.log("[v0] Back button clicked in workspace header")
+                console.log("[v0] Back button clicked in header")
                 onBackToJobBoard()
               }}
               className="p-2 rounded-lg hover:bg-accent transition-colors flex items-center justify-center"
