@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react"
 import {
-  Menu,
   Plus,
   Mic,
   ArrowUp,
@@ -1181,22 +1180,21 @@ Are you ready to begin your Take Home Challenge?`,
 
     return (
       <div className="flex-1 flex flex-col overflow-hidden h-full bg-background">
-        <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border bg-background">
-          {!isSidebarOpen && (
-            <button
-              onClick={onToggleSidebar}
-              className="p-2 rounded-lg hover:bg-accent transition-colors flex-shrink-0"
-              aria-label="Open sidebar"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-          )}
-          <div className="flex-1 text-center">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
               Teamified AI
             </h2>
           </div>
           <div className="flex-shrink-0">
+            {(() => {
+              console.log("[v0] Reopen button check:", {
+                hasOpenedWorkspace,
+                currentWorkspaceContent,
+                shouldShow: hasOpenedWorkspace && !currentWorkspaceContent,
+              })
+              return null
+            })()}
             {hasOpenedWorkspace && !currentWorkspaceContent && (
               <button
                 onClick={handleReopenWorkspace}
