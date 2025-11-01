@@ -81,7 +81,7 @@ const loremParagraphs = [
   "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
   "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
   "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
-  "Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
+  "Totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
   "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores.",
   "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.",
 ]
@@ -313,6 +313,7 @@ export const ChatMain = forwardRef<
     const lastUserMessageRef = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
     const agentDropdownRef = useRef<HTMLDivElement>(null)
 
     const {
@@ -326,6 +327,9 @@ export const ChatMain = forwardRef<
       },
       initialMessages: [], // Start with an empty array, welcome messages are handled separately
     })
+
+    const isCentered = localMessages.length === 0 && aiMessages.length === 0
+    const isThinking = status === "in_progress"
 
     useEffect(() => {
       if (aiMessages.length === 0) return
@@ -388,30 +392,6 @@ export const ChatMain = forwardRef<
     }, [aiMessages, activeAgent])
 
     useEffect(() => {
-      if (localMessages.length > 0 && messagesContainerRef.current) {
-        if (localMessages.length === 1) {
-          requestAnimationFrame(() => {
-            if (messagesContainerRef.current) {
-              messagesContainerRef.current.scrollTop = 0
-            }
-          })
-        } else {
-          const timer = setTimeout(() => {
-            if (lastUserMessageRef.current) {
-              lastUserMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
-            } else if (lastMessageRef.current && messagesContainerRef.current) {
-              messagesContainerRef.current.scrollTo({
-                top: messagesContainerRef.current.scrollHeight,
-                behavior: "smooth",
-              })
-            }
-          }, 100)
-          return () => clearTimeout(timer)
-        }
-      }
-    }, [localMessages, status])
-
-    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (agentDropdownRef.current && !agentDropdownRef.current.contains(event.target as Node)) {
           setIsAgentDropdownOpen(false)
@@ -422,6 +402,12 @@ export const ChatMain = forwardRef<
       }
       return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [isAgentDropdownOpen])
+
+    useEffect(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      }
+    }, [localMessages, isThinking])
 
     useEffect(() => {
       if (lastWorkspaceContent?.type === "code" && lastWorkspaceContent?.title === "Take Home Challenge") {
@@ -1145,8 +1131,8 @@ Are you ready to begin your Take Home Challenge?`,
       ])
     }
 
-    const isCentered = localMessages.length === 0 && aiMessages.length === 0
-    const isThinking = status === "in_progress"
+    // const isCentered = localMessages.length === 0 && aiMessages.length === 0
+    // const isThinking = status === "in_progress"
 
     const renderSuggestions = () => (
       <>
@@ -1511,6 +1497,8 @@ Are you ready to begin your Take Home Challenge?`,
                   </div>
                 )
               })}
+              {/* Add ref to the last message for auto-scroll */}
+              <div ref={messagesEndRef} />
 
               {isThinking && (
                 <div className="mb-6 message-enter">
@@ -1523,22 +1511,13 @@ Are you ready to begin your Take Home Challenge?`,
                     </div>
                     <span className="text-sm font-medium text-foreground">{activeAgent.name}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Thinking</span>
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <div className="flex gap-1">
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-[#8096FD] animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-[#A16AE8] animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
+                      <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
+                      <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
+                      <div className="w-2 h-2 rounded-full bg-current animate-bounce" />
                     </div>
+                    <span className="text-sm">Thinking...</span>
                   </div>
                 </div>
               )}
