@@ -353,7 +353,6 @@ export const ChatMain = forwardRef<
 
           if (hasCodeBlocks) {
             responseType = "code"
-            console.log("[v0] Detected code blocks in AI response, setting responseType to 'code'")
           }
         }
 
@@ -384,7 +383,6 @@ export const ChatMain = forwardRef<
         hasWelcomeMessages && preservedLocalMessages.length === 0 && convertedMessages.length === 0
 
       if (wouldClearWelcome) {
-        console.log("[v0] Skipping localMessages update to preserve welcome message")
         return
       }
 
@@ -395,12 +393,6 @@ export const ChatMain = forwardRef<
         newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content)
 
       if (messagesChanged) {
-        console.log(
-          "[v0] Updating localMessages. Preserved:",
-          preservedLocalMessages.length,
-          "AI:",
-          convertedMessages.length,
-        )
         setLocalMessages(newMessages)
       }
     }, [aiMessages, activeAgent])
@@ -443,8 +435,6 @@ export const ChatMain = forwardRef<
 
     // Declare handleStartChallenge here
     const handleStartChallenge = () => {
-      console.log("[v0] Starting take home challenge")
-
       // Show loading animation
       onOpenWorkspace({ type: "challenge-loading", title: "Take Home Challenge" })
       setHasOpenedWorkspace(true)
@@ -452,7 +442,6 @@ export const ChatMain = forwardRef<
 
       // AFTER 3 SECONDS, SHOW THE CODE PREVIEW WORKSPACE (SAME AS "CODE PREVIEW" COMMAND)
       setTimeout(() => {
-        console.log("[v0] Loading code preview workspace for challenge")
         onOpenWorkspace({
           type: "code",
           title: "Take Home Challenge",
@@ -484,17 +473,13 @@ export const ChatMain = forwardRef<
         ])
       },
       switchAgent: (agentId: string) => {
-        console.log("[v0] switchAgent called with agentId:", agentId)
         const agent = AI_AGENTS.find((a) => a.id === agentId)
         if (agent) {
-          console.log("[v0] Agent found:", agent.name)
           handleAgentChange(agent)
         } else {
-          console.log("[v0] Agent not found for id:", agentId)
         }
       },
       showPricingGuidance: () => {
-        console.log("[v0] showPricingGuidance called")
         const pricingMessage = `Great! Let's find the perfect plan for your organization. 🎯
 
 I've analyzed our enterprise offerings, and here's what each plan provides:
@@ -543,7 +528,6 @@ The **complete solution** with everything included. Best if you:
         ])
       },
       showPaymentSuccess: () => {
-        console.log("[v0] showPaymentSuccess called")
         const congratsMessage = `Congratulations! Your payment has been successfully processed! 🎉
 
 Welcome to Teamified Enterprise! You now have full access to all our premium features and AI agents.
@@ -581,8 +565,6 @@ I'm here to help you every step of the way. What would you like to start with?`
         ])
       },
       showMyJobsSummary: (appliedCount: number, savedCount: number) => {
-        console.log("[v0] showMyJobsSummary called with applied:", appliedCount, "saved:", savedCount)
-
         const summaryMessage = `Great to see you exploring opportunities! Let me give you a quick summary of your job activity. 📊
 
 ## Your Job Activity
@@ -618,8 +600,6 @@ ${loremParagraphs[1]}`
         ])
       },
       showJobViewSummary: (job: JobListing) => {
-        console.log("[v0] showJobViewSummary called for job:", job.title)
-
         const skillMatchText =
           job.skillMatch >= 80 ? "excellent match" : job.skillMatch >= 60 ? "good match" : "moderate match"
 
@@ -660,11 +640,7 @@ ${loremParagraphs[1]}`
         ])
       },
       handleJobApplication: (job: JobListing) => {
-        console.log("[v0] handleJobApplication called for job:", job.title)
-
-        console.log("[v0] Dispatching interview-option-selected event immediately")
         window.dispatchEvent(new CustomEvent("interview-option-selected"))
-        console.log("[v0] Event dispatched: interview-option-selected")
 
         // Send "Apply to this job" command to chat
         handleCommandOrMessage("Apply to this job")
@@ -1106,17 +1082,14 @@ Are you ready to begin your Take Home Challenge?`,
     }
 
     const handlePromptSuggestionClick = (suggestionText: string) => {
-      console.log("[v0] Prompt suggestion clicked:", suggestionText)
       handleCommandOrMessage(suggestionText)
     }
 
     const handleAgentChange = (agent: AIAgent) => {
-      console.log("[v0] handleAgentChange called with agent:", agent.name)
       setActiveAgent(agent)
       setIsAgentDropdownOpen(false)
 
       const introMessage = generateAgentIntroduction(agent)
-      console.log("[v0] Adding agent introduction message to chat")
 
       setLocalMessages((prev) => [
         ...prev,
