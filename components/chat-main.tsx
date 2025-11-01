@@ -320,6 +320,7 @@ export const ChatMain = forwardRef<
       messages: aiMessages,
       sendMessage,
       status,
+      setMessages,
     } = useChat({
       transport: new DefaultChatTransport({ api: "/api/chat" }),
       body: {
@@ -409,20 +410,21 @@ export const ChatMain = forwardRef<
       }
     }, [localMessages, isThinking])
 
+    // Detect when the Take Home Challenge workspace opens and reset the conversation
     useEffect(() => {
       if (lastWorkspaceContent?.type === "code" && lastWorkspaceContent?.title === "Take Home Challenge") {
-        console.log("[v0] Challenge code workspace detected, resetting conversation")
-
-        // Switch to Technical Recruiter
-        const technicalRecruiter = AI_AGENTS.find((a) => a.id === "technical-recruiter")
+        // Switch to Technical Recruiter agent
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
           setActiveAgent(technicalRecruiter)
         }
 
-        // Reset conversation with welcome message from Technical Recruiter
+        setMessages([])
+
+        // Create welcome message with instructions
         const welcomeMessage: Message = {
-          id: Date.now().toString(),
-          type: "ai",
+          id: `welcome-${Date.now()}`,
+          type: "ai", // Use type: "ai" for consistency with other messages
           content: `Welcome to your Take Home Challenge! 👨‍💻
 
 I'm your Technical Recruiter, and I'll be guiding you through this coding challenge.
@@ -1169,7 +1171,7 @@ Are you ready to begin your Take Home Challenge?`,
 
     return (
       <div className="flex-1 flex flex-col overflow-hidden h-full bg-background">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/95 supports-[backdrop-filter]:bg-background/60">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
               Teamified AI
