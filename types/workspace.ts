@@ -13,6 +13,8 @@ export type WorkspaceContentType =
   | "hiring-manager-profile"
   | "candidate-pricing"
   | "payment-success"
+  | "challenge-loading"
+  | "challenge"
   | null
 
 export interface WorkspaceContent {

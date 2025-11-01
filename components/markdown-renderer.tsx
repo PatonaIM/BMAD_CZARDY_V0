@@ -1,4 +1,7 @@
+"use client"
+
 import type React from "react"
+import { Copy } from "lucide-react"
 
 interface MarkdownRendererProps {
   content: string
@@ -12,6 +15,44 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
     while (i < lines.length) {
       const line = lines[i]
+
+      // Code blocks (```language ... ```)
+      if (line.startsWith("```")) {
+        const language = line.substring(3).trim() || "plaintext"
+        const codeLines: string[] = []
+        i++ // Move past the opening ```
+
+        // Collect all lines until closing ```
+        while (i < lines.length && !lines[i].startsWith("```")) {
+          codeLines.push(lines[i])
+          i++
+        }
+
+        const codeContent = codeLines.join("\n")
+
+        elements.push(
+          <div key={i} className="rounded-2xl overflow-hidden border border-border bg-card my-4">
+            <div className="flex items-center justify-between px-4 py-2 bg-muted border-b border-border">
+              <span className="text-xs font-mono text-muted-foreground">{language}</span>
+              <button
+                onClick={() => navigator.clipboard.writeText(codeContent)}
+                className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg hover:bg-accent transition-colors"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copy code
+              </button>
+            </div>
+            <div className="p-4 overflow-x-auto">
+              <pre className="text-xs font-mono leading-relaxed">
+                <code className="text-foreground">{codeContent}</code>
+              </pre>
+            </div>
+          </div>,
+        )
+
+        i++ // Move past the closing ```
+        continue
+      }
 
       // Headers
       if (line.startsWith("### ")) {

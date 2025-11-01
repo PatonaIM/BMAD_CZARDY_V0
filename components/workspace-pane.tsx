@@ -20,7 +20,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react" // Added useEffect
 import type { WorkspaceContent, JobListing } from "@/types/workspace"
 import {
   BarChart,
@@ -53,6 +53,13 @@ interface WorkspacePaneProps {
   onHiringManagerStepChange?: (step: number) => void
   onViewJob?: (job: JobListing) => void // Added callback for viewing job details
   onBackToJobBoard?: () => void // Added onBackToJobBoard prop
+  activeWorkspace?: string // Added activeWorkspace prop for context
+  onApplyForJob?: (job: JobListing) => void // Added prop
+  // Added onOpenWorkspace prop
+  onOpenWorkspace?: (workspaceType: WorkspaceContent["type"], data?: any) => void
+  // Added showApplicationStatus and onToggleApplicationView props
+  showApplicationStatus?: boolean
+  onToggleApplicationView?: (show: boolean) => void
 }
 
 const mockJobListings: JobListing[] = [
@@ -69,7 +76,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "open",
     skillMatch: 88,
     jobSummary:
@@ -120,13 +127,13 @@ const mockJobListings: JobListing[] = [
     description: "Join our AI team to build cutting-edge machine learning solutions.",
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "draft",
     skillMatch: 75,
     jobSummary:
       "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
     aboutClient:
-      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
     benefits: [
       "Competitive compensation with equity options",
       "Comprehensive health and wellness benefits",
@@ -148,7 +155,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "open",
     skillMatch: 82,
     jobSummary:
@@ -175,7 +182,7 @@ const mockJobListings: JobListing[] = [
     posted: "5 days ago",
     description: "Build and maintain our cloud infrastructure and CI/CD pipelines.",
     requirements: ["Kubernetes", "Docker", "AWS/GCP", "Terraform", "4+ years experience"],
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "closed",
     skillMatch: 70,
     jobSummary:
@@ -204,7 +211,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
     status: "open",
     skillMatch: 92,
     jobSummary:
@@ -232,7 +239,7 @@ const mockJobListings: JobListing[] = [
     description: "Analyze complex datasets and build predictive models to drive business insights.",
     requirements: ["Python", "SQL", "Machine Learning", "Statistics", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "draft",
     skillMatch: 78,
     jobSummary:
@@ -243,7 +250,6 @@ const mockJobListings: JobListing[] = [
       "Attractive salary and stock options",
       "Comprehensive health and dental insurance",
       "Remote work options with flexible hours",
-      "Generous professional development fund",
       "Annual company retreats and team events",
       "Access to cutting-edge tools and technologies",
     ],
@@ -260,13 +266,13 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement scalable backend services and APIs.",
     requirements: ["Node.js or Java", "Microservices", "Databases", "5+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 85,
     jobSummary:
       "• Design and develop robust and scalable backend services and APIs\n• Implement microservices architecture and ensure seamless integration\n• Manage and optimize database performance and integrity\n• Write clean, efficient, and well-documented code\n• Collaborate with frontend teams to define API contracts",
     aboutClient:
-      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
     benefits: [
       "Highly competitive salary and performance bonuses",
       "Full family medical, dental, and vision coverage",
@@ -288,7 +294,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure software quality through comprehensive testing and automation.",
     requirements: ["Test automation", "Selenium/Cypress", "API testing", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "closed",
     skillMatch: 72,
     jobSummary:
@@ -316,7 +322,7 @@ const mockJobListings: JobListing[] = [
     description: "Build native iOS applications with cutting-edge features.",
     requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 80,
     jobSummary:
@@ -345,7 +351,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "draft",
     skillMatch: 86,
     jobSummary:
@@ -373,7 +379,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement enterprise-level cloud solutions.",
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "open",
     skillMatch: 89,
     jobSummary:
@@ -401,7 +407,7 @@ const mockJobListings: JobListing[] = [
     description: "Facilitate agile processes and remove impediments for development teams.",
     requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "closed",
     skillMatch: 77,
     jobSummary:
@@ -429,13 +435,13 @@ const mockJobListings: JobListing[] = [
     description: "Protect our systems and data through robust security measures.",
     requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 83,
     jobSummary:
       "• Implement and maintain security controls to protect systems and data\n• Conduct vulnerability assessments and penetration testing\n• Monitor security alerts and respond to incidents\n• Develop and enforce security policies and procedures\n• Stay up-to-date with the latest security threats and technologies",
     aboutClient:
-      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
     benefits: [
       "Competitive salary and regular performance reviews",
       "Comprehensive health, dental, and vision insurance",
@@ -457,7 +463,7 @@ const mockJobListings: JobListing[] = [
     description: "Create clear and comprehensive technical documentation.",
     requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "draft",
     skillMatch: 74,
     jobSummary:
@@ -484,7 +490,7 @@ const mockJobListings: JobListing[] = [
     description: "Bridge the gap between business needs and technical solutions.",
     requirements: ["Requirements gathering", "Process modeling", "SQL", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 79,
     jobSummary:
@@ -512,7 +518,7 @@ const mockJobListings: JobListing[] = [
     description: "Develop and deploy machine learning models at scale.",
     requirements: ["Python", "TensorFlow", "MLOps", "Model deployment", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "closed",
     skillMatch: 81,
     jobSummary:
@@ -540,7 +546,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure high availability and reliability of production systems.",
     requirements: ["Linux", "Monitoring tools", "Incident management", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "open",
     skillMatch: 91,
     jobSummary:
@@ -568,7 +574,7 @@ const mockJobListings: JobListing[] = [
     description: "Manage and optimize database systems for performance and reliability.",
     requirements: ["PostgreSQL/MySQL", "Database tuning", "Backup strategies", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "draft",
     skillMatch: 76,
     jobSummary:
@@ -596,13 +602,13 @@ const mockJobListings: JobListing[] = [
     description: "Build and maintain cloud infrastructure on AWS and Azure.",
     requirements: ["AWS/Azure", "Infrastructure as Code", "CI/CD", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 87,
     jobSummary:
       "• Design, deploy, and manage cloud infrastructure on AWS and Azure\n• Implement Infrastructure as Code (IaC) using tools like Terraform or CloudFormation\n• Develop and maintain CI/CD pipelines for automated deployments\n• Monitor cloud resources for performance, security, and cost optimization\n• Troubleshoot and resolve cloud infrastructure issues",
     aboutClient:
-      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
     benefits: [
       "Competitive salary and performance incentives",
       "Comprehensive health and wellness benefits",
@@ -624,7 +630,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead and mentor a team of software engineers to deliver high-quality products.",
     requirements: ["Team leadership", "Technical expertise", "Agile", "7+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "closed",
     skillMatch: 93,
     jobSummary:
@@ -638,6 +644,64 @@ const mockJobListings: JobListing[] = [
       "Significant budget for professional development and leadership training",
       "Opportunity to shape the engineering culture and strategy",
       "Annual performance bonuses",
+    ],
+  },
+  {
+    id: "21",
+    title: "Senior Backend Engineer",
+    company: "Thriday",
+    companyWebsite: "https://thriday.com.au",
+    location: "Manila, Philippines",
+    type: "Full-time",
+    salary: "$50k - $70k",
+    posted: "3 days ago",
+    description: "Build scalable backend systems for our fintech platform.",
+    requirements: ["Node.js", "PostgreSQL", "AWS", "5+ years experience"],
+    applied: false,
+    saved: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
+    status: "open",
+    skillMatch: 88,
+    jobSummary:
+      "• Design, develop, and maintain highly scalable and reliable backend services using Node.js\n• Optimize database performance and ensure data integrity with PostgreSQL\n• Implement and manage cloud infrastructure on AWS\n• Develop and maintain RESTful APIs for various applications\n• Collaborate with frontend teams to define API contracts and ensure seamless integration\n• Write clean, efficient, and well-documented code",
+    aboutClient:
+      "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    benefits: [
+      "Competitive salary and quarterly bonuses",
+      "HMO coverage for you and dependents",
+      "Fully remote work setup",
+      "Internet and equipment allowance",
+      "Learning and development budget",
+      "Flexible working hours",
+    ],
+  },
+  {
+    id: "22",
+    title: "DevOps Engineer",
+    company: "Thriday",
+    companyWebsite: "https://thriday.com.au",
+    location: "Remote",
+    type: "Full-time",
+    salary: "$55k - $75k",
+    posted: "1 week ago",
+    description: "Manage and optimize our cloud infrastructure and deployment pipelines.",
+    requirements: ["AWS/GCP", "Docker", "Kubernetes", "CI/CD", "4+ years experience"],
+    applied: false,
+    saved: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
+    status: "open",
+    skillMatch: 85,
+    jobSummary:
+      "• Design, implement, and maintain scalable cloud infrastructure on AWS and GCP\n• Automate build, test, and deployment pipelines using CI/CD tools\n• Manage containerized applications using Docker and Kubernetes\n• Implement Infrastructure as Code (IaC) using tools like Terraform\n• Monitor system performance, availability, and security, and respond to incidents\n• Collaborate with development teams to improve deployment processes and system reliability",
+    aboutClient:
+      "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    benefits: [
+      "Competitive salary and quarterly bonuses",
+      "HMO coverage for you and dependents",
+      "Fully remote work setup",
+      "Internet and equipment allowance",
+      "Learning and development budget",
+      "Flexible working hours",
     ],
   },
 ]
@@ -727,10 +791,17 @@ export function WorkspacePane({
   onHiringManagerStepChange,
   onViewJob, // Added onViewJob prop
   onBackToJobBoard, // Added onBackToJobBoard prop
+  activeWorkspace, // Added activeWorkspace prop for context
+  onApplyForJob, // Added prop
+  onOpenWorkspace, // Added prop
+  showApplicationStatus, // Added prop
+  onToggleApplicationView, // Added prop
 }: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
   const [pdfZoom, setPdfZoom] = useState(100)
+
+  const [showApplicationStatusLocal, setShowApplicationStatusLocal] = useState(false)
 
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
@@ -742,11 +813,79 @@ export function WorkspacePane({
     match: "",
   })
 
+  const [loadingScores, setLoadingScores] = useState<Set<string>>(new Set())
+
   const mockImages = ["/dashboard-analytics.png", "/user-interface-design.png", "/data-visualization-abstract.png"]
+
+  // Move useEffect to the top level of the component, outside of any conditional logic.
+  useEffect(() => {
+    if (activeWorkspace === "my-jobs") {
+      const jobIds = new Set(mockJobListings.map((job) => job.id)) // Use mockJobListings directly here
+      setLoadingScores(jobIds)
+
+      const timer = setTimeout(() => {
+        setLoadingScores(new Set())
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [activeWorkspace]) // Ensure activeWorkspace is a dependency if it can change
+
+  useEffect(() => {
+    console.log("[v0] Setting up interview-option-selected event listener")
+
+    const handleInterviewSelected = () => {
+      console.log("[v0] interview-option-selected event received!")
+      console.log("[v0] Setting showApplicationStatusLocal to true")
+      setShowApplicationStatusLocal(true)
+      if (onToggleApplicationView) {
+        console.log("[v0] Calling onToggleApplicationView(true)")
+        onToggleApplicationView(true)
+      }
+    }
+
+    window.addEventListener("interview-option-selected", handleInterviewSelected)
+    console.log("[v0] Event listener added for interview-option-selected")
+
+    return () => {
+      console.log("[v0] Removing interview-option-selected event listener")
+      window.removeEventListener("interview-option-selected", handleInterviewSelected)
+    }
+  }, [onToggleApplicationView])
+
+  const handleToggleApplicationView = (show: boolean) => {
+    setShowApplicationStatusLocal(show)
+    if (onToggleApplicationView) {
+      onToggleApplicationView(show)
+    }
+  }
 
   const handleViewJobDetails = (job: JobListing) => {
     if (onViewJob) {
       onViewJob(job)
+    }
+  }
+
+  const handleApplyForJob = (job: JobListing) => {
+    console.log("[v0] handleApplyForJob called for:", job.title)
+    if (onApplyForJob) {
+      onApplyForJob(job)
+    }
+  }
+
+  const handleSkillGapAnalysisRequest = () => {
+    console.log("[v0] Skill gap analysis requested for job:", content.job?.title)
+    // This will be handled by the parent component (app/page.tsx)
+    // which will trigger the Technical Recruiter AI to send a message
+    if (content.job) {
+      // Close the workspace pane to show the chat
+      onClose()
+      // Trigger a custom event that the parent can listen to
+      window.dispatchEvent(
+        new CustomEvent("requestSkillGapAnalysis", {
+          detail: { job: content.job },
+        }),
+      )
     }
   }
 
@@ -768,6 +907,10 @@ export function WorkspacePane({
         return "Video Player"
       case "code":
         return "Code Editor"
+      case "challenge-loading":
+        return "Take Home Challenge"
+      case "challenge":
+        return "Take Home Challenge"
       case "job-board":
         const user = getCurrentUser()
         return user?.role === "candidate" ? "My Jobs" : "Available Positions"
@@ -1298,7 +1441,7 @@ export function WorkspacePane({
                         </p>
                         <p>
                           <span className="font-semibold">10.10 Survival:</span> The provisions of Sections 5
-                          (Confidentiality), 6 (Intellectual Property), and 7 (Non-Compete and Non-Solicitation) shall
+                          (Confidentiality), 6 (Intellectual Property), 7 (Non-Compete and Non-Solicitation) shall
                           survive the termination of this Agreement.
                         </p>
                       </div>
@@ -1489,6 +1632,75 @@ export function WorkspacePane({
           </div>
         )
 
+      case "challenge-loading":
+        return (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 mx-auto">
+                <div className="w-full h-full border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground">Preparing Take Home Challenge</h3>
+              <p className="text-muted-foreground">Setting up your coding environment...</p>
+            </div>
+          </div>
+        )
+
+      case "challenge":
+        return (
+          <div className="flex-1 flex flex-col">
+            <div className="border-b border-border bg-muted/30 px-6 py-4">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Take Home Challenge - {content.data?.job?.title || "Position"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Build a responsive landing page component using React and Tailwind CSS
+              </p>
+            </div>
+
+            <div className="flex-1 flex flex-col p-6 space-y-4">
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h4 className="font-medium text-foreground mb-2">Challenge Instructions</h4>
+                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                  <li>Create a modern, responsive landing page component</li>
+                  <li>Use React functional components and hooks</li>
+                  <li>Style with Tailwind CSS utility classes</li>
+                  <li>Ensure mobile responsiveness</li>
+                  <li>Include at least one interactive element</li>
+                </ul>
+              </div>
+
+              <div className="flex-1 bg-card border border-border rounded-lg overflow-hidden">
+                <div className="bg-muted/50 px-4 py-2 border-b border-border flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">app/page.tsx</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Time remaining: 3:45:22</span>
+                  </div>
+                </div>
+                <div className="p-4 font-mono text-sm">
+                  <pre className="text-foreground">
+                    {`export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Your code here */}
+    </div>
+  )
+}`}
+                  </pre>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-accent transition-colors">
+                  Save Draft
+                </button>
+                <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg transition-all">
+                  Submit Challenge
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+
       case "job-board":
         const user = getCurrentUser()
 
@@ -1504,11 +1716,14 @@ export function WorkspacePane({
         const appliedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.applied) : []
         const savedJobs = user?.role === "candidate" ? displayedJobs.filter((job) => job.saved && !job.applied) : []
 
+        // The useEffect hook was moved to the top of the component.
+
         const getSkillMatchInfo = (score: number | undefined) => {
           if (!score) return { label: "N/A", color: "bg-gray-500/10 text-gray-600 border-gray-500/20" }
           if (score >= 90) return { label: "STRONG FIT", color: "bg-green-500/10 text-green-600 border-green-500/20" }
-          if (score >= 70) return { label: "GOOD FIT", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" }
-          return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border-red-500/20" }
+          if (score >= 70)
+            return { label: "GOOD FIT", color: "bg-amber-500/10 text-amber-600 border border-amber-500/20" }
+          return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border border-red-500/20" }
         }
 
         return (
@@ -1537,35 +1752,37 @@ export function WorkspacePane({
                       {appliedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
+                          className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
                         >
-                          <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <div className="flex flex-col gap-2">
+                                {job.status && (
+                                  <span
+                                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                      job.status === "open"
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                    }`}
+                                  >
+                                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                  </span>
+                                )}
+                                <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                  Applied
                                 </span>
-                              )}
-                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                Applied
-                              </span>
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                              </div>
+                              <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain rounded-lg"
                                 />
                               </div>
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
-                              <p className="text-sm text-muted-foreground">{job.company}</p>
                             </div>
                           </div>
 
@@ -1605,37 +1822,48 @@ export function WorkspacePane({
 
                             {/* Right side - 20% width */}
                             <div className="flex-[2] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
-                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                Applied
-                              </span>
                               {job.skillMatch && (
                                 <div className="text-center">
-                                  <div
-                                    className={`text-4xl font-bold mb-2 ${
-                                      job.skillMatch >= 90
-                                        ? "text-green-600"
-                                        : job.skillMatch >= 70
-                                          ? "text-amber-600"
-                                          : "text-red-600"
-                                    }`}
-                                  >
-                                    {job.skillMatch}%
-                                  </div>
-                                  <div
-                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                                      job.skillMatch >= 90
-                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                        : job.skillMatch >= 70
-                                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
-                                    }`}
-                                  >
-                                    {job.skillMatch >= 90
-                                      ? "STRONG FIT"
-                                      : job.skillMatch >= 70
-                                        ? "GOOD FIT"
-                                        : "NOT FIT"}
-                                  </div>
+                                  {loadingScores.has(job.id) ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                      <div className="relative w-16 h-16">
+                                        <div className="absolute inset-0 rounded-full border-4 border-muted animate-pulse" />
+                                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                                      </div>
+                                      <div className="text-xs font-medium text-muted-foreground animate-pulse">
+                                        Calculating...
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div
+                                        className={`text-4xl font-bold mb-2 ${
+                                          job.skillMatch >= 90
+                                            ? "text-green-600"
+                                            : job.skillMatch >= 70
+                                              ? "text-amber-600"
+                                              : "text-red-600"
+                                        }`}
+                                      >
+                                        {job.skillMatch}%
+                                      </div>
+                                      <div
+                                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                          job.skillMatch >= 90
+                                            ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                            : job.skillMatch >= 70
+                                              ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                              : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                        }`}
+                                      >
+                                        {job.skillMatch >= 90
+                                          ? "STRONG FIT"
+                                          : job.skillMatch >= 70
+                                            ? "GOOD FIT"
+                                            : "NOT FIT"}
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -1659,35 +1887,37 @@ export function WorkspacePane({
                       {savedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all"
+                          className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
                         >
-                          <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
+                              <p className="text-sm text-muted-foreground">{job.company}</p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <div className="flex flex-col gap-2">
+                                {job.status && (
+                                  <span
+                                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                      job.status === "open"
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                    }`}
+                                  >
+                                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                  </span>
+                                )}
+                                <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                  Saved
                                 </span>
-                              )}
-                              <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                                Saved
-                              </span>
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                              </div>
+                              <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain rounded-lg"
                                 />
                               </div>
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
-                              <p className="text-sm text-muted-foreground">{job.company}</p>
                             </div>
                           </div>
 
@@ -1727,37 +1957,48 @@ export function WorkspacePane({
 
                             {/* Right side - 20% width */}
                             <div className="flex-[2] flex flex-col items-center justify-center gap-3 border-l border-border pl-6">
-                              <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                                Saved
-                              </span>
                               {job.skillMatch && (
                                 <div className="text-center">
-                                  <div
-                                    className={`text-4xl font-bold mb-2 ${
-                                      job.skillMatch >= 90
-                                        ? "text-green-600"
-                                        : job.skillMatch >= 70
-                                          ? "text-amber-600"
-                                          : "text-red-600"
-                                    }`}
-                                  >
-                                    {job.skillMatch}%
-                                  </div>
-                                  <div
-                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                                      job.skillMatch >= 90
-                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                        : job.skillMatch >= 70
-                                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                                          : "bg-red-500/10 text-red-600 border border-red-500/20"
-                                    }`}
-                                  >
-                                    {job.skillMatch >= 90
-                                      ? "STRONG FIT"
-                                      : job.skillMatch >= 70
-                                        ? "GOOD FIT"
-                                        : "NOT FIT"}
-                                  </div>
+                                  {loadingScores.has(job.id) ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                      <div className="relative w-16 h-16">
+                                        <div className="absolute inset-0 rounded-full border-4 border-muted animate-pulse" />
+                                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                                      </div>
+                                      <div className="text-xs font-medium text-muted-foreground animate-pulse">
+                                        Calculating...
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div
+                                        className={`text-4xl font-bold mb-2 ${
+                                          job.skillMatch >= 90
+                                            ? "text-green-600"
+                                            : job.skillMatch >= 70
+                                              ? "text-amber-600"
+                                              : "text-red-600"
+                                        }`}
+                                      >
+                                        {job.skillMatch}%
+                                      </div>
+                                      <div
+                                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                          job.skillMatch >= 90
+                                            ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                            : job.skillMatch >= 70
+                                              ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                              : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                        }`}
+                                      >
+                                        {job.skillMatch >= 90
+                                          ? "STRONG FIT"
+                                          : job.skillMatch >= 70
+                                            ? "GOOD FIT"
+                                            : "NOT FIT"}
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -1776,11 +2017,11 @@ export function WorkspacePane({
                     className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
                   >
                     <div className="absolute top-6 right-6">
-                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 border border-border flex items-center justify-center overflow-hidden">
+                      <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden">
                         <img
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain rounded-lg"
                         />
                       </div>
                     </div>
@@ -1833,7 +2074,10 @@ export function WorkspacePane({
                     </div>
                     <p className="text-sm mb-4 leading-relaxed line-clamp-2">{job.description}</p>
                     <div className="flex gap-2">
-                      <button className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all">
+                      <button
+                        onClick={() => handleApplyForJob(job)} // Trigger apply job handler
+                        className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
+                      >
                         {job.applied ? "View Application" : "Apply Now"}
                       </button>
                       <button
@@ -1851,7 +2095,18 @@ export function WorkspacePane({
         )
 
       case "job-view":
-        return content.job ? <JobView job={content.job} onBack={onBackToJobBoard} /> : <div>No job data available</div>
+        return content.job ? (
+          <JobView
+            job={content.job}
+            onBack={onBackToJobBoard}
+            onRequestSkillGapAnalysis={handleSkillGapAnalysisRequest} // Pass the callback
+            onApplyForJob={handleApplyForJob} // Pass the callback
+            showApplicationStatus={showApplicationStatusLocal} // Pass the state
+            onToggleApplicationView={handleToggleApplicationView} // Pass the toggle handler
+          />
+        ) : (
+          <div>No job data available</div>
+        )
 
       case "table":
         return (

@@ -1,17 +1,54 @@
-import { convertToModelMessages, streamText, type UIMessage } from "ai"
+import { streamText, convertToModelMessages, type UIMessage } from "ai"
 
 export const maxDuration = 30
 
 export async function POST(req: Request) {
-  const { messages, agentId }: { messages: UIMessage[]; agentId: string } = await req.json()
+  try {
+    const { messages, agentId }: { messages: UIMessage[]; agentId: string } = await req.json()
 
-  const prompt = convertToModelMessages(messages)
+    const systemPrompts: Record<string, string> = {
+      "technical-recruiter": `You are a friendly and professional Technical Recruiter AI assistant helping candidates find their dream jobs.
 
-  // Add system message based on the agent
-  const systemPrompts: Record<string, string> = {
-    "technical-recruiter": `You are a helpful Technical Recruiter AI assistant. You help candidates find jobs, review resumes, and prepare for interviews. Be professional, encouraging, and provide actionable advice.`,
-    "hiring-manager": `You are a helpful Hiring Manager AI assistant. You help companies find qualified candidates, write job descriptions, and manage the hiring process. Be professional and efficient.`,
-    "sales-marketing": `You are a helpful Sales & Marketing AI assistant for Teamified. Your role is to help both candidates and hiring managers understand the value of Teamified's offerings.
+Your primary responsibilities:
+- Help candidates discover job opportunities that match their skills and experience
+- Provide guidance on the application process and interview preparation
+- Answer questions about job requirements, company culture, and career growth
+- Assist with resume reviews and skill assessments
+
+**IMPORTANT - Job Application Handling:**
+When a candidate expresses interest in applying for a job (phrases like "I want to apply", "Apply for this position", "Apply to this job", etc.), you MUST respond with the following structure:
+
+# AI Interview (Recommended)
+
+Take an AI-powered interview that provides instant feedback and speeds up your application process. Our AI interviews are designed to assess your skills efficiently and give you immediate results.
+
+**Benefits:**
+- ⚡ Instant scheduling - start immediately
+- 🎯 Personalized questions based on the role
+- 📊 Immediate feedback and results
+- 🚀 Priority consideration by hiring managers
+
+# Traditional Interview
+
+Schedule a traditional interview with our hiring team. This option follows the standard recruitment process with human interviewers.
+
+**What to expect:**
+- 📅 Scheduled at mutual convenience
+- 👥 Interview with hiring managers
+- ⏰ Standard processing time
+- 📋 Traditional evaluation process
+
+**Please note:** We prioritize candidates who choose AI interviews as it significantly speeds up the hiring process and allows us to move faster with qualified candidates. AI interview candidates typically receive responses within 24-48 hours, while traditional interviews may take 1-2 weeks to schedule and complete.
+
+Which interview format would you prefer?
+
+---
+
+For all other queries, be helpful, encouraging, and provide detailed information about job opportunities, application processes, and career advice.
+
+Always maintain a professional yet friendly tone, and celebrate candidates' achievements and progress in their job search journey.`,
+      "hiring-manager": `You are a helpful Hiring Manager AI assistant. You help companies find qualified candidates, write job descriptions, and manage the hiring process. Be professional and efficient.`,
+      "sales-marketing": `You are a helpful Sales & Marketing AI assistant for Teamified. Your role is to help both candidates and hiring managers understand the value of Teamified's offerings.
 
 **FOR CANDIDATES - Premium Plan:**
 
@@ -115,27 +152,33 @@ We offer **4 flexible enterprise plans** designed to meet different organization
 - Scale your team without the overhead
 
 Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer questions about features, pricing, and benefits. Help users understand which plan best fits their needs. If asked about payment or technical issues, guide them to complete the setup form in the workspace.`,
-    "pricing-calculator": `You are a helpful Pricing Calculator AI assistant. You help users understand pricing for recruitment services and generate quotations. Be clear and transparent about costs.`,
-    "legal-advisor": `You are a helpful Legal Advisor AI assistant. You help with employment contracts, privacy policies, and legal compliance. Always remind users to consult with a qualified attorney for legal advice.`,
-    "company-info": `You are a helpful Company Information AI assistant. You provide information about Teamified's mission, values, services, and team. Be informative and enthusiastic about the company.`,
+      "pricing-calculator": `You are a helpful Pricing Calculator AI assistant. You help users understand pricing for recruitment services and generate quotations. Be clear and transparent about costs.`,
+      "legal-advisor": `You are a helpful Legal Advisor AI assistant. You help with employment contracts, privacy policies, and legal compliance. Always remind users to consult with a qualified attorney for legal advice.`,
+      "company-info": `You are a helpful Company Information AI assistant. You provide information about Teamified's mission, values, services, and team. Be informative and enthusiastic about the company.`,
+    }
+
+    const systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
+
+    const prompt = convertToModelMessages(messages)
+
+    const result = streamText({
+      model: "openai/gpt-4o-mini",
+      system: systemMessage,
+      prompt,
+    })
+
+    return result.toUIMessageStreamResponse()
+  } catch (error) {
+    console.error("[v0] Chat API error:", error)
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    )
   }
-
-  const systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
-
-  const result = streamText({
-    model: "openai/gpt-4o-mini",
-    system: systemMessage,
-    messages: prompt,
-    abortSignal: req.signal,
-    temperature: 0.7,
-    maxOutputTokens: 2000,
-  })
-
-  return result.toUIMessageStreamResponse({
-    onFinish: async ({ isAborted }) => {
-      if (isAborted) {
-        console.log("[v0] Chat request aborted")
-      }
-    },
-  })
 }
