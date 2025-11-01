@@ -205,7 +205,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
     status: "open",
     skillMatch: 92,
     jobSummary:
@@ -316,7 +316,7 @@ const mockJobListings: JobListing[] = [
     description: "Build native iOS applications with cutting-edge features.",
     requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 80,
     jobSummary:
@@ -345,7 +345,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "draft",
     skillMatch: 86,
     jobSummary:
@@ -373,7 +373,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement enterprise-level cloud solutions.",
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "open",
     skillMatch: 89,
     jobSummary:
@@ -429,7 +429,7 @@ const mockJobListings: JobListing[] = [
     description: "Protect our systems and data through robust security measures.",
     requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 83,
     jobSummary:
@@ -484,7 +484,7 @@ const mockJobListings: JobListing[] = [
     description: "Bridge the gap between business needs and technical solutions.",
     requirements: ["Requirements gathering", "Process modeling", "SQL", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 79,
     jobSummary:
@@ -512,7 +512,7 @@ const mockJobListings: JobListing[] = [
     description: "Develop and deploy machine learning models at scale.",
     requirements: ["Python", "TensorFlow", "MLOps", "Model deployment", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "closed",
     skillMatch: 81,
     jobSummary:
@@ -540,7 +540,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure high availability and reliability of production systems.",
     requirements: ["Linux", "Monitoring tools", "Incident management", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "open",
     skillMatch: 91,
     jobSummary:
@@ -596,7 +596,7 @@ const mockJobListings: JobListing[] = [
     description: "Build and maintain cloud infrastructure on AWS and Azure.",
     requirements: ["AWS/Azure", "Infrastructure as Code", "CI/CD", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 87,
     jobSummary:
@@ -638,6 +638,64 @@ const mockJobListings: JobListing[] = [
       "Significant budget for professional development and leadership training",
       "Opportunity to shape the engineering culture and strategy",
       "Annual performance bonuses",
+    ],
+  },
+  {
+    id: "21",
+    title: "Senior Backend Engineer",
+    company: "Thriday",
+    companyWebsite: "https://thriday.com.au",
+    location: "Manila, Philippines",
+    type: "Full-time",
+    salary: "$50k - $70k",
+    posted: "3 days ago",
+    description: "Build scalable backend systems for our fintech platform.",
+    requirements: ["Node.js", "PostgreSQL", "AWS", "5+ years experience"],
+    applied: false,
+    saved: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
+    status: "open",
+    skillMatch: 88,
+    jobSummary:
+      "• Design, develop, and maintain highly scalable and reliable backend services using Node.js\n• Optimize database performance and ensure data integrity with PostgreSQL\n• Implement and manage cloud infrastructure on AWS\n• Develop and maintain RESTful APIs for various applications\n• Collaborate with frontend teams to define API contracts and ensure seamless integration\n• Write clean, efficient, and well-documented code",
+    aboutClient:
+      "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    benefits: [
+      "Competitive salary and quarterly bonuses",
+      "HMO coverage for you and dependents",
+      "Fully remote work setup",
+      "Internet and equipment allowance",
+      "Learning and development budget",
+      "Flexible working hours",
+    ],
+  },
+  {
+    id: "22",
+    title: "DevOps Engineer",
+    company: "Thriday",
+    companyWebsite: "https://thriday.com.au",
+    location: "Remote",
+    type: "Full-time",
+    salary: "$55k - $75k",
+    posted: "1 week ago",
+    description: "Manage and optimize our cloud infrastructure and deployment pipelines.",
+    requirements: ["AWS/GCP", "Docker", "Kubernetes", "CI/CD", "4+ years experience"],
+    applied: false,
+    saved: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
+    status: "open",
+    skillMatch: 85,
+    jobSummary:
+      "• Design, implement, and maintain scalable cloud infrastructure on AWS and GCP\n• Automate build, test, and deployment pipelines using CI/CD tools\n• Manage containerized applications using Docker and Kubernetes\n• Implement Infrastructure as Code (IaC) using tools like Terraform\n• Monitor system performance, availability, and security, and respond to incidents\n• Collaborate with development teams to improve deployment processes and system reliability",
+    aboutClient:
+      "Thriday is an Australian fintech startup transforming how small businesses manage their finances through intelligent automation. Since launching in 2021, we've helped over 10,000 small business owners save countless hours on bookkeeping and accounting tasks. Our AI-powered platform automatically categorizes transactions, generates invoices, and prepares financial reports, making financial management effortless. We're a fully remote-first company with team members across Australia, Philippines, and India, united by our passion for empowering entrepreneurs. Our product has won multiple awards including 'Best Fintech Innovation' at the Australian Fintech Awards. We're backed by leading Australian VCs and are experiencing rapid growth, doubling our user base every quarter. Join our talented team and help us build intuitive financial tools that make a real difference in people's lives.",
+    benefits: [
+      "Competitive salary and quarterly bonuses",
+      "HMO coverage for you and dependents",
+      "Fully remote work setup",
+      "Internet and equipment allowance",
+      "Learning and development budget",
+      "Flexible working hours",
     ],
   },
 ]
@@ -1547,14 +1605,6 @@ export function WorkspacePane({
           return { label: "NOT FIT", color: "bg-red-500/10 text-red-600 border border-red-500/20" }
         }
 
-        // Added handleJobClick function
-        const handleJobClick = (job: JobListing) => {
-          console.log("[v0] Job clicked:", job.title)
-          if (onViewJob) {
-            onViewJob(job)
-          }
-        }
-
         return (
           <div className="h-full overflow-auto">
             {user?.role === "candidate" && displayedJobs.length === 0 ? (
@@ -1581,39 +1631,37 @@ export function WorkspacePane({
                       {appliedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative cursor-pointer"
-                          onClick={() => handleJobClick(job)}
+                          className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
                         >
-                          <div className="absolute top-6 right-6">
-                            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
-                              <img
-                                src={job.logo || "/placeholder.svg"}
-                                alt={`${job.company} logo`}
-                                className="w-full h-full object-contain rounded-lg"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex items-start justify-between mb-4 pr-16">
-                            <div>
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
                               <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                               <p className="text-sm text-muted-foreground">{job.company}</p>
                             </div>
-                            <div className="flex flex-col gap-2 items-end">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                            <div className="flex items-start gap-3">
+                              <div className="flex flex-col gap-2">
+                                {job.status && (
+                                  <span
+                                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                      job.status === "open"
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                    }`}
+                                  >
+                                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                  </span>
+                                )}
+                                <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                  Applied
                                 </span>
-                              )}
-                              <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                Applied
-                              </span>
+                              </div>
+                              <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <img
+                                  src={job.logo || "/placeholder.svg"}
+                                  alt={`${job.company} logo`}
+                                  className="w-full h-full object-contain rounded-lg"
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -1718,39 +1766,37 @@ export function WorkspacePane({
                       {savedJobs.map((job) => (
                         <div
                           key={job.id}
-                          className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative cursor-pointer"
-                          onClick={() => handleJobClick(job)}
+                          className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
                         >
-                          <div className="absolute top-6 right-6">
-                            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
-                              <img
-                                src={job.logo || "/placeholder.svg"}
-                                alt={`${job.company} logo`}
-                                className="w-full h-full object-contain rounded-lg"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex items-start justify-between mb-4 pr-16">
-                            <div>
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
                               <h3 className="text-lg font-semibold mb-1">{job.title}</h3>
                               <p className="text-sm text-muted-foreground">{job.company}</p>
                             </div>
-                            <div className="flex flex-col gap-2 items-end">
-                              {job.status && (
-                                <span
-                                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                    job.status === "open"
-                                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                      : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  }`}
-                                >
-                                  {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                            <div className="flex items-start gap-3">
+                              <div className="flex flex-col gap-2">
+                                {job.status && (
+                                  <span
+                                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                      job.status === "open"
+                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                        : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                    }`}
+                                  >
+                                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                  </span>
+                                )}
+                                <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                  Saved
                                 </span>
-                              )}
-                              <span className="px-3 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                                Saved
-                              </span>
+                              </div>
+                              <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <img
+                                  src={job.logo || "/placeholder.svg"}
+                                  alt={`${job.company} logo`}
+                                  className="w-full h-full object-contain rounded-lg"
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -1847,11 +1893,10 @@ export function WorkspacePane({
                 {displayedJobs.map((job) => (
                   <div
                     key={job.id}
-                    className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative cursor-pointer"
-                    onClick={() => handleJobClick(job)}
+                    className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all relative"
                   >
                     <div className="absolute top-6 right-6">
-                      <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
+                      <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden">
                         <img
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
