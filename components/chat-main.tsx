@@ -328,40 +328,34 @@ export const ChatMain = forwardRef<
     })
 
     useEffect(() => {
-      console.log("[v0] Code detection useEffect triggered. aiMessages length:", aiMessages.length)
-
       if (aiMessages.length === 0) {
-        console.log("[v0] No AI messages yet, returning early")
         return
       }
 
       const lastAiMessage = aiMessages[aiMessages.length - 1]
-      console.log("[v0] Last message object:", JSON.stringify(lastAiMessage, null, 2))
-      console.log("[v0] Last message keys:", Object.keys(lastAiMessage))
-      console.log("[v0] Last message role:", lastAiMessage.role)
-      console.log("[v0] Last message content type:", typeof lastAiMessage.content)
 
       if (lastAiMessage.role !== "assistant") {
-        console.log("[v0] Last message is not from assistant, returning")
         return
       }
 
-      // Extract content as string, handling different message formats
-      let content = ""
-      if (typeof lastAiMessage.content === "string") {
-        content = lastAiMessage.content
-      } else if (Array.isArray(lastAiMessage.content)) {
-        // Handle content as array of parts
-        content = lastAiMessage.content.map((part: any) => (typeof part === "string" ? part : part.text || "")).join("")
+      // Check if message is still streaming - if so, skip processing
+      const isStreaming = lastAiMessage.parts?.some((part: any) => part.state === "streaming")
+      if (isStreaming) {
+        return
       }
 
-      console.log("[v0] Extracted content length:", content.length)
-      if (content) {
-        console.log("[v0] Content preview:", content.substring(0, 200))
+      // Extract content from parts array
+      let content = ""
+      if (lastAiMessage.parts && Array.isArray(lastAiMessage.parts)) {
+        content = lastAiMessage.parts
+          .filter((part: any) => part.type === "text")
+          .map((part: any) => part.text || "")
+          .join("")
+      } else if (typeof lastAiMessage.content === "string") {
+        content = lastAiMessage.content
       }
 
       if (!content) {
-        console.log("[v0] No content found, returning")
         return
       }
 
@@ -369,18 +363,11 @@ export const ChatMain = forwardRef<
       const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
       const matches = [...content.matchAll(codeBlockRegex)]
 
-      console.log("[v0] Code block matches found:", matches.length)
-
       if (matches.length > 0) {
-        console.log("[v0] Detected code blocks in AI response:", matches.length)
-
-        // Extract the first code block (or combine multiple blocks)
+        // Extract the first code block
         const firstMatch = matches[0]
         const language = firstMatch[1] || "javascript"
         const code = firstMatch[2].trim()
-
-        console.log("[v0] First code block language:", language)
-        console.log("[v0] First code block length:", code.length)
 
         // Determine filename based on language
         const filenameMap: Record<string, string> = {
@@ -396,11 +383,20 @@ export const ChatMain = forwardRef<
           css: "styles.css",
           jsx: "component.jsx",
           tsx: "component.tsx",
+          bash: "script.sh",
+          sh: "script.sh",
         }
 
         const filename = filenameMap[language.toLowerCase()] || "code.txt"
 
-        console.log("[v0] Opening code workspace with filename:", filename)
+        console.log(
+          "[v0] Code block detected - Language:",
+          language,
+          "| Filename:",
+          filename,
+          "| Lines:",
+          code.split("\n").length,
+        )
 
         // Open code workspace with the extracted code
         onOpenWorkspace({
