@@ -1603,6 +1603,10 @@ export function WorkspacePane({
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
                                   className="w-full h-full object-contain p-2"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "/placeholder.svg"
+                                  }}
                                 />
                               </div>
                             </div>
@@ -1738,6 +1742,10 @@ export function WorkspacePane({
                                   src={job.logo || "/placeholder.svg"}
                                   alt={`${job.company} logo`}
                                   className="w-full h-full object-contain p-2"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "/placeholder.svg"
+                                  }}
                                 />
                               </div>
                             </div>
@@ -1844,6 +1852,10 @@ export function WorkspacePane({
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
                           className="w-full h-full object-contain p-2"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = "/placeholder.svg"
+                          }}
                         />
                       </div>
                     </div>

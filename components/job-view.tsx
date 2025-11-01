@@ -191,6 +191,10 @@ export function JobView({ job, onBack, onRequestSkillGapAnalysis }: JobViewProps
                     src={job.logo || "/placeholder.svg"}
                     alt={`${job.company} logo`}
                     className="w-full h-full object-contain p-2"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = "/placeholder.svg"
+                    }}
                   />
                 ) : (
                   <Building2 className="w-8 h-8 text-[#A16AE8]" />
