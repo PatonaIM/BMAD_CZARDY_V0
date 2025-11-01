@@ -336,19 +336,10 @@ export const ChatMain = forwardRef<
       }
 
       const lastAiMessage = aiMessages[aiMessages.length - 1]
+      console.log("[v0] Last message object:", JSON.stringify(lastAiMessage, null, 2))
+      console.log("[v0] Last message keys:", Object.keys(lastAiMessage))
       console.log("[v0] Last message role:", lastAiMessage.role)
       console.log("[v0] Last message content type:", typeof lastAiMessage.content)
-
-      if (lastAiMessage.content) {
-        console.log(
-          "[v0] Last message content preview:",
-          typeof lastAiMessage.content === "string"
-            ? lastAiMessage.content.substring(0, 100)
-            : JSON.stringify(lastAiMessage.content).substring(0, 100),
-        )
-      } else {
-        console.log("[v0] Last message content is undefined or null")
-      }
 
       if (lastAiMessage.role !== "assistant") {
         console.log("[v0] Last message is not from assistant, returning")
