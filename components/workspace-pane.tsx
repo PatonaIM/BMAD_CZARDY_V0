@@ -831,27 +831,34 @@ export function WorkspacePane({
     }
   }, [activeWorkspace]) // Ensure activeWorkspace is a dependency if it can change
 
+  useEffect(() => {
+    console.log("[v0] Setting up interview-option-selected event listener")
+
+    const handleInterviewSelected = () => {
+      console.log("[v0] interview-option-selected event received!")
+      console.log("[v0] Setting showApplicationStatusLocal to true")
+      setShowApplicationStatusLocal(true)
+      if (onToggleApplicationView) {
+        console.log("[v0] Calling onToggleApplicationView(true)")
+        onToggleApplicationView(true)
+      }
+    }
+
+    window.addEventListener("interview-option-selected", handleInterviewSelected)
+    console.log("[v0] Event listener added for interview-option-selected")
+
+    return () => {
+      console.log("[v0] Removing interview-option-selected event listener")
+      window.removeEventListener("interview-option-selected", handleInterviewSelected)
+    }
+  }, [onToggleApplicationView])
+
   const handleToggleApplicationView = (show: boolean) => {
     setShowApplicationStatusLocal(show)
     if (onToggleApplicationView) {
       onToggleApplicationView(show)
     }
   }
-
-  useEffect(() => {
-    const handleInterviewSelected = () => {
-      setShowApplicationStatusLocal(true)
-      if (onToggleApplicationView) {
-        onToggleApplicationView(true)
-      }
-    }
-
-    window.addEventListener("interview-option-selected", handleInterviewSelected)
-
-    return () => {
-      window.removeEventListener("interview-option-selected", handleInterviewSelected)
-    }
-  }, [onToggleApplicationView])
 
   const handleViewJobDetails = (job: JobListing) => {
     if (onViewJob) {

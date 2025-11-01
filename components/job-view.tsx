@@ -163,6 +163,8 @@ export function JobView({
   showApplicationStatus = false,
   onToggleApplicationView,
 }: JobViewProps) {
+  console.log("[v0] JobView rendered with showApplicationStatus:", showApplicationStatus)
+
   const statusConfig = getStatusConfig(job.status || "open")
   const skillMatchConfig = job.skillMatch !== undefined ? getSkillMatchConfig(job.skillMatch) : null
   const skillGapInsights = job.skillMatch !== undefined ? generateSkillGapInsights(job.skillMatch) : null

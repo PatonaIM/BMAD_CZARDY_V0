@@ -1036,14 +1036,16 @@ Which interview format would you prefer?`,
     setInputMessage(suggestionText)
   }
 
-  // </CHANGE> Modified handlePromptSuggestionClick to dispatch event when interview option is selected
+  // Modified handlePromptSuggestionClick to dispatch event when interview option is selected
   const handlePromptSuggestionClick = (suggestionText: string) => {
     console.log("[v0] Prompt suggestion clicked:", suggestionText)
 
     // Check if this is an interview option selection
     if (suggestionText.includes("schedule an AI interview") || suggestionText.includes("traditional interview")) {
+      console.log("[v0] Interview option detected, dispatching event")
       // Dispatch custom event to notify JobView to show application status
       window.dispatchEvent(new CustomEvent("interview-option-selected"))
+      console.log("[v0] Event dispatched: interview-option-selected")
     }
 
     handleCommandOrMessage(suggestionText)
