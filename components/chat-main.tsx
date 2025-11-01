@@ -461,26 +461,168 @@ export const ChatMain = forwardRef<
   const handleStartChallenge = () => {
     console.log("[v0] Starting take home challenge")
 
-    // Show loading animation
     onOpenWorkspace({ type: "challenge-loading", title: "Take Home Challenge" })
     setHasOpenedWorkspace(true)
     setLastWorkspaceContent({ type: "challenge-loading", title: "Take Home Challenge" })
 
-    // After 3 seconds, show the actual challenge
     setTimeout(() => {
-      console.log("[v0] Loading challenge workspace")
+      console.log("[v0] Resetting conversation and showing challenge instructions")
+
+      // Clear existing messages (fade out effect)
+      setLocalMessages([])
+
+      // Add Technical Recruiter's challenge instructions
+      const challengeInstructions: Message = {
+        id: `challenge-instructions-${Date.now()}`,
+        type: "ai",
+        content: `# Take Home Challenge: Build a Task Management API
+
+Welcome to your take-home challenge! You have **4 hours** to complete this coding challenge.
+
+## Challenge Overview
+
+Build a RESTful API for a simple task management system with the following requirements:
+
+### Required Features
+
+1. **Task CRUD Operations**
+   - Create a new task
+   - Read/list all tasks
+   - Update an existing task
+   - Delete a task
+
+2. **Task Properties**
+   - Title (required)
+   - Description (optional)
+   - Status: "pending", "in-progress", or "completed"
+   - Priority: "low", "medium", or "high"
+   - Created date
+   - Due date (optional)
+
+3. **Additional Requirements**
+   - Input validation for all endpoints
+   - Proper error handling with meaningful error messages
+   - RESTful API design principles
+   - Clean, readable code with comments
+
+### Evaluation Criteria
+
+- **Functionality** (40%): Does the API work as specified?
+- **Code Quality** (30%): Is the code clean, organized, and well-documented?
+- **Error Handling** (15%): Are errors handled gracefully?
+- **API Design** (15%): Does it follow RESTful principles?
+
+### Getting Started
+
+The code editor on the right contains a starter template. You can:
+- Write your code directly in the editor
+- Test your API using the built-in console
+- Your work is auto-saved every 30 seconds
+
+### Submission
+
+When you're ready, click the **"Submit Challenge"** button. Your code will be automatically submitted along with your application.
+
+**Timer starts now!** Good luck! 🚀`,
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages([challengeInstructions])
+
+      // Open code preview workspace with starter code
       onOpenWorkspace({
-        type: "challenge",
-        title: "Take Home Challenge",
+        type: "code",
+        title: "Take Home Challenge - Task Management API",
         data: {
-          job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
+          language: "javascript",
+          code: `// Task Management API - Starter Code
+// Complete the implementation below
+
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+// In-memory storage for tasks
+let tasks = [];
+let nextId = 1;
+
+// TODO: Implement GET /tasks - Get all tasks
+app.get('/tasks', (req, res) => {
+  // Your code here
+});
+
+// TODO: Implement POST /tasks - Create a new task
+app.post('/tasks', (req, res) => {
+  // Your code here
+});
+
+// TODO: Implement GET /tasks/:id - Get a specific task
+app.get('/tasks/:id', (req, res) => {
+  // Your code here
+});
+
+// TODO: Implement PUT /tasks/:id - Update a task
+app.put('/tasks/:id', (req, res) => {
+  // Your code here
+});
+
+// TODO: Implement DELETE /tasks/:id - Delete a task
+app.delete('/tasks/:id', (req, res) => {
+  // Your code here
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(\`Server running on port \${PORT}\`);
+});`,
         },
       })
+
       setLastWorkspaceContent({
-        type: "challenge",
-        title: "Take Home Challenge",
+        type: "code",
+        title: "Take Home Challenge - Task Management API",
         data: {
-          job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
+          language: "javascript",
+          code: `// Task Management API - Starter Code
+// Complete the implementation below
+
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+// In-memory storage for tasks
+let tasks = [];
+let nextId = 1;
+
+// TODO: Implement GET /tasks - Get all tasks
+app.get('/tasks', (req, res) => {
+  // Your code here
+});
+
+// TODO: Implement POST /tasks - Create a new task
+app.post('/tasks', (req, res) => {
+  // Your code here
+});
+
+// TODO: Implement GET /tasks/:id - Get a specific task
+app.get('/tasks/:id', (req, res) => {
+  // Your code here
+});
+
+// TODO: Implement PUT /tasks/:id - Update a task
+app.put('/tasks/:id', (req, res) => {
+  // Your code here
+});
+
+// TODO: Implement DELETE /tasks/:id - Delete a task
+app.delete('/tasks/:id', (req, res) => {
+  // Your code here
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(\`Server running on port \${PORT}\`);
+});`,
         },
       })
     }, 3000)
