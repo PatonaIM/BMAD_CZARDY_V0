@@ -1,5 +1,4 @@
-import { OpenAI } from "openai"
-import { OpenAIStream, StreamingTextResponse } from "ai"
+import { streamText } from "ai"
 
 export const maxDuration = 30
 
@@ -165,52 +164,43 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
 
     const systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
 
-    const openai = new OpenAI({
+    const formattedMessages = messages.map((msg: any) => {
+      let content = ""
+
+      // Handle AI SDK format with parts array
+      if (msg.parts && Array.isArray(msg.parts)) {
+        content = msg.parts
+          .filter((part: any) => part.type === "text")
+          .map((part: any) => part.text)
+          .join("\n")
+      }
+      // Handle standard format with content field
+      else if (msg.content) {
+        content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)
+      }
+      // Fallback to text field
+      else if (msg.text) {
+        content = msg.text
+      }
+
+      return {
+        role: msg.role,
+        content,
+      }
+    })
+
+    console.log("[v0] Chat API: Calling OpenAI with", formattedMessages.length, "messages")
+    console.log("[v0] Chat API: First user message:", formattedMessages[formattedMessages.length - 1]?.content)
+
+    const result = streamText({
+      model: "openai/gpt-4o-mini",
+      system: systemMessage,
+      messages: formattedMessages,
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    const openaiMessages = [
-      { role: "system" as const, content: systemMessage },
-      ...messages.map((msg: any) => {
-        let content = ""
-
-        // Handle AI SDK format with parts array
-        if (msg.parts && Array.isArray(msg.parts)) {
-          content = msg.parts
-            .filter((part: any) => part.type === "text")
-            .map((part: any) => part.text)
-            .join("\n")
-        }
-        // Handle standard format with content field
-        else if (msg.content) {
-          content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)
-        }
-        // Fallback to text field
-        else if (msg.text) {
-          content = msg.text
-        }
-
-        return {
-          role: msg.role as "user" | "assistant",
-          content,
-        }
-      }),
-    ]
-
-    console.log("[v0] Chat API: Calling OpenAI with", openaiMessages.length, "messages")
-    console.log("[v0] Chat API: First user message:", openaiMessages[openaiMessages.length - 1]?.content)
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: openaiMessages,
-      stream: true,
-    })
-
-    console.log("[v0] Chat API: OpenAI response received, creating stream")
-    // Convert OpenAI stream to Vercel AI SDK format
-    const stream = OpenAIStream(response)
-
-    return new StreamingTextResponse(stream)
+    console.log("[v0] Chat API: Stream created successfully")
+    return result.toUIMessageStreamResponse()
   } catch (error) {
     console.error("[v0] Chat API error:", error)
     console.error("[v0] Chat API error stack:", error instanceof Error ? error.stack : "No stack trace")
