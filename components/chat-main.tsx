@@ -310,9 +310,6 @@ export const ChatMain = forwardRef<
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const agentDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Define messages state for useChat
-  const [messages, setMessages] = useState<Message[]>([])
-
   const {
     messages: aiMessages,
     sendMessage,
@@ -469,127 +466,21 @@ export const ChatMain = forwardRef<
     setHasOpenedWorkspace(true)
     setLastWorkspaceContent({ type: "challenge-loading", title: "Take Home Challenge" })
 
+    // After 3 seconds, show the actual challenge
     setTimeout(() => {
-      console.log("[v0] Resetting conversation and showing challenge instructions")
-
-      // Reset the conversation
-      setMessages([]) // Assuming setMessages is available to clear the chat
-
-      // Add Technical Recruiter's challenge instructions
-      const instructionsMessage: Message = {
-        id: Date.now().toString(),
-        type: "ai",
-        agentId: "technical-recruiter",
-        content: `# Take Home Challenge: Task Management API
-
-Welcome to your take-home challenge! You'll be building a RESTful API for a task management system.
-
-## Challenge Requirements
-
-Build a Node.js/Express API with the following features:
-
-### Core Features
-- **Create Task**: POST endpoint to create a new task with title, description, and status
-- **Get All Tasks**: GET endpoint to retrieve all tasks
-- **Get Task by ID**: GET endpoint to retrieve a specific task
-- **Update Task**: PUT endpoint to update task details
-- **Delete Task**: DELETE endpoint to remove a task
-
-### Technical Requirements
-- Use Express.js for the server
-- Implement proper error handling
-- Use appropriate HTTP status codes
-- Include input validation
-- Add at least 3 unit tests
-
-## Evaluation Criteria
-
-You'll be evaluated on:
-- **Code Quality** (40%): Clean, readable, and well-organized code
-- **Functionality** (30%): All features work as expected
-- **Error Handling** (15%): Proper validation and error responses
-- **Testing** (15%): Comprehensive test coverage
-
-## Time Limit
-
-You have **4 hours** to complete this challenge. Your progress is automatically saved.
-
-## Getting Started
-
-The code editor on the right contains starter code. You can:
-- Edit the code directly in the workspace
-- Run tests to verify your implementation
-- Submit when you're ready
-
-Good luck! 🚀`,
-        promptSuggestions: [
-          {
-            text: "I have a question about the requirements",
-            icon: <MessageSquare className="w-4 h-4 text-[#A16AE8]" />,
-          },
-          { text: "How do I submit my challenge?", icon: <Info className="w-4 h-4 text-[#A16AE8]" /> },
-        ],
-      }
-
-      setLocalMessages([instructionsMessage]) // Assuming setLocalMessages is the correct state to update for local messages
-
-      // Open code workspace with starter code
+      console.log("[v0] Loading challenge workspace")
       onOpenWorkspace({
-        type: "code",
-        title: "Task Management API Challenge",
+        type: "challenge",
+        title: "Take Home Challenge",
         data: {
-          language: "javascript",
-          code: `// Task Management API Challenge
-// Complete the implementation below
-
-const express = require('express');
-const app = express();
-const PORT = 3000;
-
-app.use(express.json());
-
-// In-memory storage for tasks
-let tasks = [];
-let nextId = 1;
-
-// TODO: Implement POST /tasks - Create a new task
-app.post('/tasks', (req, res) => {
-  // Your code here
-});
-
-// TODO: Implement GET /tasks - Get all tasks
-app.get('/tasks', (req, res) => {
-  // Your code here
-});
-
-// TODO: Implement GET /tasks/:id - Get task by ID
-app.get('/tasks/:id', (req, res) => {
-  // Your code here
-});
-
-// TODO: Implement PUT /tasks/:id - Update a task
-app.put('/tasks/:id', (req, res) => {
-  // Your code here
-});
-
-// TODO: Implement DELETE /tasks/:id - Delete a task
-app.delete('/tasks/:id', (req, res) => {
-  // Your code here
-});
-
-app.listen(PORT, () => {
-  console.log(\`Server running on port \${PORT}\`);
-});
-
-module.exports = app;`,
+          job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
         },
       })
-
       setLastWorkspaceContent({
-        type: "code",
-        title: "Task Management API Challenge",
+        type: "challenge",
+        title: "Take Home Challenge",
         data: {
-          language: "javascript",
+          job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
         },
       })
     }, 3000)
@@ -1775,3 +1666,4 @@ Are you ready to begin your Take Home Challenge?`,
 })
 
 ChatMain.displayName = "ChatMain"
+;("ChatMain")
