@@ -333,9 +333,20 @@ export const ChatMain = forwardRef<
       const lastAiMessage = aiMessages[aiMessages.length - 1]
       if (lastAiMessage.role !== "assistant") return
 
+      // Extract content as string, handling different message formats
+      let content = ""
+      if (typeof lastAiMessage.content === "string") {
+        content = lastAiMessage.content
+      } else if (Array.isArray(lastAiMessage.content)) {
+        // Handle content as array of parts
+        content = lastAiMessage.content.map((part: any) => (typeof part === "string" ? part : part.text || "")).join("")
+      }
+
+      if (!content) return
+
       // Check if the message contains code blocks
       const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
-      const matches = [...lastAiMessage.content.matchAll(codeBlockRegex)]
+      const matches = [...content.matchAll(codeBlockRegex)]
 
       if (matches.length > 0) {
         console.log("[v0] Detected code blocks in AI response:", matches.length)
