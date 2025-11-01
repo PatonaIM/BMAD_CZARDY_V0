@@ -486,7 +486,8 @@ Good luck! 🚀`,
           title: "Take Home Challenge",
           data: codeSnippet,
         })
-        // The useEffect will update lastWorkspaceContent after showing the welcome message
+        // Update lastWorkspaceContent to trigger the useEffect that resets conversation
+        setLastWorkspaceContent({ type: "code", title: "Take Home Challenge" })
       }, 3000)
     }
 
