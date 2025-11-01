@@ -328,7 +328,7 @@ export const ChatMain = forwardRef<
     })
 
     useEffect(() => {
-      if (!aiMessages) return
+      if (aiMessages.length === 0) return
 
       const convertedMessages: Message[] = aiMessages.map((msg) => {
         // Find the corresponding agent if it's an AI message. If not, use the active agent.
@@ -344,6 +344,7 @@ export const ChatMain = forwardRef<
         }
 
         const responseType = msg.extra?.responseType
+        // REMOVED CODE DETECTION USE EFFECT (LINES 325-395)
 
         return {
           id: msg.id,
