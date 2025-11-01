@@ -415,6 +415,8 @@ Good luck! I'm here if you have any questions. 🚀`,
           }
 
           setLocalMessages([welcomeMessage])
+
+          setLastWorkspaceContent(currentWorkspaceContent)
         }, 500)
       }
     }, [currentWorkspaceContent, lastWorkspaceContent, activeAgent])
@@ -590,11 +592,7 @@ Good luck! I'm confident you'll do great. Remember, we're looking for your probl
           title: "server.js",
           data: codeSnippet,
         })
-        setLastWorkspaceContent({
-          type: "code",
-          title: "server.js",
-          data: codeSnippet,
-        })
+        // The useEffect will update lastWorkspaceContent after showing the welcome message
       }, 3000)
     }
 
