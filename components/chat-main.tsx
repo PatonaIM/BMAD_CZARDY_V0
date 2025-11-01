@@ -623,8 +623,8 @@ ${loremParagraphs[1]}`
 
       const applicationMessage = `I want to apply for the ${job.title} position at ${job.company}.`
 
-      // Send the application message to the AI
-      sendMessage({ text: applicationMessage, agentId: activeAgent.id })
+      // The agentId is already included in the useChat body configuration
+      sendMessage(applicationMessage)
     },
   }))
 
@@ -958,7 +958,7 @@ ${loremParagraphs[1]}`
     if (inputMessage.trim()) {
       const isCommand = handleCommandOrMessage(inputMessage)
       if (!isCommand) {
-        sendMessage({ text: inputMessage, agentId: activeAgent.id })
+        sendMessage(inputMessage)
       }
       setInputMessage("")
     }
@@ -971,7 +971,7 @@ ${loremParagraphs[1]}`
   const handlePromptSuggestionClick = (suggestionText: string) => {
     const isCommand = handleCommandOrMessage(suggestionText)
     if (!isCommand) {
-      sendMessage({ text: suggestionText, agentId: activeAgent.id })
+      sendMessage(suggestionText)
     }
   }
 
