@@ -327,6 +327,12 @@ export const ChatMain = forwardRef<
         agentId: activeAgent.id,
       },
       initialMessages: [], // Start with an empty array, welcome messages are handled separately
+      onError: (error) => {
+        console.error("[v0] useChat error:", error)
+      },
+      onFinish: (message) => {
+        console.log("[v0] useChat finished:", message)
+      },
     })
 
     const isCentered = localMessages.length === 0 && aiMessages.length === 0
