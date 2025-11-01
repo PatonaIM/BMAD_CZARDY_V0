@@ -70,7 +70,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "open",
     skillMatch: 88,
     jobSummary:
@@ -121,7 +121,7 @@ const mockJobListings: JobListing[] = [
     description: "Join our AI team to build cutting-edge machine learning solutions.",
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "draft",
     skillMatch: 75,
     jobSummary:
@@ -149,7 +149,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
     saved: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "open",
     skillMatch: 82,
     jobSummary:
@@ -176,7 +176,7 @@ const mockJobListings: JobListing[] = [
     posted: "5 days ago",
     description: "Build and maintain our cloud infrastructure and CI/CD pipelines.",
     requirements: ["Kubernetes", "Docker", "AWS/GCP", "Terraform", "4+ years experience"],
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "closed",
     skillMatch: 70,
     jobSummary:
@@ -205,7 +205,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "open",
     skillMatch: 92,
     jobSummary:
@@ -233,7 +233,7 @@ const mockJobListings: JobListing[] = [
     description: "Analyze complex datasets and build predictive models to drive business insights.",
     requirements: ["Python", "SQL", "Machine Learning", "Statistics", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "draft",
     skillMatch: 78,
     jobSummary:
@@ -261,7 +261,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement scalable backend services and APIs.",
     requirements: ["Node.js or Java", "Microservices", "Databases", "5+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 85,
     jobSummary:
@@ -289,7 +289,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure software quality through comprehensive testing and automation.",
     requirements: ["Test automation", "Selenium/Cypress", "API testing", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "closed",
     skillMatch: 72,
     jobSummary:
@@ -317,7 +317,7 @@ const mockJobListings: JobListing[] = [
     description: "Build native iOS applications with cutting-edge features.",
     requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 80,
     jobSummary:
@@ -346,7 +346,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "draft",
     skillMatch: 86,
     jobSummary:
@@ -374,7 +374,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement enterprise-level cloud solutions.",
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "open",
     skillMatch: 89,
     jobSummary:
@@ -402,7 +402,7 @@ const mockJobListings: JobListing[] = [
     description: "Facilitate agile processes and remove impediments for development teams.",
     requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "closed",
     skillMatch: 77,
     jobSummary:
@@ -430,7 +430,7 @@ const mockJobListings: JobListing[] = [
     description: "Protect our systems and data through robust security measures.",
     requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 83,
     jobSummary:
@@ -458,7 +458,7 @@ const mockJobListings: JobListing[] = [
     description: "Create clear and comprehensive technical documentation.",
     requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "draft",
     skillMatch: 74,
     jobSummary:
@@ -485,7 +485,7 @@ const mockJobListings: JobListing[] = [
     description: "Bridge the gap between business needs and technical solutions.",
     requirements: ["Requirements gathering", "Process modeling", "SQL", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-3Bb4gZipjVfr2gWZJaFL7PCYGJghqR.jpg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 79,
     jobSummary:
@@ -513,7 +513,7 @@ const mockJobListings: JobListing[] = [
     description: "Develop and deploy machine learning models at scale.",
     requirements: ["Python", "TensorFlow", "MLOps", "Model deployment", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-Zj5o0qLJVi2HJnHqVX6DydAP4pnKBN.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "closed",
     skillMatch: 81,
     jobSummary:
@@ -541,7 +541,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure high availability and reliability of production systems.",
     requirements: ["Linux", "Monitoring tools", "Incident management", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-8EH1LHzdtuGkcJm9qtk0UEoG89Ht5h.jpeg",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "open",
     skillMatch: 91,
     jobSummary:
@@ -569,7 +569,7 @@ const mockJobListings: JobListing[] = [
     description: "Manage and optimize database systems for performance and reliability.",
     requirements: ["PostgreSQL/MySQL", "Database tuning", "Backup strategies", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-z71A3nLVFYGxsNDGRrsNMXNlj2Mw1L.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "draft",
     skillMatch: 76,
     jobSummary:
@@ -597,7 +597,7 @@ const mockJobListings: JobListing[] = [
     description: "Build and maintain cloud infrastructure on AWS and Azure.",
     requirements: ["AWS/Azure", "Infrastructure as Code", "CI/CD", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-hG253NIsF4D3nHFyFmkDW64AC92Ocl.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 87,
     jobSummary:
@@ -625,7 +625,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead and mentor a team of software engineers to deliver high-quality products.",
     requirements: ["Team leadership", "Technical expertise", "Agile", "7+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-8C2bS6hRQcpiWfm5tR1PvB9jKttelk.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "closed",
     skillMatch: 93,
     jobSummary:
