@@ -363,6 +363,63 @@ export const ChatMain = forwardRef<
     }, [shouldShowWelcome, initialAgentId])
 
     useEffect(() => {
+      // WATCH FOR CODE WORKSPACE WHEN IT'S OPENED FROM "TAKE HOME CHALLENGE" (AFTER LOADING)
+      // CHECK IF WE JUST TRANSITIONED FROM CHALLENGE-LOADING TO CODE WORKSPACE
+      if (currentWorkspaceContent?.type === "code" && lastWorkspaceContent?.type === "challenge-loading") {
+        console.log("[v0] Challenge code workspace detected, resetting conversation")
+
+        // Clear existing messages
+        setLocalMessages([])
+
+        // Switch to Technical Recruiter if not already active
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
+          setActiveAgent(technicalRecruiter)
+        }
+
+        // Add welcome message from Technical Recruiter
+        setTimeout(() => {
+          const welcomeMessage: Message = {
+            id: `challenge-welcome-${Date.now()}`,
+            type: "ai",
+            content: `Welcome to your Take Home Challenge! 🎯
+
+I'm excited to see what you'll build! This is your opportunity to showcase your technical skills and problem-solving abilities.
+
+## Challenge Instructions
+
+**Your Task:** Build a RESTful API for a Task Management System
+
+**Requirements:**
+- Create endpoints for CRUD operations (Create, Read, Update, Delete tasks)
+- Implement proper error handling and validation
+- Use appropriate HTTP status codes
+- Include basic authentication (can be simple token-based)
+- Write clean, well-documented code
+
+**Time Limit:** You have 4 hours to complete this challenge. The timer starts now!
+
+**Evaluation Criteria:**
+- Code quality and organization
+- API design and RESTful principles
+- Error handling and edge cases
+- Documentation and code comments
+- Bonus: Unit tests
+
+**Getting Started:**
+I've provided a starter template in the code editor on the right. Feel free to modify it as needed. Your work is automatically saved as you type.
+
+Good luck! I'm here if you have any questions. 🚀`,
+            agentId: "technical-recruiter",
+            isWelcome: true,
+          }
+
+          setLocalMessages([welcomeMessage])
+        }, 500)
+      }
+    }, [currentWorkspaceContent, lastWorkspaceContent, activeAgent])
+
+    useEffect(() => {
       if (currentWorkspaceContent?.type === "challenge") {
         console.log("[v0] Challenge workspace detected, resetting conversation")
 
@@ -525,22 +582,18 @@ Good luck! I'm confident you'll do great. Remember, we're looking for your probl
       setHasOpenedWorkspace(true)
       setLastWorkspaceContent({ type: "challenge-loading", title: "Take Home Challenge" })
 
-      // After 3 seconds, show the actual challenge
+      // AFTER 3 SECONDS, SHOW THE CODE PREVIEW WORKSPACE (SAME AS "CODE PREVIEW" COMMAND)
       setTimeout(() => {
-        console.log("[v0] Loading challenge workspace")
+        console.log("[v0] Loading code preview workspace for challenge")
         onOpenWorkspace({
-          type: "challenge",
-          title: "Take Home Challenge",
-          data: {
-            job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
-          },
+          type: "code",
+          title: "server.js",
+          data: codeSnippet,
         })
         setLastWorkspaceContent({
-          type: "challenge",
-          title: "Take Home Challenge",
-          data: {
-            job: lastWorkspaceContent?.job || { title: "Full-Stack Developer" },
-          },
+          type: "code",
+          title: "server.js",
+          data: codeSnippet,
         })
       }, 3000)
     }
