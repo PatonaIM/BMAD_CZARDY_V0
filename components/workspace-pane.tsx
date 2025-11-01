@@ -54,7 +54,12 @@ interface WorkspacePaneProps {
   onViewJob?: (job: JobListing) => void // Added callback for viewing job details
   onBackToJobBoard?: () => void // Added onBackToJobBoard prop
   activeWorkspace?: string // Added activeWorkspace prop for context
-  onApplyForJob?: (job: JobListing) => void // Added callback for job application
+  onApplyForJob?: (job: JobListing) => void // Added prop
+  // Added onOpenWorkspace prop
+  onOpenWorkspace?: (workspaceType: WorkspaceContent["type"], data?: any) => void
+  // Added showApplicationStatus and onToggleApplicationView props
+  showApplicationStatus?: boolean
+  onToggleApplicationView?: (show: boolean) => void
 }
 
 const mockJobListings: JobListing[] = [
@@ -128,7 +133,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
     aboutClient:
-      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
     benefits: [
       "Competitive compensation with equity options",
       "Comprehensive health and wellness benefits",
@@ -267,7 +272,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Design and develop robust and scalable backend services and APIs\n• Implement microservices architecture and ensure seamless integration\n• Manage and optimize database performance and integrity\n• Write clean, efficient, and well-documented code\n• Collaborate with frontend teams to define API contracts",
     aboutClient:
-      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
     benefits: [
       "Highly competitive salary and performance bonuses",
       "Full family medical, dental, and vision coverage",
@@ -436,7 +441,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Implement and maintain security controls to protect systems and data\n• Conduct vulnerability assessments and penetration testing\n• Monitor security alerts and respond to incidents\n• Develop and enforce security policies and procedures\n• Stay up-to-date with the latest security threats and technologies",
     aboutClient:
-      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
     benefits: [
       "Competitive salary and regular performance reviews",
       "Comprehensive health, dental, and vision insurance",
@@ -603,7 +608,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Design, deploy, and manage cloud infrastructure on AWS and Azure\n• Implement Infrastructure as Code (IaC) using tools like Terraform or CloudFormation\n• Develop and maintain CI/CD pipelines for automated deployments\n• Monitor cloud resources for performance, security, and cost optimization\n• Troubleshoot and resolve cloud infrastructure issues",
     aboutClient:
-      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their most complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
+      "Archa is an innovative AI company at the forefront of developing intelligent solutions for enterprise clients worldwide. Since our inception in 2018, we've been pioneering advanced machine learning and natural language processing technologies that transform how businesses operate. Our team of world-class researchers and engineers has published over 50 papers in top-tier AI conferences and holds multiple patents in the field. We work with Fortune 500 companies across finance, healthcare, and technology sectors to solve their complex challenges. With offices in Bangalore, San Francisco, and London, we foster a culture of continuous learning and innovation. Our commitment to ethical AI development and responsible technology deployment sets us apart in the industry. We offer our team members the opportunity to work on cutting-edge projects that push the boundaries of what's possible with artificial intelligence.",
     benefits: [
       "Competitive salary and performance incentives",
       "Comprehensive health and wellness benefits",
@@ -788,10 +793,15 @@ export function WorkspacePane({
   onBackToJobBoard, // Added onBackToJobBoard prop
   activeWorkspace, // Added activeWorkspace prop for context
   onApplyForJob, // Added prop
+  onOpenWorkspace, // Added prop
+  showApplicationStatus, // Added prop
+  onToggleApplicationView, // Added prop
 }: WorkspacePaneProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showTranscription, setShowTranscription] = useState(false)
   const [pdfZoom, setPdfZoom] = useState(100)
+
+  const [showApplicationStatusLocal, setShowApplicationStatusLocal] = useState(false)
 
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
@@ -820,6 +830,28 @@ export function WorkspacePane({
       return () => clearTimeout(timer)
     }
   }, [activeWorkspace]) // Ensure activeWorkspace is a dependency if it can change
+
+  const handleToggleApplicationView = (show: boolean) => {
+    setShowApplicationStatusLocal(show)
+    if (onToggleApplicationView) {
+      onToggleApplicationView(show)
+    }
+  }
+
+  useEffect(() => {
+    const handleInterviewSelected = () => {
+      setShowApplicationStatusLocal(true)
+      if (onToggleApplicationView) {
+        onToggleApplicationView(true)
+      }
+    }
+
+    window.addEventListener("interview-option-selected", handleInterviewSelected)
+
+    return () => {
+      window.removeEventListener("interview-option-selected", handleInterviewSelected)
+    }
+  }, [onToggleApplicationView])
 
   const handleViewJobDetails = (job: JobListing) => {
     if (onViewJob) {
@@ -1988,7 +2020,9 @@ export function WorkspacePane({
             job={content.job}
             onBack={onBackToJobBoard}
             onRequestSkillGapAnalysis={handleSkillGapAnalysisRequest} // Pass the callback
-            onApplyForJob={handleApplyForJob} // Pass callback to JobView
+            onApplyForJob={handleApplyForJob} // Pass the callback
+            showApplicationStatus={showApplicationStatusLocal} // Pass the state
+            onToggleApplicationView={handleToggleApplicationView} // Pass the toggle handler
           />
         ) : (
           <div>No job data available</div>

@@ -1,13 +1,25 @@
 "use client"
 
-import { Briefcase, MapPin, DollarSign, Clock, Building2, CheckCircle2, ExternalLink, HelpCircle } from "lucide-react"
+import {
+  Briefcase,
+  MapPin,
+  DollarSign,
+  Clock,
+  Building2,
+  CheckCircle2,
+  ExternalLink,
+  HelpCircle,
+  ArrowLeft,
+} from "lucide-react"
 import type { JobListing, JobStatus } from "@/types/workspace"
 
 interface JobViewProps {
   job: JobListing
   onBack?: () => void
-  onRequestSkillGapAnalysis?: () => void // Added callback for skill gap analysis request
-  onApplyForJob?: (job: JobListing) => void // Added callback for job application
+  onRequestSkillGapAnalysis?: () => void
+  onApplyForJob?: (job: JobListing) => void
+  showApplicationStatus?: boolean // Added prop to control application status view
+  onToggleApplicationView?: (show: boolean) => void // Added callback to toggle view
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -143,7 +155,14 @@ const generateSkillGapInsights = (matchPercentage: number) => {
   }
 }
 
-export function JobView({ job, onBack, onRequestSkillGapAnalysis, onApplyForJob }: JobViewProps) {
+export function JobView({
+  job,
+  onBack,
+  onRequestSkillGapAnalysis,
+  onApplyForJob,
+  showApplicationStatus = false,
+  onToggleApplicationView,
+}: JobViewProps) {
   const statusConfig = getStatusConfig(job.status || "open")
   const skillMatchConfig = job.skillMatch !== undefined ? getSkillMatchConfig(job.skillMatch) : null
   const skillGapInsights = job.skillMatch !== undefined ? generateSkillGapInsights(job.skillMatch) : null
@@ -176,6 +195,12 @@ export function JobView({ job, onBack, onRequestSkillGapAnalysis, onApplyForJob 
     console.log("[v0] Apply button clicked for job:", job.title)
     if (onApplyForJob) {
       onApplyForJob(job)
+    }
+  }
+
+  const handleBackToDetails = () => {
+    if (onToggleApplicationView) {
+      onToggleApplicationView(false)
     }
   }
 
@@ -259,93 +284,170 @@ export function JobView({ job, onBack, onRequestSkillGapAnalysis, onApplyForJob 
           </div>
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-4">About The Client</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {job.aboutClient ||
-              `${job.company} is a leading organization committed to innovation and excellence. We are dedicated to creating a positive impact in our industry and fostering a collaborative work environment where talented professionals can thrive and grow their careers.`}
-          </p>
-        </div>
-
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-4">Job Summary</h2>
-          {renderJobSummary(job.jobSummary || job.description)}
-        </div>
-
-        {((job.qualifications && job.qualifications.length > 0) || job.requirements.length > 0) && (
+        <div
+          className={`space-y-6 transition-opacity duration-500 ${showApplicationStatus ? "opacity-0 h-0 overflow-hidden" : "opacity-100"}`}
+        >
           <div className="bg-card rounded-2xl border border-border p-6">
-            <h2 className="text-lg font-semibold mb-6">Required Skills</h2>
+            <h2 className="text-lg font-semibold mb-4">About The Client</h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {job.aboutClient ||
+                `${job.company} is a leading organization committed to innovation and excellence. We are dedicated to creating a positive impact in our industry and fostering a collaborative work environment where talented professionals can thrive and grow their careers.`}
+            </p>
+          </div>
 
-            <div className="flex gap-6">
-              {/* Left Pane - Skills List (70%) */}
-              <div className="flex-[7]">
-                <ul className="space-y-3">
-                  {(job.qualifications || job.requirements).map((req, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-sm">
-                      <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{req}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <h2 className="text-lg font-semibold mb-4">Job Summary</h2>
+            {renderJobSummary(job.jobSummary || job.description)}
+          </div>
 
-              {/* Vertical Divider */}
-              {job.skillMatch !== undefined && <div className="w-px bg-border flex-shrink-0" />}
+          {((job.qualifications && job.qualifications.length > 0) || job.requirements.length > 0) && (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-lg font-semibold mb-6">Required Skills</h2>
 
-              {/* Right Pane - Skill Match Score (30%) */}
-              {job.skillMatch !== undefined && (
-                <div className="flex-[3] flex flex-col items-center justify-center text-center space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`text-5xl font-bold ${skillMatchConfig?.color}`}>{job.skillMatch}%</div>
-                    {job.skillMatch < 100 && onRequestSkillGapAnalysis && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          onRequestSkillGapAnalysis()
-                        }}
-                        className="p-1.5 rounded-full hover:bg-accent transition-colors group"
-                        aria-label="Get skill gap insights"
-                        title="Ask Technical Recruiter AI about your skill gaps"
-                      >
-                        <HelpCircle className="w-5 h-5 text-muted-foreground group-hover:text-[#A16AE8] transition-colors" />
-                      </button>
-                    )}
-                  </div>
-                  <div className={`text-lg font-semibold ${skillMatchConfig?.color}`}>{skillMatchConfig?.label}</div>
-                  <p className="text-xs text-muted-foreground mt-2">{skillMatchConfig?.description}</p>
+              <div className="flex gap-6">
+                {/* Left Pane - Skills List (70%) */}
+                <div className="flex-[7]">
+                  <ul className="space-y-3">
+                    {(job.qualifications || job.requirements).map((req, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-sm">
+                        <CheckCircle2 className="w-5 h-5 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{req}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              )}
+
+                {/* Vertical Divider */}
+                {job.skillMatch !== undefined && <div className="w-px bg-border flex-shrink-0" />}
+
+                {/* Right Pane - Skill Match Score (30%) */}
+                {job.skillMatch !== undefined && (
+                  <div className="flex-[3] flex flex-col items-center justify-center text-center space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`text-5xl font-bold ${skillMatchConfig?.color}`}>{job.skillMatch}%</div>
+                      {job.skillMatch < 100 && onRequestSkillGapAnalysis && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            onRequestSkillGapAnalysis()
+                          }}
+                          className="p-1.5 rounded-full hover:bg-accent transition-colors group"
+                          aria-label="Get skill gap insights"
+                          title="Ask Technical Recruiter AI about your skill gaps"
+                        >
+                          <HelpCircle className="w-5 h-5 text-muted-foreground group-hover:text-[#A16AE8] transition-colors" />
+                        </button>
+                      )}
+                    </div>
+                    <div className={`text-lg font-semibold ${skillMatchConfig?.color}`}>{skillMatchConfig?.label}</div>
+                    <p className="text-xs text-muted-foreground mt-2">{skillMatchConfig?.description}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Benefits */}
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <h2 className="text-lg font-semibold mb-4">Benefits</h2>
+            {job.benefits && job.benefits.length > 0 ? (
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {job.benefits.map((benefit, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No benefits information available for this position.</p>
+            )}
+          </div>
+        </div>
+
+        {showApplicationStatus && (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-lg font-semibold mb-6">Application Status</h2>
+
+              <div className="space-y-4">
+                {/* Stage 1: Take Home Challenge */}
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent/50 border border-border">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#A16AE8] text-white flex items-center justify-center font-semibold">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground mb-1">Take Home Challenge</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Complete a practical coding challenge to demonstrate your technical skills
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                      Pending
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stage 2: Teamified AI Interviews */}
+                <div className="flex items-start gap-4 p-4 rounded-xl border border-border">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground mb-1">Teamified AI Interviews</h3>
+                    <p className="text-sm text-muted-foreground">
+                      AI-powered interview to assess your skills and cultural fit
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                      Not Started
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stage 3: Meet the hiring manager */}
+                <div className="flex items-start gap-4 p-4 rounded-xl border border-border">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
+                    3
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground mb-1">Meet the hiring manager!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Final interview with the hiring manager to discuss the role and team
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                      Not Started
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Benefits */}
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-4">Benefits</h2>
-          {job.benefits && job.benefits.length > 0 ? (
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {job.benefits.map((benefit, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">{benefit}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">No benefits information available for this position.</p>
-          )}
-        </div>
-
-        {/* Action Buttons (only show for open positions) */}
         {job.status === "open" && (
           <div className="bg-card rounded-2xl border border-border p-6">
-            <button
-              onClick={handleApplyClick} // Added onClick handler
-              className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
-            >
-              {job.applied ? "View Application" : "Apply for this Position"}
-            </button>
+            {showApplicationStatus ? (
+              <button
+                onClick={handleBackToDetails}
+                className="w-full px-6 py-3 rounded-xl border-2 border-[#A16AE8] text-[#A16AE8] font-medium hover:bg-[#A16AE8]/10 transition-all flex items-center justify-center gap-2"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                Go back to Job Details
+              </button>
+            ) : (
+              <button
+                onClick={handleApplyClick}
+                className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all"
+              >
+                {job.applied ? "View Application" : "Apply for this Position"}
+              </button>
+            )}
           </div>
         )}
       </div>
