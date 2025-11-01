@@ -343,10 +343,20 @@ export const ChatMain = forwardRef<
     const convertedMessages: Message[] = aiMessages.map((msg) => {
       // Find the corresponding agent if it's an AI message. If not, use the active agent.
       const messageAgent = AI_AGENTS.find((a) => a.id === msg.extra?.agentId) || activeAgent
+
+      let content = ""
+      if (msg.parts && msg.parts.length > 0) {
+        // Extract from parts array (typical for AI responses)
+        content = msg.parts.map((part) => (part.type === "text" ? part.text : "")).join("")
+      } else if (msg.content) {
+        // Use content directly if parts don't exist (typical for user messages)
+        content = typeof msg.content === "string" ? msg.content : ""
+      }
+
       return {
         id: msg.id,
         type: msg.role === "user" ? "user" : "ai",
-        content: (msg.parts || []).map((part) => (part.type === "text" ? part.text : "")).join(""),
+        content,
         agentId: messageAgent.id,
         responseType: msg.extra?.responseType,
         thinkingTime: msg.extra?.thinkingTime,
