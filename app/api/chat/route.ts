@@ -177,66 +177,19 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
       lastUserMessage.includes("application") ||
       lastUserMessage.includes("i want to apply")
 
-    // Convert the stream to add extra metadata
-    const stream = result.toDataStream({
-      getErrorMessage: (error) => {
-        console.error("Stream error:", error)
-        return "An error occurred while processing your request."
-      },
-    })
-
-    // If it's a job application, we need to add prompt suggestions to the response
-    // We'll do this by transforming the stream
+    // If it's a job application, add prompt suggestions
     if (isJobApplication && agentId === "technical-recruiter") {
-      const reader = stream.getReader()
-      const encoder = new TextEncoder()
-      const decoder = new TextDecoder()
-
-      const transformedStream = new ReadableStream({
-        async start(controller) {
-          let fullText = ""
-          try {
-            while (true) {
-              const { done, value } = await reader.read()
-              if (done) {
-                const promptSuggestionsData = {
-                  type: "data",
-                  data: {
-                    promptSuggestions: [
-                      { text: "I'd like to schedule an AI interview", icon: "Sparkles" },
-                      { text: "I prefer a traditional interview", icon: "Users" },
-                    ],
-                  },
-                }
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(promptSuggestionsData)}\n\n`))
-                controller.close()
-                break
-              }
-              fullText += decoder.decode(value, { stream: true })
-              controller.enqueue(value)
-            }
-          } catch (error) {
-            controller.error(error)
-          }
-        },
-      })
-
-      return new Response(transformedStream, {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
+      return result.toUIMessageStreamResponse({
+        data: {
+          promptSuggestions: [
+            { text: "I'd like to schedule an AI interview", icon: "Sparkles" },
+            { text: "I prefer a traditional interview", icon: "Users" },
+          ],
         },
       })
     }
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    })
+    return result.toUIMessageStreamResponse()
   } catch (error) {
     console.error("Chat API error:", error)
     return new Response(JSON.stringify({ error: "Internal server error" }), {
