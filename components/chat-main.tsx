@@ -638,7 +638,7 @@ ${loremParagraphs[1]}`
       console.log("[v0] Application message:", applicationMessage)
       console.log("[v0] Message length:", applicationMessage.length)
 
-      sendMessage({ content: applicationMessage })
+      sendMessage(applicationMessage)
     },
   }))
 
