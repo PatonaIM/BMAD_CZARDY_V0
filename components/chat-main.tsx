@@ -426,19 +426,16 @@ export const ChatMain = forwardRef<
     // Detect when the Take Home Challenge workspace opens and reset the conversation
     useEffect(() => {
       if (lastWorkspaceContent?.type === "code" && lastWorkspaceContent?.title === "Take Home Challenge") {
+        console.log("[v0] Challenge code workspace detected, resetting conversation")
+
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
           setActiveAgent(technicalRecruiter)
         }
 
-        setMessages([])
-
-        // Create welcome message with instructions
-        const welcomeMessage: Message = {
-          id: `welcome-${Date.now()}`,
-          type: "ai", // Use type: "ai" for consistency with other messages
-          content: `Welcome to your Take Home Challenge! 👨‍💻
+        // Create welcome message content
+        const welcomeContent = `Welcome to your Take Home Challenge! 👨‍💻
 
 I'm your Technical Recruiter, and I'll be guiding you through this coding challenge.
 
@@ -459,7 +456,13 @@ The code editor on the right contains a Node.js server implementation. Your task
 
 Feel free to ask me any questions about the challenge. When you're ready to submit, let me know and I'll review your solution.
 
-Good luck! 🚀`,
+Good luck! 🚀`
+
+        // Create welcome message for local display
+        const welcomeMessage: Message = {
+          id: `welcome-${Date.now()}`,
+          type: "ai",
+          content: welcomeContent,
           agentId: technicalRecruiter?.id || activeAgent.id,
           promptSuggestions: [
             { text: "I have a question about the challenge", icon: <MessageSquare className="w-4 h-4" /> },
@@ -468,9 +471,23 @@ Good luck! 🚀`,
           ],
         }
 
+        // Create assistant message for AI chat history
+        const aiWelcomeMessage = {
+          id: `ai-welcome-${Date.now()}`,
+          role: "assistant" as const,
+          parts: [
+            {
+              type: "text" as const,
+              text: welcomeContent,
+            },
+          ],
+        }
+
+        // Set both local messages and AI messages so the context is preserved
         setLocalMessages([welcomeMessage])
+        setMessages([aiWelcomeMessage])
       }
-    }, [lastWorkspaceContent])
+    }, [lastWorkspaceContent, setMessages, activeAgent])
 
     // Declare handleStartChallenge here
     const handleStartChallenge = () => {
