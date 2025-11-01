@@ -346,7 +346,7 @@ export const ChatMain = forwardRef<
       return {
         id: msg.id,
         type: msg.role === "user" ? "user" : "ai",
-        content: msg.parts.map((part) => (part.type === "text" ? part.text : "")).join(""),
+        content: (msg.parts || []).map((part) => (part.type === "text" ? part.text : "")).join(""),
         agentId: messageAgent.id,
         responseType: msg.extra?.responseType,
         thinkingTime: msg.extra?.thinkingTime,
