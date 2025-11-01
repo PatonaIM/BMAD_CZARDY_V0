@@ -13,6 +13,39 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     while (i < lines.length) {
       const line = lines[i]
 
+      // Code blocks (```language ... ```)
+      if (line.startsWith("```")) {
+        const language = line.substring(3).trim()
+        const codeLines: string[] = []
+        i++ // Move past the opening ```
+
+        // Collect all lines until closing ```
+        while (i < lines.length && !lines[i].startsWith("```")) {
+          codeLines.push(lines[i])
+          i++
+        }
+
+        // Skip the closing ```
+        if (i < lines.length && lines[i].startsWith("```")) {
+          i++
+        }
+
+        // Render the code block
+        elements.push(
+          <div key={i} className="my-4 rounded-lg overflow-hidden border border-border">
+            {language && (
+              <div className="bg-muted px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border">
+                {language}
+              </div>
+            )}
+            <pre className="bg-muted/50 p-4 overflow-x-auto">
+              <code className="text-sm font-mono text-foreground">{codeLines.join("\n")}</code>
+            </pre>
+          </div>,
+        )
+        continue
+      }
+
       // Headers
       if (line.startsWith("### ")) {
         elements.push(

@@ -327,8 +327,6 @@ export const ChatMain = forwardRef<
       initialMessages: [], // Start with an empty array, welcome messages are handled separately
     })
 
-    // REMOVED CODE DETECTION USE EFFECT (LINES 325-395)
-
     useEffect(() => {
       if (!aiMessages) return
 
@@ -345,23 +343,7 @@ export const ChatMain = forwardRef<
           content = typeof msg.content === "string" ? msg.content : ""
         }
 
-        let responseType = msg.extra?.responseType
-        if (msg.role === "assistant" && content && !responseType) {
-          console.log("[v0] Checking for code blocks in message:", msg.id)
-          console.log("[v0] Content preview:", content.substring(0, 200))
-          console.log("[v0] Content includes triple backticks:", content.includes("```"))
-
-          // Check if the message contains code blocks (\`\`\`language ... \`\`\`)
-          const codeBlockRegex = /```[\w]*\n[\s\S]*?\n```/g
-          const hasCodeBlocks = codeBlockRegex.test(content)
-
-          console.log("[v0] Regex matched code blocks:", hasCodeBlocks)
-
-          if (hasCodeBlocks) {
-            responseType = "code"
-            console.log("[v0] Set responseType to 'code'")
-          }
-        }
+        const responseType = msg.extra?.responseType
 
         return {
           id: msg.id,
