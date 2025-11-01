@@ -338,6 +338,8 @@ export const ChatMain = forwardRef<
   }, [shouldShowWelcome, initialAgentId])
 
   useEffect(() => {
+    if (!aiMessages) return
+
     const convertedMessages: Message[] = aiMessages.map((msg) => {
       // Find the corresponding agent if it's an AI message. If not, use the active agent.
       const messageAgent = AI_AGENTS.find((a) => a.id === msg.extra?.agentId) || activeAgent
