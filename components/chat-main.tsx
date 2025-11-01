@@ -48,6 +48,19 @@ interface Message {
   promptSuggestions?: Array<{ text: string; icon: React.ReactNode }>
 }
 
+// Define JobListing type for clarity in handleJobApplication
+type JobListing = {
+  title: string
+  company: string
+  location: string
+  type: string
+  salary: string
+  jobSummary?: string
+  description: string
+  skillMatch: number
+  // Add other relevant properties as needed
+}
+
 const welcomeQuestions = [
   "What can Teamified AI assist you with today?",
   "How may I help you with your job search?",
@@ -268,7 +281,7 @@ export const ChatMain = forwardRef<
     showPaymentSuccess: () => void
     showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
     showJobViewSummary: (job: any) => void // Added showJobViewSummary
-    handleJobApplication: (job: any) => void // Added handler for job application
+    handleJobApplication: (job: JobListing) => void // Added handler for job application
   },
   ChatMainProps
 >(({ isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome }, ref) => {
@@ -588,7 +601,7 @@ ${loremParagraphs[1]}`
         },
       ])
     },
-    showJobViewSummary: (job: any) => {
+    showJobViewSummary: (job: JobListing) => {
       console.log("[v0] showJobViewSummary called for job:", job.title)
 
       const skillMatchText =
@@ -630,15 +643,10 @@ ${loremParagraphs[1]}`
         },
       ])
     },
-    handleJobApplication: (job: any) => {
+    handleJobApplication: (job: JobListing) => {
       console.log("[v0] handleJobApplication called for job:", job.title)
-      console.log("[v0] Full job object:", job)
-
-      const applicationMessage = `I want to apply for the ${job.title} position at ${job.company}.`
-      console.log("[v0] Application message:", applicationMessage)
-      console.log("[v0] Message length:", applicationMessage.length)
-
-      sendMessage(applicationMessage)
+      // Simply trigger the "Apply to this job" command
+      handleCommandOrMessage("Apply to this job")
     },
   }))
 
@@ -960,6 +968,52 @@ ${loremParagraphs[1]}`
       setHasOpenedWorkspace(true)
       setLastWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" })
 
+      return true
+    }
+
+    // 15. Apply to this job (shows interview options)
+    if (lowerText === "apply to this job") {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: text,
+        agentId: activeAgent.id,
+      }
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: `# AI Interview (Recommended)
+
+Take an AI-powered interview that provides instant feedback and speeds up your application process. Our AI interviews are designed to assess your skills efficiently and give you immediate results.
+
+**Benefits:**
+- ⚡ Instant scheduling - start immediately
+- 🎯 Personalized questions based on the role
+- 📊 Immediate feedback and results
+- 🚀 Priority consideration by hiring managers
+
+# Traditional Interview
+
+Schedule a traditional interview with our hiring team. This option follows the standard recruitment process with human interviewers.
+
+**What to expect:**
+- 📅 Scheduled at mutual convenience
+- 👥 Interview with hiring managers
+- ⏰ Standard processing time
+- 📋 Traditional evaluation process
+
+**Please note:** We prioritize candidates who choose AI interviews as it significantly speeds up the hiring process and allows us to move faster with qualified candidates. AI interview candidates typically receive responses within 24-48 hours, while traditional interviews may take 1-2 weeks to schedule and complete.
+
+Which interview format would you prefer?`,
+        agentId: activeAgent.id,
+        promptSuggestions: [
+          { text: "I'd like to schedule an AI interview", icon: <Sparkles className="w-4 h-4" /> },
+          { text: "I prefer a traditional interview", icon: <Users className="w-4 h-4" /> },
+        ],
+      }
+
+      setLocalMessages((prev) => [...prev, userMsg, aiMsg])
       return true
     }
 
