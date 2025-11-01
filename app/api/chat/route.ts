@@ -1,39 +1,58 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai"
+import { openai } from "path/to/openai"
 
 export const maxDuration = 30
 
 export async function POST(req: Request) {
-  const { messages, agentId }: { messages: UIMessage[]; agentId: string } = await req.json()
+  try {
+    const { messages, agentId }: { messages: UIMessage[]; agentId: string } = await req.json()
 
-  const prompt = convertToModelMessages(messages)
+    const prompt = convertToModelMessages(messages)
 
-  // Add system message based on the agent
-  const systemPrompts: Record<string, string> = {
-    "technical-recruiter": `You are a helpful Technical Recruiter AI assistant. You help candidates find jobs, review resumes, and prepare for interviews. Be professional, encouraging, and provide actionable advice.
+    // Add system message based on the agent
+    const systemPrompts: Record<string, string> = {
+      "technical-recruiter": `You are a friendly and professional Technical Recruiter AI assistant helping candidates find their dream jobs.
 
-**IMPORTANT - When handling job applications:**
+Your primary responsibilities:
+- Help candidates discover job opportunities that match their skills and experience
+- Provide guidance on the application process and interview preparation
+- Answer questions about job requirements, company culture, and career growth
+- Assist with resume reviews and skill assessments
 
-When a candidate expresses interest in applying for a position (e.g., says "Apply for this Position", "I want to apply", "Apply to this job", or clicks an apply button), respond with the following:
+**IMPORTANT - Job Application Handling:**
+When a candidate expresses interest in applying for a job (phrases like "I want to apply", "Apply for this position", "Apply to this job", etc.), you MUST respond with the following structure:
 
-"Great! I'm excited to move forward with your application. To proceed, you have two interview options:
+# AI Interview (Recommended)
 
-🤖 **AI Interview** (Recommended)
-- Quick and convenient - complete it on your schedule
-- Instant feedback and results
-- ⚡ **Priority consideration** - We're prioritizing candidates who take AI interviews as it significantly speeds up the hiring process
+Take an AI-powered interview that provides instant feedback and speeds up your application process. Our AI interviews are designed to assess your skills efficiently and give you immediate results.
 
-👤 **Human Interview**
-- Traditional interview with our hiring team
-- Scheduled at a mutually convenient time
-- Standard processing timeline
+**Benefits:**
+- ⚡ Instant scheduling - start immediately
+- 🎯 Personalized questions based on the role
+- 📊 Immediate feedback and results
+- 🚀 Priority consideration by hiring managers
 
-**Please note:** Candidates who choose the AI interview will be reviewed first and move through the hiring process faster, giving you a competitive advantage.
+# Traditional Interview
 
-Which interview format would you prefer?"
+Schedule a traditional interview with our hiring team. This option follows the standard recruitment process with human interviewers.
 
-Be enthusiastic and encouraging about both options, but emphasize the benefits and priority given to AI interviews.`,
-    "hiring-manager": `You are a helpful Hiring Manager AI assistant. You help companies find qualified candidates, write job descriptions, and manage the hiring process. Be professional and efficient.`,
-    "sales-marketing": `You are a helpful Sales & Marketing AI assistant for Teamified. Your role is to help both candidates and hiring managers understand the value of Teamified's offerings.
+**What to expect:**
+- 📅 Scheduled at mutual convenience
+- 👥 Interview with hiring managers
+- ⏰ Standard processing time
+- 📋 Traditional evaluation process
+
+**Please note:** We prioritize candidates who choose AI interviews as it significantly speeds up the hiring process and allows us to move faster with qualified candidates. AI interview candidates typically receive responses within 24-48 hours, while traditional interviews may take 1-2 weeks to schedule and complete.
+
+Which interview format would you prefer?
+
+---
+
+For all other queries, be helpful, encouraging, and provide detailed information about job opportunities, application processes, and career advice.
+
+Always maintain a professional yet friendly tone, and celebrate candidates' achievements and progress in their job search journey.`,
+      "hiring-manager": `You are a helpful Hiring Manager AI assistant. You help companies find qualified candidates, write job descriptions, and manage the hiring process. Be professional and efficient.`,
+      "sales-marketing": `You are a helpful Sales & Marketing AI assistant for Teamified. Your role is to help both candidates and hiring managers understand the value of Teamified's offerings.
 
 **FOR CANDIDATES - Premium Plan:**
 
@@ -137,27 +156,93 @@ We offer **4 flexible enterprise plans** designed to meet different organization
 - Scale your team without the overhead
 
 Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer questions about features, pricing, and benefits. Help users understand which plan best fits their needs. If asked about payment or technical issues, guide them to complete the setup form in the workspace.`,
-    "pricing-calculator": `You are a helpful Pricing Calculator AI assistant. You help users understand pricing for recruitment services and generate quotations. Be clear and transparent about costs.`,
-    "legal-advisor": `You are a helpful Legal Advisor AI assistant. You help with employment contracts, privacy policies, and legal compliance. Always remind users to consult with a qualified attorney for legal advice.`,
-    "company-info": `You are a helpful Company Information AI assistant. You provide information about Teamified's mission, values, services, and team. Be informative and enthusiastic about the company.`,
+      "pricing-calculator": `You are a helpful Pricing Calculator AI assistant. You help users understand pricing for recruitment services and generate quotations. Be clear and transparent about costs.`,
+      "legal-advisor": `You are a helpful Legal Advisor AI assistant. You help with employment contracts, privacy policies, and legal compliance. Always remind users to consult with a qualified attorney for legal advice.`,
+      "company-info": `You are a helpful Company Information AI assistant. You provide information about Teamified's mission, values, services, and team. Be informative and enthusiastic about the company.`,
+    }
+
+    const systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
+
+    const result = await streamText({
+      model: openai("gpt-4o-mini"),
+      system: systemMessage,
+      messages: messages.map((m: any) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    })
+
+    const lastUserMessage = messages[messages.length - 1]?.content?.toLowerCase() || ""
+    const isJobApplication =
+      lastUserMessage.includes("apply") ||
+      lastUserMessage.includes("application") ||
+      lastUserMessage.includes("i want to apply")
+
+    // Convert the stream to add extra metadata
+    const stream = result.toDataStream({
+      getErrorMessage: (error) => {
+        console.error("Stream error:", error)
+        return "An error occurred while processing your request."
+      },
+    })
+
+    // If it's a job application, we need to add prompt suggestions to the response
+    // We'll do this by transforming the stream
+    if (isJobApplication && agentId === "technical-recruiter") {
+      const reader = stream.getReader()
+      const encoder = new TextEncoder()
+      const decoder = new TextDecoder()
+
+      const transformedStream = new ReadableStream({
+        async start(controller) {
+          let fullText = ""
+          try {
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) {
+                const promptSuggestionsData = {
+                  type: "data",
+                  data: {
+                    promptSuggestions: [
+                      { text: "I'd like to schedule an AI interview", icon: "Sparkles" },
+                      { text: "I prefer a traditional interview", icon: "Users" },
+                    ],
+                  },
+                }
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(promptSuggestionsData)}\n\n`))
+                controller.close()
+                break
+              }
+              fullText += decoder.decode(value, { stream: true })
+              controller.enqueue(value)
+            }
+          } catch (error) {
+            controller.error(error)
+          }
+        },
+      })
+
+      return new Response(transformedStream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      })
+    }
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    })
+  } catch (error) {
+    console.error("Chat API error:", error)
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    })
   }
-
-  const systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
-
-  const result = streamText({
-    model: "openai/gpt-4o-mini",
-    system: systemMessage,
-    messages: prompt,
-    abortSignal: req.signal,
-    temperature: 0.7,
-    maxOutputTokens: 2000,
-  })
-
-  return result.toUIMessageStreamResponse({
-    onFinish: async ({ isAborted }) => {
-      if (isAborted) {
-        console.log("[v0] Chat request aborted")
-      }
-    },
-  })
 }
