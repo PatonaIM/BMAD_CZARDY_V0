@@ -22,6 +22,7 @@ import {
   Users,
   Code,
   MessageSquare,
+  CheckCircle,
 } from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
@@ -422,6 +423,54 @@ export const ChatMain = forwardRef<
       }
       return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [isAgentDropdownOpen])
+
+    useEffect(() => {
+      if (lastWorkspaceContent?.type === "code" && lastWorkspaceContent?.title === "Take Home Challenge") {
+        console.log("[v0] Challenge code workspace detected, resetting conversation")
+
+        // Switch to Technical Recruiter
+        const technicalRecruiter = AI_AGENTS.find((a) => a.id === "technical-recruiter")
+        if (technicalRecruiter) {
+          setActiveAgent(technicalRecruiter)
+        }
+
+        // Reset conversation with welcome message from Technical Recruiter
+        const welcomeMessage: Message = {
+          id: Date.now().toString(),
+          type: "ai",
+          content: `Welcome to your Take Home Challenge! 👨‍💻
+
+I'm your Technical Recruiter, and I'll be guiding you through this coding challenge.
+
+**Challenge Instructions:**
+
+The code editor on the right contains a Node.js server implementation. Your task is to:
+
+1. Review the existing code structure
+2. Identify any bugs or issues
+3. Implement the missing functionality
+4. Ensure the server runs correctly
+
+**What I'm looking for:**
+- Clean, readable code
+- Proper error handling
+- Best practices in Node.js development
+- Attention to detail
+
+Feel free to ask me any questions about the challenge. When you're ready to submit, let me know and I'll review your solution.
+
+Good luck! 🚀`,
+          agentId: technicalRecruiter?.id || activeAgent.id,
+          promptSuggestions: [
+            { text: "I have a question about the challenge", icon: <MessageSquare className="w-4 h-4" /> },
+            { text: "Can you explain the requirements?", icon: <FileText className="w-4 h-4" /> },
+            { text: "I'm ready to submit my solution", icon: <CheckCircle className="w-4 h-4" /> },
+          ],
+        }
+
+        setLocalMessages([welcomeMessage])
+      }
+    }, [lastWorkspaceContent])
 
     // Declare handleStartChallenge here
     const handleStartChallenge = () => {
