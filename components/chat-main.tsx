@@ -1229,7 +1229,7 @@ Are you ready to begin your Take Home Challenge?`,
       if (inputMessage.trim()) {
         const isCommand = handleCommandOrMessage(inputMessage)
         if (!isCommand) {
-          sendMessage(inputMessage)
+          sendMessage({ text: inputMessage })
         }
         setInputMessage("")
       }
