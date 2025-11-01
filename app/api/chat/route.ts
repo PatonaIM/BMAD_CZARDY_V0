@@ -6,9 +6,8 @@ export async function POST(req: Request) {
   try {
     const { messages, agentId }: { messages: UIMessage[]; agentId: string } = await req.json()
 
-    const prompt = convertToModelMessages(messages)
+    const modelMessages = convertToModelMessages(messages)
 
-    // Add system message based on the agent
     const systemPrompts: Record<string, string> = {
       "technical-recruiter": `You are a friendly and professional Technical Recruiter AI assistant helping candidates find their dream jobs.
 
@@ -165,10 +164,7 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
     const result = await streamText({
       model: "openai/gpt-4o-mini",
       system: systemMessage,
-      messages: messages.map((m: any) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: modelMessages,
     })
 
     const lastUserMessage = messages[messages.length - 1]?.content?.toLowerCase() || ""
