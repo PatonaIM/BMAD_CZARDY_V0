@@ -316,7 +316,7 @@ const mockJobListings: JobListing[] = [
     description: "Build native iOS applications with cutting-edge features.",
     requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 80,
     jobSummary:
@@ -345,7 +345,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "draft",
     skillMatch: 86,
     jobSummary:
@@ -373,7 +373,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement enterprise-level cloud solutions.",
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
+    logo: "https://hebbkx1anhila5blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "open",
     skillMatch: 89,
     jobSummary:
@@ -401,7 +401,7 @@ const mockJobListings: JobListing[] = [
     description: "Facilitate agile processes and remove impediments for development teams.",
     requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "closed",
     skillMatch: 77,
     jobSummary:
@@ -457,7 +457,7 @@ const mockJobListings: JobListing[] = [
     description: "Create clear and comprehensive technical documentation.",
     requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "draft",
     skillMatch: 74,
     jobSummary:
@@ -568,7 +568,7 @@ const mockJobListings: JobListing[] = [
     description: "Manage and optimize database systems for performance and reliability.",
     requirements: ["PostgreSQL/MySQL", "Database tuning", "Backup strategies", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "draft",
     skillMatch: 76,
     jobSummary:
@@ -624,7 +624,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead and mentor a team of software engineers to deliver high-quality products.",
     requirements: ["Team leadership", "Technical expertise", "Agile", "7+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "closed",
     skillMatch: 93,
     jobSummary:
@@ -1585,7 +1585,7 @@ export function WorkspacePane({
                           onClick={() => handleJobClick(job)}
                         >
                           <div className="absolute top-6 right-6">
-                            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-2.5">
+                            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
                               <img
                                 src={job.logo || "/placeholder.svg"}
                                 alt={`${job.company} logo`}
@@ -1722,7 +1722,7 @@ export function WorkspacePane({
                           onClick={() => handleJobClick(job)}
                         >
                           <div className="absolute top-6 right-6">
-                            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-2.5">
+                            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
                               <img
                                 src={job.logo || "/placeholder.svg"}
                                 alt={`${job.company} logo`}
@@ -1851,7 +1851,7 @@ export function WorkspacePane({
                     onClick={() => handleJobClick(job)}
                   >
                     <div className="absolute top-6 right-6">
-                      <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-2.5">
+                      <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
                         <img
                           src={job.logo || "/placeholder.svg"}
                           alt={`${job.company} logo`}
