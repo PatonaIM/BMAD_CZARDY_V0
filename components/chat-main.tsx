@@ -328,6 +328,57 @@ export const ChatMain = forwardRef<
     })
 
     useEffect(() => {
+      if (aiMessages.length === 0) return
+
+      const lastAiMessage = aiMessages[aiMessages.length - 1]
+      if (lastAiMessage.role !== "assistant") return
+
+      // Check if the message contains code blocks
+      const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
+      const matches = [...lastAiMessage.content.matchAll(codeBlockRegex)]
+
+      if (matches.length > 0) {
+        console.log("[v0] Detected code blocks in AI response:", matches.length)
+
+        // Extract the first code block (or combine multiple blocks)
+        const firstMatch = matches[0]
+        const language = firstMatch[1] || "javascript"
+        const code = firstMatch[2].trim()
+
+        // Determine filename based on language
+        const filenameMap: Record<string, string> = {
+          javascript: "code.js",
+          typescript: "code.ts",
+          python: "code.py",
+          java: "Code.java",
+          cpp: "code.cpp",
+          c: "code.c",
+          go: "code.go",
+          rust: "code.rs",
+          html: "index.html",
+          css: "styles.css",
+          jsx: "component.jsx",
+          tsx: "component.tsx",
+        }
+
+        const filename = filenameMap[language.toLowerCase()] || "code.txt"
+
+        // Open code workspace with the extracted code
+        onOpenWorkspace({
+          type: "code",
+          title: filename,
+          data: code,
+        })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({
+          type: "code",
+          title: filename,
+          data: code,
+        })
+      }
+    }, [aiMessages, onOpenWorkspace])
+
+    useEffect(() => {
       const randomIndex = Math.floor(Math.random() * welcomeQuestions.length)
       setWelcomeQuestion(welcomeQuestions[randomIndex])
     }, [])
