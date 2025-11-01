@@ -20,6 +20,9 @@ import {
   PanelRight,
   Crown,
   Users,
+  Code,
+  MessageSquare,
+  User,
 } from "lucide-react"
 import { AI_AGENTS, type AIAgent } from "@/types/agents"
 import type { WorkspaceContent } from "@/types/workspace"
@@ -39,7 +42,7 @@ interface Message {
   id: string
   type: "user" | "ai"
   content: string
-  responseType?: "text" | "code" | "table" | "file" | "image"
+  responseType?: "text" | "code" | "table" | "file" | "image" | "challenge-button" // Added challenge-button
   thinking?: boolean
   thinkingTime?: number
   agentId?: string
@@ -1019,19 +1022,18 @@ ${loremParagraphs[1]}`
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: `Thank you for your interest in this position! Here's how our application process works:
+        content: `Great! I'm excited to help you apply for this position. 
 
-# Application Process
+Here's how our application process works:
 
 **Step 1: Take Home Challenge**
 
-First, you'll complete a take-home challenge that's designed to assess your technical skills and problem-solving abilities. This challenge is tailored to the role you're applying for and typically takes 2-4 hours to complete.
+First, you'll complete a take-home challenge that's designed to showcase your skills in a real-world scenario. This challenge is tailored to the role you're applying for and typically takes 2-4 hours to complete.
 
 **Step 2: Teamified AI Interviews**
 
-Once you've submitted your take-home challenge, you'll participate in our Teamified AI Interviews. These AI-powered interviews will assess your communication skills, technical knowledge, and cultural fit. The AI interviews are:
+After submitting your take-home challenge, you'll participate in our Teamified AI Interviews. These are:
 
-- ⚡ Available immediately after challenge submission
 - 🎯 Personalized based on your role and experience
 - 📊 Recorded for review by the hiring manager
 - 🚀 Completed at your convenience
@@ -1052,7 +1054,10 @@ If the hiring manager is impressed with your application package, they'll reach 
 
 Ready to get started? Let's begin with the take-home challenge!`,
         agentId: activeAgent.id,
-        promptSuggestions: ["take home challenge", "Tell me more about the AI interviews"],
+        promptSuggestions: [
+          { text: "take home challenge", icon: <Code className="w-4 h-4 text-[#A16AE8]" /> },
+          { text: "Tell me more about the AI interviews", icon: <MessageSquare className="w-4 h-4 text-[#8096FD]" /> },
+        ],
       }
 
       setLocalMessages((prev) => [...prev, userMsg, aiMsg])
@@ -1068,61 +1073,39 @@ Ready to get started? Let's begin with the take-home challenge!`,
         agentId: activeAgent.id,
       }
 
-      // Check if a job view is currently open
-      const isJobViewOpen = lastWorkspaceContent?.type === "job-view"
-
-      let aiContent: string
-      let aiMsg: Message
-
-      if (!isJobViewOpen) {
-        // No job view open - inform user to open a job first
-        aiContent = `I notice you don't have a job listing open in your workspace. To start a take-home challenge, please first:
-
-1. Open the **Job Board** by typing "job board" or "my jobs"
-2. Select a job you'd like to apply for
-3. Then you can start the take-home challenge for that specific role
-
-Would you like me to open the job board for you?`
-
-        aiMsg = {
+      // Check if a job view is open
+      if (!lastWorkspaceContent || lastWorkspaceContent.type !== "job-view") {
+        const aiMsg: Message = {
           id: (Date.now() + 1).toString(),
           type: "ai",
-          content: aiContent,
+          content: `I'd love to help you start the take-home challenge! However, I need you to open a job listing first so I can prepare the appropriate challenge for that specific role.
+
+Please go to the Job Board and select a position you'd like to apply for, then we can begin your take-home challenge.`,
           agentId: activeAgent.id,
-          promptSuggestions: ["job board", "my jobs"],
+          promptSuggestions: [
+            { text: "job board", icon: <Briefcase className="w-4 h-4 text-[#A16AE8]" /> },
+            { text: "my jobs", icon: <User className="w-4 h-4 text-[#8096FD]" /> },
+          ],
         }
-      } else {
-        // Job view is open - show confirmation
-        const jobTitle = lastWorkspaceContent?.job?.title || "this position"
-        aiContent = `Perfect! You're about to start the **Take Home Challenge** for the **${jobTitle}** role.
 
-# Important Information
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+        return true
+      }
 
-⚠️ **This challenge can only be taken once.** Once you begin, you'll have a limited time to complete and submit your solution.
+      // Job view is open, show confirmation
+      const jobTitle = lastWorkspaceContent.job?.title || "this position"
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: `Perfect! You're about to start the Take Home Challenge for **${jobTitle}**.
 
-The challenge will test your:
-- Technical skills and problem-solving abilities
-- Code quality and best practices
-- Ability to work independently
-- Time management skills
+⚠️ **Important:** This challenge can only be taken once, so make sure you're ready before proceeding.
 
-**What to expect:**
-- Estimated time: 2-4 hours
-- You'll work in an interactive code editor
-- Your code will be automatically saved
-- You can submit when you're ready
+The challenge will test your skills in a real-world scenario and typically takes 2-4 hours to complete. You'll have access to a code editor where you can write, test, and submit your solution.
 
-Are you ready to proceed?`
-
-        aiMsg = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: aiContent,
-          agentId: activeAgent.id,
-          hasActionButton: true, // Added flag for action button
-          actionButtonText: "Proceed to Take Home Challenge",
-          actionButtonHandler: "start-challenge", // Added handler identifier
-        }
+When you're ready, click the button below to begin your challenge.`,
+        agentId: activeAgent.id,
+        responseType: "challenge-button",
       }
 
       setLocalMessages((prev) => [...prev, userMsg, aiMsg])
@@ -1514,6 +1497,17 @@ Are you ready to proceed?`
                               alt="Dashboard preview"
                               className="w-full rounded-xl"
                             />
+                          </div>
+                        )}
+
+                        {msg.responseType === "challenge-button" && (
+                          <div className="mt-4">
+                            <button
+                              onClick={() => handleStartChallenge()}
+                              className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all"
+                            >
+                              Start Take Home Challenge
+                            </button>
                           </div>
                         )}
 
