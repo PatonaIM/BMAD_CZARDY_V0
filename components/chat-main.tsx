@@ -310,6 +310,7 @@ export const ChatMain = forwardRef<
     const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
     const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
     const [localMessages, setLocalMessages] = useState<Message[]>([])
+    const [hasChallengeWelcomeShown, setHasChallengeWelcomeShown] = useState(false)
     const lastUserMessageRef = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -421,9 +422,12 @@ export const ChatMain = forwardRef<
       }
     }, [localMessages, isThinking])
 
-    // Detect when the Take Home Challenge workspace opens and reset the conversation
     useEffect(() => {
-      if (lastWorkspaceContent?.type === "code" && lastWorkspaceContent?.title === "Take Home Challenge") {
+      if (
+        lastWorkspaceContent?.type === "code" &&
+        lastWorkspaceContent?.title === "Take Home Challenge" &&
+        !hasChallengeWelcomeShown
+      ) {
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
@@ -435,7 +439,7 @@ export const ChatMain = forwardRef<
         // Create welcome message with instructions
         const welcomeMessage: Message = {
           id: `welcome-${Date.now()}`,
-          type: "ai", // Use type: "ai" for consistency with other messages
+          type: "ai",
           content: `Welcome to your Take Home Challenge! 👨‍💻
 
 I'm your Technical Recruiter, and I'll be guiding you through this coding challenge.
@@ -467,11 +471,14 @@ Good luck! 🚀`,
         }
 
         setLocalMessages([welcomeMessage])
+        setHasChallengeWelcomeShown(true)
       }
-    }, [lastWorkspaceContent])
+    }, [lastWorkspaceContent, hasChallengeWelcomeShown])
 
     // Declare handleStartChallenge here
     const handleStartChallenge = () => {
+      setHasChallengeWelcomeShown(false)
+
       // Show loading animation
       onOpenWorkspace({ type: "challenge-loading", title: "Take Home Challenge" })
       setHasOpenedWorkspace(true)
@@ -481,7 +488,7 @@ Good luck! 🚀`,
       setTimeout(() => {
         onOpenWorkspace({
           type: "code",
-          title: "Take Home Challenge",
+          title: "server.js",
           data: codeSnippet,
         })
         // Update lastWorkspaceContent to trigger the useEffect that resets conversation

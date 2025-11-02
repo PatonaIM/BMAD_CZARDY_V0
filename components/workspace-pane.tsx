@@ -20,7 +20,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react"
-import { useState, useMemo, useEffect } from "react" // Added useEffect
+import { useState, useMemo, useEffect, useRef } from "react" // Added useRef
 import type { WorkspaceContent, JobListing } from "@/types/workspace"
 import {
   BarChart,
@@ -746,6 +746,40 @@ const mockFileStructure = [
   { name: "package.json", type: "file" },
 ]
 
+const mockFileContents: Record<string, string> = {
+  "server.js": `const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Hello World!' });
+});
+
+app.listen(port, () => {
+  console.log(\`Server running on port \${port}\`);
+});`,
+  "app.js": `const config = {
+  apiUrl: process.env.API_URL || 'http://localhost:3000',
+  environment: process.env.NODE_ENV || 'development',
+  features: {
+    authentication: true,
+    analytics: false,
+  }
+};
+
+function initializeApp() {
+  console.log('Initializing application...');
+  console.log('Environment:', config.environment);
+  console.log('API URL:', config.apiUrl);
+}
+
+initializeApp();
+
+module.exports = config;`,
+}
+
 const mockTranscription = [
   { time: "00:00", text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
   { time: "00:15", text: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
@@ -817,6 +851,12 @@ export function WorkspacePane({
 
   const mockImages = ["/dashboard-analytics.png", "/user-interface-design.png", "/data-visualization-abstract.png"]
 
+  const [selectedFile, setSelectedFile] = useState("server.js")
+  const [fileContents, setFileContents] = useState<Record<string, string>>(mockFileContents)
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   // Move useEffect to the top level of the component, outside of any conditional logic.
   useEffect(() => {
     if (activeWorkspace === "my-jobs") {
@@ -852,6 +892,40 @@ export function WorkspacePane({
       window.removeEventListener("interview-option-selected", handleInterviewSelected)
     }
   }, [onToggleApplicationView])
+
+  const handleCodeChange = (newCode: string) => {
+    setFileContents((prev) => ({
+      ...prev,
+      [selectedFile]: newCode,
+    }))
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Show saving indicator
+    setIsSaving(true)
+
+    // Debounce save for 1 second
+    saveTimeoutRef.current = setTimeout(() => {
+      setIsSaving(false)
+      setLastSaved(new Date())
+      console.log("[v0] Auto-saved", selectedFile)
+    }, 1000)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleFileClick = (fileName: string) => {
+    setSelectedFile(fileName)
+  }
 
   const handleToggleApplicationView = (show: boolean) => {
     setShowApplicationStatusLocal(show)
@@ -906,7 +980,7 @@ export function WorkspacePane({
       case "video":
         return "Video Player"
       case "code":
-        return "Code Editor"
+        return "Take Home Challenge" // Changed from "Code Editor" to "Take Home Challenge"
       case "challenge-loading":
         return "Take Home Challenge"
       case "challenge":
@@ -1597,7 +1671,10 @@ export function WorkspacePane({
                         {item.children.map((child, childIdx) => (
                           <div
                             key={childIdx}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent cursor-pointer ${child.type === "file" && child.active ? "bg-accent" : ""}`}
+                            onClick={() => child.type === "file" && handleFileClick(child.name)}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent cursor-pointer transition-colors ${
+                              child.type === "file" && selectedFile === child.name ? "bg-accent" : ""
+                            }`}
                           >
                             {child.type === "folder" ? (
                               <Folder className="w-4 h-4 text-[#8096FD]" />
@@ -1616,16 +1693,30 @@ export function WorkspacePane({
             <div className="flex-1">
               <div className="bg-card rounded-2xl border border-border overflow-hidden h-full flex flex-col">
                 <div className="flex items-center justify-between px-4 py-3 bg-muted border-b border-border">
-                  <span className="text-sm font-mono text-muted-foreground">{content.title || "code.tsx"}</span>
-                  <button className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent transition-colors flex items-center gap-2">
-                    <Download className="w-3.5 h-3.5" />
-                    Download
-                  </button>
+                  <span className="text-sm font-mono text-muted-foreground">{selectedFile}</span>
+                  <div className="flex items-center gap-3">
+                    {isSaving && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        Saving...
+                      </span>
+                    )}
+                    {!isSaving && lastSaved && (
+                      <span className="text-xs text-muted-foreground">Saved {lastSaved.toLocaleTimeString()}</span>
+                    )}
+                    <button className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent transition-colors flex items-center gap-2">
+                      <Download className="w-3.5 h-3.5" />
+                      Download
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1 p-6 overflow-auto">
-                  <pre className="text-sm font-mono leading-relaxed">
-                    <code className="text-foreground">{content.data || "// Code content here"}</code>
-                  </pre>
+                <div className="flex-1 overflow-hidden">
+                  <textarea
+                    value={fileContents[selectedFile] || content.data || "// Code content here"}
+                    onChange={(e) => handleCodeChange(e.target.value)}
+                    className="w-full h-full p-6 bg-transparent text-sm font-mono leading-relaxed resize-none focus:outline-none text-foreground"
+                    spellCheck={false}
+                  />
                 </div>
               </div>
             </div>
