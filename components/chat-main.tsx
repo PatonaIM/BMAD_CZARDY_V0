@@ -109,22 +109,25 @@ const generateBulletResponse = () => {
   return `${intro}\n\n${bullets}${summary}`
 }
 
-const codeSnippet = `import express from "express";
-import fetch from "node-fetch";
+const codeSnippet = `from flask import Flask, jsonify, request
+import os
+import requests
 
-const app = express();
+app = Flask(__name__)
 
-app.get("/session", async (req, res) => {
-  const response = await fetch("https://api.example.com/v1/sessions", {
-    method: "POST",
-    headers: { "Authorization": \`Bearer \${process.env.API_KEY}\` },
-    body: JSON.stringify({ model: "gpt-4" })
-  });
-  const data = await response.json();
-  res.json(data);
-});
+@app.route('/session', methods=['GET'])
+def get_session():
+    api_key = os.environ.get('API_KEY')
+    response = requests.post(
+        'https://api.example.com/v1/sessions',
+        headers={'Authorization': f'Bearer {api_key}'},
+        json={'model': 'gpt-4'}
+    )
+    data = response.json()
+    return jsonify(data)
 
-app.listen(3000, () => console.log("Server running"));`
+if __name__ == '__main__':
+    app.run(port=3000, debug=True)`
 
 const tableData = {
   headers: ["Candidate", "Position", "Experience", "Status", "Match Score"],
@@ -290,6 +293,9 @@ export const ChatMain = forwardRef<
     showJobViewSummary: (job: JobListing) => void // Added showJobViewSummary
     handleJobApplication: (job: JobListing) => void // Added handler for job application
     handleStartChallenge: () => void // Added handler for challenge button click
+    handleSubmitChallengeRequest: () => void
+    handleSubmissionComplete: () => void
+    // </CHANGE>
   },
   ChatMainProps
 >(
@@ -436,7 +442,6 @@ export const ChatMain = forwardRef<
 
         setMessages([])
 
-        // Create welcome message with instructions
         const welcomeMessage: Message = {
           id: `welcome-${Date.now()}`,
           type: "ai",
@@ -446,7 +451,7 @@ I'm your Technical Recruiter, and I'll be guiding you through this coding challe
 
 **Challenge Instructions:**
 
-The code editor on the right contains a Node.js server implementation. Your task is to:
+The code editor on the right contains a Python Flask server implementation. Your task is to:
 
 1. Review the existing code structure
 2. Identify any bugs or issues
@@ -456,7 +461,7 @@ The code editor on the right contains a Node.js server implementation. Your task
 **What I'm looking for:**
 - Clean, readable code
 - Proper error handling
-- Best practices in Node.js development
+- Best practices in Python development
 - Attention to detail
 
 Feel free to ask me any questions about the challenge. When you're ready to submit, let me know and I'll review your solution.
@@ -488,13 +493,110 @@ Good luck! 🚀`,
       setTimeout(() => {
         onOpenWorkspace({
           type: "code",
-          title: "server.js",
+          title: "server.py",
           data: codeSnippet,
         })
         // Update lastWorkspaceContent to trigger the useEffect that resets conversation
         setLastWorkspaceContent({ type: "code", title: "Take Home Challenge" })
       }, 3000)
     }
+
+    const handleSubmitChallengeRequest = () => {
+      // Switch to Technical Recruiter if not already
+      const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+      if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
+        setActiveAgent(technicalRecruiter)
+      }
+
+      const confirmationMessage: Message = {
+        id: `submit-confirmation-${Date.now()}`,
+        type: "ai",
+        content: `Before you submit your Take Home Challenge, please read this carefully:
+
+**⚠️ Important Submission Guidelines:**
+
+• **You can only submit once.** Once you click submit, you cannot make any further changes to your code.
+
+• **Current GitHub version will be submitted.** The version currently in your GitHub repository (jonesy02/coding-challenge.git) will be sent to the hiring managers.
+
+• **Make sure you've pushed your latest changes.** If you haven't pushed your most recent code to GitHub, please do so before submitting.
+
+**What happens after submission:**
+
+1. Your code will be reviewed by our technical team
+2. We'll evaluate your solution based on code quality, functionality, and best practices
+3. You'll receive feedback within 3-5 business days
+4. If successful, we'll move forward with the next steps in the interview process
+
+Are you ready to submit your Take Home Challenge? This action cannot be undone.`,
+        agentId: technicalRecruiter?.id || activeAgent.id,
+        hasActionButton: true,
+        actionButtonText: "Yes, I would like to submit my work",
+        actionButtonHandler: "confirmSubmitChallenge",
+      }
+
+      setLocalMessages((prev) => [...prev, confirmationMessage])
+    }
+
+    const handleConfirmSubmitChallenge = () => {
+      // Trigger submission in workspace via custom event
+      window.dispatchEvent(new CustomEvent("confirm-challenge-submission"))
+
+      // Add confirmation message to chat
+      const submittingMessage: Message = {
+        id: `submitting-${Date.now()}`,
+        type: "ai",
+        content: `Great! I'm submitting your Take Home Challenge now. Please wait while we process your submission...`,
+        agentId: activeAgent.id,
+      }
+
+      setLocalMessages((prev) => [...prev, submittingMessage])
+    }
+
+    const handleSubmissionComplete = () => {
+      // Switch to Technical Recruiter if not already
+      const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+      if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
+        setActiveAgent(technicalRecruiter)
+      }
+
+      const followUpMessage: Message = {
+        id: `submission-complete-${Date.now()}`,
+        type: "ai",
+        content: `Congratulations! Your Take Home Challenge has been successfully submitted! 🎉
+
+Your code has been sent to our technical team for review. Here's what happens next:
+
+**Next Steps in Your Application Process:**
+
+1. **Technical Review** (2-3 business days)
+   - Our technical team will review your code submission
+   - We'll evaluate code quality, functionality, and best practices
+
+2. **AI Interviews** (Your next step!)
+   - Complete AI-powered interviews at your convenience
+   - These interviews help us understand your experience and approach
+   - Recordings will be shared with the hiring manager
+
+3. **Hiring Manager Review**
+   - Your complete application package (challenge + interviews) will be sent to the hiring manager
+   - They'll review everything and decide on next steps
+
+4. **Final Interview**
+   - If selected, you'll have a final interview with the hiring team
+   - This is your chance to meet the team and ask questions
+
+**Ready to continue?** Let's move forward with the AI interviews to complete your application!`,
+        agentId: technicalRecruiter?.id || activeAgent.id,
+        promptSuggestions: [
+          { text: "Take AI interview", icon: <MessageSquare className="w-4 h-4" /> },
+          { text: "View Application", icon: <FileText className="w-4 h-4" /> },
+        ],
+      }
+
+      setLocalMessages((prev) => [...prev, followUpMessage])
+    }
+    // </CHANGE>
 
     useImperativeHandle(ref, () => ({
       handleProfileSaved: () => {
@@ -691,6 +793,9 @@ ${loremParagraphs[1]}`
         handleCommandOrMessage("Apply to this job")
       },
       handleStartChallenge: handleStartChallenge, // Use the declared variable
+      handleSubmitChallengeRequest: handleSubmitChallengeRequest,
+      handleSubmissionComplete: handleSubmissionComplete,
+      // </CHANGE>
     }))
 
     const handlePreviewClick = (fileType: string) => {
@@ -1508,6 +1613,8 @@ Are you ready to begin your Take Home Challenge?`,
                                 onClick={() => {
                                   if (msg.actionButtonHandler === "startChallenge") {
                                     handleStartChallenge()
+                                  } else if (msg.actionButtonHandler === "confirmSubmitChallenge") {
+                                    handleConfirmSubmitChallenge()
                                   }
                                 }}
                                 className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"

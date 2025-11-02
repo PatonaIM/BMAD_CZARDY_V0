@@ -18,8 +18,8 @@ interface JobViewProps {
   onBack?: () => void
   onRequestSkillGapAnalysis?: () => void
   onApplyForJob?: (job: JobListing) => void
-  showApplicationStatus?: boolean // Added prop to control application status view
-  onToggleApplicationView?: (show: boolean) => void // Added callback to toggle view
+  showApplicationStatus?: boolean
+  onToggleApplicationView?: (show: boolean) => void
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -85,76 +85,6 @@ const getSkillMatchConfig = (percentage: number) => {
   }
 }
 
-const generateSkillGapInsights = (matchPercentage: number) => {
-  if (matchPercentage >= 90) {
-    return {
-      title: "Excellent Match!",
-      description: "You're an outstanding fit for this role. Consider these areas to stand out even more:",
-      gaps: [
-        "Advanced certifications in your field",
-        "Leadership or mentorship experience",
-        "Contributions to open-source projects or industry publications",
-      ],
-      recommendations: [
-        {
-          title: "Advanced Technical Certification",
-          description: "Earn industry-recognized certifications to validate your expertise",
-        },
-        { title: "Leadership Training", description: "Develop management and team leadership skills" },
-      ],
-    }
-  } else if (matchPercentage >= 70) {
-    return {
-      title: "Good Match with Room for Growth",
-      description: "You have a solid foundation. Focus on these areas to increase your match score:",
-      gaps: [
-        "Some required technical skills need strengthening",
-        "Additional years of experience in specific technologies",
-        "Certifications or formal training in key areas",
-      ],
-      recommendations: [
-        {
-          title: "Technical Skills Assessment",
-          description: "Take targeted assessments to identify and improve specific skill gaps",
-        },
-        {
-          title: "Online Courses & Bootcamps",
-          description: "Complete focused training in the technologies mentioned in the job requirements",
-        },
-        { title: "Practice Projects", description: "Build portfolio projects demonstrating the required skills" },
-      ],
-    }
-  } else {
-    return {
-      title: "Significant Skill Gaps Identified",
-      description: "This role requires skills you may need to develop. Here's how to improve your match:",
-      gaps: [
-        "Multiple core technical skills are missing",
-        "Insufficient experience level for this position",
-        "Lack of required certifications or qualifications",
-      ],
-      recommendations: [
-        {
-          title: "Comprehensive Skills Training",
-          description: "Enroll in structured learning programs to build foundational skills",
-        },
-        {
-          title: "Entry-Level Positions",
-          description: "Consider similar roles with lower requirements to gain experience",
-        },
-        {
-          title: "Mentorship Program",
-          description: "Connect with experienced professionals in this field for guidance",
-        },
-        {
-          title: "Certification Programs",
-          description: "Pursue relevant certifications to demonstrate commitment and knowledge",
-        },
-      ],
-    }
-  }
-}
-
 export function JobView({
   job,
   onBack,
@@ -167,10 +97,8 @@ export function JobView({
 
   const statusConfig = getStatusConfig(job.status || "open")
   const skillMatchConfig = job.skillMatch !== undefined ? getSkillMatchConfig(job.skillMatch) : null
-  const skillGapInsights = job.skillMatch !== undefined ? generateSkillGapInsights(job.skillMatch) : null
 
   const renderJobSummary = (summary: string) => {
-    // Check if the summary contains bullet points (lines starting with •)
     const lines = summary.split("\n").filter((line) => line.trim())
     const hasBullets = lines.some((line) => line.trim().startsWith("•"))
 
@@ -201,6 +129,7 @@ export function JobView({
   }
 
   const handleBackToDetails = () => {
+    console.log("[v0] Back to details clicked")
     if (onToggleApplicationView) {
       onToggleApplicationView(false)
     }
