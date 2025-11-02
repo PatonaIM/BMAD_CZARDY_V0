@@ -10,15 +10,15 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
-  FileCode,
-  Folder,
-  File,
   ZoomIn,
   ZoomOut,
   Printer,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  FileText,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react"
 import { useState, useMemo, useEffect, useRef } from "react" // Added useRef
 import type { WorkspaceContent, JobListing } from "@/types/workspace"
@@ -33,7 +33,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip, // Renamed to avoid conflict
   Legend,
   ResponsiveContainer,
 } from "recharts"
@@ -43,6 +43,10 @@ import { CandidatePricing } from "./candidate-pricing"
 import { PaymentSuccess } from "./payment-success" // Import payment success component
 import { JobView } from "./job-view" // Import JobView component
 import { getCurrentUser } from "@/lib/auth" // Added import for getCurrentUser
+import { cn } from "@/lib/utils" // Added import for cn utility
+
+// Added Tooltip imports
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface WorkspacePaneProps {
   isOpen: boolean
@@ -127,7 +131,7 @@ const mockJobListings: JobListing[] = [
     description: "Join our AI team to build cutting-edge machine learning solutions.",
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "draft",
     skillMatch: 75,
     jobSummary:
@@ -155,7 +159,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "open",
     skillMatch: 82,
     jobSummary:
@@ -182,7 +186,7 @@ const mockJobListings: JobListing[] = [
     posted: "5 days ago",
     description: "Build and maintain our cloud infrastructure and CI/CD pipelines.",
     requirements: ["Kubernetes", "Docker", "AWS/GCP", "Terraform", "4+ years experience"],
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "closed",
     skillMatch: 70,
     jobSummary:
@@ -211,7 +215,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
     status: "open",
     skillMatch: 92,
     jobSummary:
@@ -239,7 +243,7 @@ const mockJobListings: JobListing[] = [
     description: "Analyze complex datasets and build predictive models to drive business insights.",
     requirements: ["Python", "SQL", "Machine Learning", "Statistics", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "draft",
     skillMatch: 78,
     jobSummary:
@@ -266,7 +270,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement scalable backend services and APIs.",
     requirements: ["Node.js or Java", "Microservices", "Databases", "5+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 85,
     jobSummary:
@@ -294,7 +298,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure software quality through comprehensive testing and automation.",
     requirements: ["Test automation", "Selenium/Cypress", "API testing", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "closed",
     skillMatch: 72,
     jobSummary:
@@ -322,7 +326,7 @@ const mockJobListings: JobListing[] = [
     description: "Build native iOS applications with cutting-edge features.",
     requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 80,
     jobSummary:
@@ -351,7 +355,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "draft",
     skillMatch: 86,
     jobSummary:
@@ -379,7 +383,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement enterprise-level cloud solutions.",
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "open",
     skillMatch: 89,
     jobSummary:
@@ -407,7 +411,7 @@ const mockJobListings: JobListing[] = [
     description: "Facilitate agile processes and remove impediments for development teams.",
     requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "closed",
     skillMatch: 77,
     jobSummary:
@@ -435,7 +439,7 @@ const mockJobListings: JobListing[] = [
     description: "Protect our systems and data through robust security measures.",
     requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 83,
     jobSummary:
@@ -463,7 +467,7 @@ const mockJobListings: JobListing[] = [
     description: "Create clear and comprehensive technical documentation.",
     requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "draft",
     skillMatch: 74,
     jobSummary:
@@ -490,7 +494,7 @@ const mockJobListings: JobListing[] = [
     description: "Bridge the gap between business needs and technical solutions.",
     requirements: ["Requirements gathering", "Process modeling", "SQL", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/hellozai_logo-Y6DjFOspbcWXaYEgdDiKeNzKC4JL6a.jpg",
     status: "open",
     skillMatch: 79,
     jobSummary:
@@ -518,7 +522,7 @@ const mockJobListings: JobListing[] = [
     description: "Develop and deploy machine learning models at scale.",
     requirements: ["Python", "TensorFlow", "MLOps", "Model deployment", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/fortify_technology_logo-3bOv5UeXkzGd62gZlOJ7b22ZeolgeH.jpeg",
     status: "closed",
     skillMatch: 81,
     jobSummary:
@@ -546,7 +550,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure high availability and reliability of production systems.",
     requirements: ["Linux", "Monitoring tools", "Incident management", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/volaro_group_logo-kp4B3LoBaZhq0JegHhrddGgZIk2VPJ.jpeg",
     status: "open",
     skillMatch: 91,
     jobSummary:
@@ -574,7 +578,7 @@ const mockJobListings: JobListing[] = [
     description: "Manage and optimize database systems for performance and reliability.",
     requirements: ["PostgreSQL/MySQL", "Database tuning", "Backup strategies", "5+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Icon_Only-4S5A6CfHe5kWyi38ePzw0VABYLAwbn.png",
     status: "draft",
     skillMatch: 76,
     jobSummary:
@@ -602,7 +606,7 @@ const mockJobListings: JobListing[] = [
     description: "Build and maintain cloud infrastructure on AWS and Azure.",
     requirements: ["AWS/Azure", "Infrastructure as Code", "CI/CD", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/archa%20logo-P5ZxT6nDrIeHLDjZZ9ITDRPqHs7utZ.png",
     status: "open",
     skillMatch: 87,
     jobSummary:
@@ -630,7 +634,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead and mentor a team of software engineers to deliver high-quality products.",
     requirements: ["Team leadership", "Technical expertise", "Agile", "7+ years experience"],
     applied: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-z38ipmQ0iXtgTG0KUMaI5P8VwHXNTB.png",
     status: "closed",
     skillMatch: 93,
     jobSummary:
@@ -659,7 +663,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Node.js", "PostgreSQL", "AWS", "5+ years experience"],
     applied: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
     status: "open",
     skillMatch: 88,
     jobSummary:
@@ -688,7 +692,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["AWS/GCP", "Docker", "Kubernetes", "CI/CD", "4+ years experience"],
     applied: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
+    logo: "https://hebbkx1anhila5yf.blob.vercel-storage.com/Thriday-V4mRQkNjRolGIQuKwOqVZcBZJavg0E.png",
     status: "open",
     skillMatch: 85,
     jobSummary:
@@ -1648,68 +1652,78 @@ export function WorkspacePane({
           </div>
         )
 
-      case "code":
+      case "code": {
         return (
-          <div className="h-full flex gap-4">
-            <div className="w-64 bg-card rounded-2xl border border-border p-4 overflow-y-auto">
-              <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase">File Explorer</h3>
-              <div className="space-y-1">
-                {mockFileStructure.map((item, idx) => (
-                  <div key={idx}>
-                    <div
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent cursor-pointer ${item.type === "file" && item.active ? "bg-accent" : ""}`}
-                    >
-                      {item.type === "folder" ? (
-                        <Folder className="w-4 h-4 text-[#8096FD]" />
-                      ) : (
-                        <FileCode className="w-4 h-4 text-[#A16AE8]" />
+          <div className="flex flex-col h-full bg-background">
+            {/* File Explorer Sidebar */}
+            <div className="flex h-full">
+              <div className="w-48 border-r border-border bg-muted/30">
+                <div className="p-3 border-b border-border">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Files</h3>
+                </div>
+                <div className="p-2">
+                  {mockFileStructure.map((file) => (
+                    <button
+                      key={file.name}
+                      onClick={() => setSelectedFile(file.name)}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2",
+                        selectedFile === file.name
+                          ? "bg-accent text-accent-foreground font-medium"
+                          : "hover:bg-accent/50 text-muted-foreground",
                       )}
-                      <span className="text-sm">{item.name}</span>
-                    </div>
-                    {item.children && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {item.children.map((child, childIdx) => (
-                          <div
-                            key={childIdx}
-                            onClick={() => child.type === "file" && handleFileClick(child.name)}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent cursor-pointer transition-colors ${
-                              child.type === "file" && selectedFile === child.name ? "bg-accent" : ""
-                            }`}
-                          >
-                            {child.type === "folder" ? (
-                              <Folder className="w-4 h-4 text-[#8096FD]" />
-                            ) : (
-                              <File className="w-4 h-4 text-muted-foreground" />
-                            )}
-                            <span className="text-sm">{child.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="bg-card rounded-2xl border border-border overflow-hidden h-full flex flex-col">
-                <div className="flex items-center justify-between px-4 py-3 bg-muted border-b border-border">
-                  <span className="text-sm font-mono text-muted-foreground">{selectedFile}</span>
-                  <div className="flex items-center gap-3">
-                    {isSaving && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                        Saving...
-                      </span>
-                    )}
-                    {!isSaving && lastSaved && (
-                      <span className="text-xs text-muted-foreground">Saved {lastSaved.toLocaleTimeString()}</span>
-                    )}
-                    <button className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent transition-colors flex items-center gap-2">
-                      <Download className="w-3.5 h-3.5" />
-                      Download
+                    >
+                      <FileText className="w-4 h-4 flex-shrink-0" />
+                      {file.name}
                     </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Code Editor */}
+              <div className="flex-1 flex flex-col">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/30">
+                  <span className="text-sm font-medium">{content.title || "code.tsx"}</span>
+                  <div className="flex items-center gap-3">
+                    <TooltipProvider>
+                      {isSaving && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center">
+                              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Auto-saving</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {!isSaving && lastSaved && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center">
+                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Saved</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="p-1.5 rounded-lg hover:bg-accent transition-colors">
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Download</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
+
                 <div className="flex-1 overflow-hidden">
                   <textarea
                     value={fileContents[selectedFile] || content.data || "// Code content here"}
@@ -1722,6 +1736,7 @@ export function WorkspacePane({
             </div>
           </div>
         )
+      }
 
       case "challenge-loading":
         return (
@@ -2374,7 +2389,7 @@ export function WorkspacePane({
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="role" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip
+                  <RechartsTooltip // Use the renamed Tooltip
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
@@ -2402,7 +2417,7 @@ export function WorkspacePane({
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
+                  <RechartsTooltip // Use the renamed Tooltip
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
@@ -2420,7 +2435,7 @@ export function WorkspacePane({
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip
+                  <RechartsTooltip // Use the renamed Tooltip
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
