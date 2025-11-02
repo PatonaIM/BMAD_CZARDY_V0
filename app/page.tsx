@@ -24,6 +24,7 @@ export default function ChatPage() {
     handleJobApplication: (job: any) => void // Added method for job application
     handleSubmitChallengeRequest: () => void // Added method for challenge submission request
     handleSubmissionComplete: () => void // Added handleSubmissionComplete to ref type
+    sendMessageFromWorkspace: (message: string) => void // Added sendMessageFromWorkspace method to ref type
   } | null>(null)
 
   useEffect(() => {
@@ -199,6 +200,13 @@ export default function ChatPage() {
     }
   }
 
+  const handleSendMessage = (message: string) => {
+    console.log("[v0] handleSendMessage called with:", message)
+    if (chatMainRef.current) {
+      chatMainRef.current.sendMessageFromWorkspace(message)
+    }
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -235,6 +243,7 @@ export default function ChatPage() {
                 onApplyForJob={handleApplyForJob}
                 onRequestSubmit={handleRequestSubmit}
                 onSubmissionComplete={handleSubmissionComplete}
+                onSendMessage={handleSendMessage}
               />
             </div>
           )}

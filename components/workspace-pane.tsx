@@ -67,7 +67,7 @@ interface WorkspacePaneProps {
   onRequestSubmit?: () => void
   onConfirmSubmit?: () => void
   onSubmissionComplete?: () => void
-  // </CHANGE>
+  onSendMessage?: (message: string) => void
 }
 
 const mockJobListings: JobListing[] = [
@@ -644,6 +644,7 @@ export function WorkspacePane({
   onRequestSubmit,
   onConfirmSubmit,
   onSubmissionComplete,
+  onSendMessage, // Added from updates
 }: WorkspacePaneProps) {
   console.log("[v0] WorkspacePane rendered with content.type:", content.type)
 
@@ -915,6 +916,16 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     // Open the job view to show application status
     if (onViewJob) {
       onViewJob(job)
+    }
+  }
+
+  // Mock function for requesting skill gap analysis
+  const handleRequestSkillGapAnalysis = (job: JobListing) => {
+    console.log("[v0] Requesting skill gap analysis for:", job.title)
+    // In a real app, this would trigger a backend process or AI analysis
+    // For now, simulate sending a message to the AI chat
+    if (onSendMessage) {
+      onSendMessage(`Can you analyze the skill gap for the ${job.title} role at ${job.company}?`)
     }
   }
 
@@ -1348,10 +1359,12 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
         {content.type === "job-view" && content.job && (
           <JobView
             job={content.job}
-            onApplyForJob={handleApplyForJob}
             onBack={onBackToJobBoard}
+            onRequestSkillGapAnalysis={handleRequestSkillGapAnalysis}
+            onApplyForJob={handleApplyForJob}
             showApplicationStatus={showApplicationStatusLocal}
             onToggleApplicationView={handleToggleApplicationView}
+            onSendMessage={onSendMessage}
           />
         )}
         {/* </CHANGE> */}

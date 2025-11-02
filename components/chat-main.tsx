@@ -296,6 +296,7 @@ export const ChatMain = forwardRef<
     handleSubmitChallengeRequest: () => void
     handleSubmissionComplete: () => void
     // </CHANGE>
+    sendMessageFromWorkspace: (message: string) => void
   },
   ChatMainProps
 >(
@@ -367,7 +368,6 @@ export const ChatMain = forwardRef<
         }
 
         const responseType = msg.extra?.responseType
-        // REMOVED CODE DETECTION USE EFFECT (LINES 325-395)
 
         return {
           id: msg.id,
@@ -377,7 +377,6 @@ export const ChatMain = forwardRef<
           responseType,
           thinkingTime: msg.extra?.thinkingTime,
           promptSuggestions: msg.extra?.promptSuggestions,
-          // Added for action button
           hasActionButton: msg.extra?.hasActionButton,
           actionButtonText: msg.extra?.actionButtonText,
           actionButtonHandler: msg.extra?.actionButtonHandler,
@@ -386,10 +385,8 @@ export const ChatMain = forwardRef<
 
       const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
 
-      // Preserve welcome messages, agent switch messages, and any local messages not from AI
-      const preservedLocalMessages = localMessages.filter(
-        (m) => !aiMessageIds.has(m.id) && (m.isWelcome || m.isAgentSwitch || m.type === "user"),
-      )
+      const preservedLocalMessages = localMessages.filter((m) => !aiMessageIds.has(m.id))
+      // </CHANGE>
 
       const hasWelcomeMessages = localMessages.some((m) => m.isWelcome)
       const wouldClearWelcome =
@@ -493,7 +490,7 @@ Good luck! 🚀`,
       setTimeout(() => {
         onOpenWorkspace({
           type: "code",
-          title: "server.py",
+          title: "Take Home Challenge",
           data: codeSnippet,
         })
         // Update lastWorkspaceContent to trigger the useEffect that resets conversation
@@ -569,22 +566,22 @@ Your code has been sent to our technical team for review. Here's what happens ne
 
 **Next Steps in Your Application Process:**
 
-1. **Technical Review** (2-3 business days)
-   - Our technical team will review your code submission
-   - We'll evaluate code quality, functionality, and best practices
+1. **Take Home Challenge** ✅ (Completed!)
+   - You've successfully submitted your code
+   - Our technical team will review your submission
 
-2. **AI Interviews** (Your next step!)
+2. **AI interviews** (Your next step!)
    - Complete AI-powered interviews at your convenience
    - These interviews help us understand your experience and approach
    - Recordings will be shared with the hiring manager
 
-3. **Hiring Manager Review**
+3. **Meet the Hiring Manager!**
    - Your complete application package (challenge + interviews) will be sent to the hiring manager
    - They'll review everything and decide on next steps
 
-4. **Final Interview**
-   - If selected, you'll have a final interview with the hiring team
-   - This is your chance to meet the team and ask questions
+4. **Job Offer**
+   - If selected, you'll receive a job offer from the hiring team
+   - This is your chance to join the team and start your new role!
 
 **Ready to continue?** Let's move forward with the AI interviews to complete your application!`,
         agentId: technicalRecruiter?.id || activeAgent.id,
@@ -596,6 +593,7 @@ Your code has been sent to our technical team for review. Here's what happens ne
 
       setLocalMessages((prev) => [...prev, followUpMessage])
     }
+    // </CHANGE>
     // </CHANGE>
 
     useImperativeHandle(ref, () => ({
@@ -796,6 +794,14 @@ ${loremParagraphs[1]}`
       handleSubmitChallengeRequest: handleSubmitChallengeRequest,
       handleSubmissionComplete: handleSubmissionComplete,
       // </CHANGE>
+      sendMessageFromWorkspace: (message: string) => {
+        console.log("[v0] sendMessageFromWorkspace called with:", message)
+        const isCommand = handleCommandOrMessage(message)
+        if (!isCommand) {
+          sendMessage({ text: message })
+        }
+        // </CHANGE>
+      },
     }))
 
     const handlePreviewClick = (fileType: string) => {
@@ -1139,27 +1145,27 @@ Here's how our application process works:
 
 First, you'll complete a take-home challenge that's designed to showcase your skills in a real-world scenario. This challenge is tailored to the role you're applying for and typically takes 2-4 hours to complete.
 
-**Step 2: Teamified AI Interviews**
+**Step 2: AI interviews**
 
-After submitting your take-home challenge, you'll participate in our Teamified AI Interviews. These are:
+After submitting your take-home challenge, you'll participate in our AI interviews. These are:
 
 - 🎯 Personalized based on your role and experience
 - 📊 Recorded for review by the hiring manager
 - 🚀 Completed at your convenience
 
-**Step 3: Hiring Manager Review**
+**Step 3: Meet the Hiring Manager!**
 
 After you complete both the take-home challenge and AI interviews, we'll compile your complete application package including:
 
 - Your resume and portfolio
 - Take-home challenge submission
-- Recording of your Teamified AI interviews
+- Recording of your AI interviews
 
 This package will be sent directly to the hiring manager for review.
 
-**Step 4: Final Interview**
+**Step 4: Job Offer**
 
-If the hiring manager is impressed with your application package, they'll reach out to you directly to schedule a final interview. This is your opportunity to meet the team, ask questions, and discuss the role in more detail.
+If the hiring manager is impressed with your application package, they'll reach out to you with a job offer. This is your opportunity to join the team and start your new role!
 
 Ready to get started? Let's begin with the take-home challenge!`,
           agentId: activeAgent.id,

@@ -20,6 +20,7 @@ interface JobViewProps {
   onApplyForJob?: (job: JobListing) => void
   showApplicationStatus?: boolean
   onToggleApplicationView?: (show: boolean) => void
+  onSendMessage?: (message: string) => void
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -92,6 +93,7 @@ export function JobView({
   onApplyForJob,
   showApplicationStatus = false,
   onToggleApplicationView,
+  onSendMessage,
 }: JobViewProps) {
   console.log("[v0] JobView rendered with showApplicationStatus:", showApplicationStatus)
 
@@ -132,6 +134,13 @@ export function JobView({
     console.log("[v0] Back to details clicked")
     if (onToggleApplicationView) {
       onToggleApplicationView(false)
+    }
+  }
+
+  const handleStageClick = (stageName: string) => {
+    console.log("[v0] Stage clicked:", stageName)
+    if (onSendMessage) {
+      onSendMessage(stageName.toLowerCase())
     }
   }
 
@@ -304,7 +313,10 @@ export function JobView({
 
               <div className="space-y-4">
                 {/* Stage 1: Take Home Challenge */}
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent/50 border border-border">
+                <div
+                  onClick={() => handleStageClick("Take Home Challenge")}
+                  className="flex items-start gap-4 p-4 rounded-xl bg-accent/50 border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+                >
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#A16AE8] text-white flex items-center justify-center font-semibold">
                     1
                   </div>
@@ -322,7 +334,10 @@ export function JobView({
                 </div>
 
                 {/* Stage 2: Teamified AI Interviews */}
-                <div className="flex items-start gap-4 p-4 rounded-xl border border-border">
+                <div
+                  onClick={() => handleStageClick("Teamified AI Interviews")}
+                  className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+                >
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
                     2
                   </div>
@@ -340,7 +355,10 @@ export function JobView({
                 </div>
 
                 {/* Stage 3: Meet the hiring manager */}
-                <div className="flex items-start gap-4 p-4 rounded-xl border border-border">
+                <div
+                  onClick={() => handleStageClick("Meet the hiring manager")}
+                  className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+                >
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
                     3
                   </div>
