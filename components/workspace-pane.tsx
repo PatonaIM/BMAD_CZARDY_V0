@@ -22,8 +22,8 @@ import {
   MapPin,
   DollarSign,
 } from "lucide-react"
-import { useState, useEffect } from "react"
-import type { WorkspaceContent, JobListing } from "@/types/workspace"
+import { useState, useEffect, useMemo } from "react"
+import type { WorkspaceContent, JobListing, CandidateProfile } from "@/types/workspace"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -37,16 +37,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { JobView } from "@/components/job-view"
+import { CandidateSwipe } from "@/components/candidate-swipe"
+import { MatchSuccess } from "@/components/match-success"
+import { mockCandidates } from "@/lib/mock-candidates"
+import { getCurrentUser } from "@/lib/auth"
 
 // Mock getCurrentUser function - replace with actual implementation if needed
-const getCurrentUser = () => ({
-  id: "1",
-  name: "John Doe",
-  email: "john.doe@example.com",
-  role: "candidate", // or "hiring_manager", "recruiter", etc.
-  profile: {},
-  company: {},
-})
+// const getCurrentUser = () => ({
+//   id: "1",
+//   name: "John Doe",
+//   email: "john.doe@example.com",
+//   role: "candidate", // or "hiring_manager", "recruiter", etc.
+//   profile: {},
+//   company: {},
+// })
 
 interface WorkspacePaneProps {
   isOpen: boolean
@@ -631,7 +635,7 @@ const mockFileStructure: FileNode[] = [
   { name: "README.md", type: "file", path: "README.md" },
 ]
 
-export function WorkspacePane({
+export const WorkspacePane = ({
   isOpen,
   onClose,
   content,
@@ -641,12 +645,16 @@ export function WorkspacePane({
   onViewJob,
   onBackToJobBoard,
   onApplyForJob,
+  // ADDED: onOpenWorkspace prop
+  onOpenWorkspace,
   onRequestSubmit,
   onConfirmSubmit,
   onSubmissionComplete,
   onSendMessage, // Added from updates
-}: WorkspacePaneProps) {
+}: WorkspacePaneProps) => {
   console.log("[v0] WorkspacePane rendered with content.type:", content.type)
+
+  const currentUser = useMemo(() => getCurrentUser(), [])
 
   const [isGithubOpen, setIsGithubOpen] = useState(false)
   const [githubConnected, setGithubConnected] = useState(true)
@@ -668,6 +676,15 @@ export function WorkspacePane({
   const [submissionComplete, setSubmissionComplete] = useState(false)
 
   const [showApplicationStatusLocal, setShowApplicationStatusLocal] = useState(false)
+
+  const [swipedCandidates, setSwipedCandidates] = useState<{
+    left: string[]
+    right: string[]
+  }>({ left: [], right: [] })
+  const [showMatchSuccess, setShowMatchSuccess] = useState(false)
+  const [matchedCandidate, setMatchedCandidate] = useState<CandidateProfile | null>(null)
+
+  const [matchedCandidatesPerJob, setMatchedCandidatesPerJob] = useState<Record<string, CandidateProfile[]>>({})
 
   const [fileContents, setFileContents] = useState<Record<string, string>>({
     "app/main.py": `from fastapi import FastAPI
@@ -919,6 +936,16 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     }
   }
 
+  const handleUpdateJobSummary = (jobId: string, newSummary: string) => {
+    console.log("[v0] Updating job summary for job:", jobId)
+    // In a real app, this would update the job in the database
+    // For now, we'll just log it and potentially send a message to the AI
+    if (onSendMessage) {
+      onSendMessage(`Update job summary for job ${jobId}: ${newSummary}`)
+    }
+  }
+  // </CHANGE>
+
   useEffect(() => {
     if (content.type === "job-view" && content.job) {
       console.log("[v0] Job view opened, job.applied:", content.job.applied)
@@ -1076,11 +1103,100 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     )
   }
 
+  const handleSwipeLeft = (candidate: CandidateProfile) => {
+    console.log("[v0] Swiped left on candidate:", candidate.name)
+    setSwipedCandidates((prev) => ({
+      ...prev,
+      left: [...prev.left, candidate.id],
+    }))
+  }
+
+  const handleSwipeRight = (candidate: CandidateProfile) => {
+    console.log("[v0] Swiped right on candidate:", candidate.name)
+    setSwipedCandidates((prev) => ({
+      ...prev,
+      right: [...prev.right, candidate.id],
+    }))
+
+    // Simulate mutual match (in real app, check if candidate also swiped right)
+    const isMutualMatch = Math.random() > 0.5 // 50% chance for demo
+    if (isMutualMatch) {
+      setMatchedCandidate(candidate)
+      setShowMatchSuccess(true)
+
+      if (content.job) {
+        setMatchedCandidatesPerJob((prev) => ({
+          ...prev,
+          [content.job.id]: [...(prev[content.job.id] || []), candidate],
+        }))
+      }
+    }
+  }
+
+  const handleOpenMatchChat = () => {
+    console.log("[v0] Opening chat with matched candidate:", matchedCandidate?.name)
+    // In real app, this would open a chat interface
+    setShowMatchSuccess(false)
+    onClose()
+  }
+
+  const handleContinueSwiping = () => {
+    setShowMatchSuccess(false)
+    setMatchedCandidate(null)
+  }
+
+  const handleBackToMyJobs = () => {
+    console.log("[v0] Back to my jobs from candidate swipe")
+    const user = currentUser
+    if (onBackToJobBoard) {
+      onBackToJobBoard()
+    }
+  }
+
+  const handleBrowseMoreCandidates = () => {
+    console.log("[v0] Browse more candidates clicked")
+    if (content.job && onOpenWorkspace) {
+      onOpenWorkspace("candidate-swipe", { job: content.job })
+    }
+  }
+
+  const handleOpenCandidateChat = (candidate: CandidateProfile) => {
+    console.log("[v0] Opening chat with candidate:", candidate.name)
+    // In a real app, this would open a chat interface with the candidate
+    // For now, we'll send a message to the AI chat
+    if (onSendMessage) {
+      onSendMessage(`I want to chat with ${candidate.name} about the ${content.job?.title} position`)
+    }
+    onClose()
+  }
+
+  if (showMatchSuccess && matchedCandidate) {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <MatchSuccess
+          candidateName={matchedCandidate.name}
+          jobTitle={content.job?.title}
+          onOpenChat={handleOpenMatchChat}
+          onContinueSwiping={handleContinueSwiping}
+        />
+      </div>
+    )
+  }
+
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full border-l">
         {content.title && (
           <div className="flex items-center px-6 py-4 border-b">
+            {content.type === "candidate-swipe" && (
+              <button
+                onClick={handleBackToMyJobs}
+                className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                aria-label="Back to my jobs"
+              >
+                <span className="text-lg font-semibold">←</span>
+              </button>
+            )}
             {content.type === "job-view" && (
               <button
                 onClick={onBackToJobBoard}
@@ -1348,6 +1464,18 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
           </div>
         )}
 
+        {content.type === "candidate-swipe" && content.job && (
+          <CandidateSwipe
+            candidates={mockCandidates.filter(
+              (c) => !swipedCandidates.left.includes(c.id) && !swipedCandidates.right.includes(c.id),
+            )}
+            jobTitle={content.job.title}
+            onSwipeLeft={handleSwipeLeft}
+            onSwipeRight={handleSwipeRight}
+            onBackToJobs={handleBackToMyJobs}
+          />
+        )}
+
         {content.type === "job-view" && content.job && (
           <JobView
             job={content.job}
@@ -1357,250 +1485,346 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             showApplicationStatus={showApplicationStatusLocal}
             onToggleApplicationView={handleToggleApplicationView}
             onSendMessage={onSendMessage}
+            userRole={currentUser?.role}
+            matchedCandidates={matchedCandidatesPerJob[content.job.id] || []}
+            onBrowseMoreCandidates={handleBrowseMoreCandidates}
+            onOpenCandidateChat={handleOpenCandidateChat}
+            onUpdateJobSummary={handleUpdateJobSummary}
           />
         )}
 
         {content.type === "job-board" && (
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-6xl mx-auto space-y-8">
-              {/* Applied Jobs Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-6">
-                  <h3 className="text-xl font-semibold">Applied Jobs</h3>
-                  <span className="px-2.5 py-0.5 bg-[#A16AE8] text-white text-sm font-medium rounded-full">
-                    {mockJobListings.filter((j) => j.applied).length}
-                  </span>
-                </div>
-                {mockJobListings.filter((j) => j.applied).length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-border rounded-lg">
-                    <Briefcase className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-muted-foreground">You haven't applied to any jobs yet</p>
+              {currentUser?.role === "hiring_manager" ? (
+                // Hiring Manager View - My Jobs with candidate browsing
+                <div>
+                  <div className="flex items-center gap-2 mb-6">
+                    <h3 className="text-xl font-semibold">My Jobs</h3>
+                    <span className="px-2.5 py-0.5 bg-[#A16AE8] text-white text-sm font-medium rounded-full">
+                      {mockJobListings.filter((j) => j.status === "open").length}
+                    </span>
                   </div>
-                ) : (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {mockJobListings
-                      .filter((j) => j.applied)
-                      .map((job) => {
-                        const fitLevel =
-                          job.skillMatch && job.skillMatch >= 90
-                            ? "STRONG FIT"
-                            : job.skillMatch && job.skillMatch >= 80
-                              ? "GOOD FIT"
-                              : "MODERATE FIT"
-                        const fitColor =
-                          fitLevel === "STRONG FIT"
-                            ? "text-green-500"
-                            : fitLevel === "GOOD FIT"
-                              ? "text-orange-500"
-                              : "text-yellow-500"
-
-                        return (
-                          <div
-                            key={job.id}
-                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
-                            onClick={() => onViewJob?.(job)}
-                          >
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <h4 className="font-semibold text-lg">{job.title}</h4>
-                                  <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-xs font-medium rounded">
-                                    Open
-                                  </span>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
-                                <div className="flex flex-col gap-1.5 text-sm text-muted-foreground mb-3">
-                                  <div className="flex items-center gap-1.5">
-                                    <MapPin className="w-4 h-4" />
-                                    <span>{job.location}</span>
-                                    <span className="mx-1">•</span>
-                                    <Briefcase className="w-4 h-4" />
-                                    <span>{job.type}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <DollarSign className="w-4 h-4" />
-                                    <span>{job.salary}</span>
-                                    <span className="mx-1">•</span>
-                                    <Clock className="w-4 h-4" />
-                                    <span>1 week ago</span>
-                                  </div>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                                  {job.description || "Design and implement scalable backend services and APIs."}
-                                </p>
+                      .filter((j) => j.status === "open")
+                      .map((job) => (
+                        <div
+                          key={job.id}
+                          className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
+                          onClick={() => {
+                            if (onViewJob) {
+                              onViewJob(job)
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="font-semibold text-lg">{job.title}</h4>
+                                <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-xs font-medium rounded">
+                                  {job.status}
+                                </span>
                               </div>
-                              <div className="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
-                                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                                  {job.logo ? (
-                                    <img
-                                      src={job.logo || "/placeholder.svg"}
-                                      alt={`${job.company} logo`}
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement
-                                        target.style.display = "none"
-                                        const fallback = target.nextElementSibling as HTMLElement
-                                        if (fallback) fallback.style.display = "flex"
-                                      }}
-                                    />
-                                  ) : null}
-                                  <div
-                                    className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground"
-                                    style={{ display: job.logo ? "none" : "flex" }}
-                                  >
-                                    {job.company.charAt(0)}
-                                  </div>
+                              <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
+                              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground mb-3">
+                                <div className="flex items-center gap-1.5">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{job.location}</span>
+                                  <span className="mx-1">•</span>
+                                  <Briefcase className="w-4 h-4" />
+                                  <span>{job.type}</span>
                                 </div>
-                                {job.skillMatch && (
-                                  <div className="flex flex-col items-center">
-                                    <div className={`text-3xl font-bold ${fitColor}`} style={{ lineHeight: "1" }}>
-                                      {job.skillMatch}%
-                                    </div>
-                                    <div
-                                      className={`text-[10px] font-semibold ${fitColor} mt-1`}
-                                      style={{ lineHeight: "1" }}
-                                    >
-                                      {fitLevel}
-                                    </div>
-                                  </div>
-                                )}
+                                <div className="flex items-center gap-1.5">
+                                  <DollarSign className="w-4 h-4" />
+                                  <span>{job.salary}</span>
+                                </div>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{job.description}</p>
+                            </div>
+                            <div className="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
+                              <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                                {job.logo ? (
+                                  <img
+                                    src={job.logo || "/placeholder.svg"}
+                                    alt={`${job.company} logo`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.style.display = "none"
+                                      const fallback = target.nextElementSibling as HTMLElement
+                                      if (fallback) fallback.style.display = "flex"
+                                    }}
+                                  />
+                                ) : null}
+                                <div
+                                  className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground"
+                                  style={{ display: job.logo ? "none" : "flex" }}
+                                >
+                                  {job.company.charAt(0)}
+                                </div>
                               </div>
                             </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onViewJob?.(job)
-                              }}
-                              className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
-                            >
-                              View Application
-                            </button>
                           </div>
-                        )
-                      })}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // Open job view
+                              if (onViewJob) {
+                                onViewJob(job)
+                              }
+                            }}
+                            className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
+                          >
+                            View Job
+                          </button>
+                        </div>
+                      ))}
                   </div>
-                )}
-              </div>
-
-              {/* Saved Jobs Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-6">
-                  <h3 className="text-xl font-semibold">Saved Jobs</h3>
-                  <span className="px-2.5 py-0.5 bg-[#A16AE8] text-white text-sm font-medium rounded-full">
-                    {mockJobListings.filter((j) => j.saved && !j.applied).length}
-                  </span>
                 </div>
-                {mockJobListings.filter((j) => j.saved && !j.applied).length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-border rounded-lg">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-muted-foreground">You haven't saved any jobs yet</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {mockJobListings
-                      .filter((j) => j.saved && !j.applied)
-                      .map((job) => {
-                        const fitLevel =
-                          job.skillMatch && job.skillMatch >= 90
-                            ? "STRONG FIT"
-                            : job.skillMatch && job.skillMatch >= 80
-                              ? "GOOD FIT"
-                              : "MODERATE FIT"
-                        const fitColor =
-                          fitLevel === "STRONG FIT"
-                            ? "text-green-500"
-                            : fitLevel === "GOOD FIT"
-                              ? "text-orange-500"
-                              : "text-yellow-500"
+              ) : (
+                // Candidate View - Applied and Saved Jobs
+                <>
+                  {/* Applied Jobs Section */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <h3 className="text-xl font-semibold">Applied Jobs</h3>
+                      <span className="px-2.5 py-0.5 bg-[#A16AE8] text-white text-sm font-medium rounded-full">
+                        {mockJobListings.filter((j) => j.applied).length}
+                      </span>
+                    </div>
+                    {mockJobListings.filter((j) => j.applied).length === 0 ? (
+                      <div className="text-center py-12 border border-dashed border-border rounded-lg">
+                        <Briefcase className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                        <p className="text-muted-foreground">You haven't applied to any jobs yet</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {mockJobListings
+                          .filter((j) => j.applied)
+                          .map((job) => {
+                            const fitLevel =
+                              job.skillMatch && job.skillMatch >= 90
+                                ? "STRONG FIT"
+                                : job.skillMatch && job.skillMatch >= 80
+                                  ? "GOOD FIT"
+                                  : "MODERATE FIT"
+                            const fitColor =
+                              fitLevel === "STRONG FIT"
+                                ? "text-green-500"
+                                : fitLevel === "GOOD FIT"
+                                  ? "text-orange-500"
+                                  : "text-yellow-500"
 
-                        return (
-                          <div
-                            key={job.id}
-                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
-                            onClick={() => onViewJob?.(job)}
-                          >
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <h4 className="font-semibold text-lg">{job.title}</h4>
-                                  <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-xs font-medium rounded">
-                                    Open
-                                  </span>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
-                                <div className="flex flex-col gap-1.5 text-sm text-muted-foreground mb-3">
-                                  <div className="flex items-center gap-1.5">
-                                    <MapPin className="w-4 h-4" />
-                                    <span>{job.location}</span>
-                                    <span className="mx-1">•</span>
-                                    <Briefcase className="w-4 h-4" />
-                                    <span>{job.type}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <DollarSign className="w-4 h-4" />
-                                    <span>{job.salary}</span>
-                                    <span className="mx-1">•</span>
-                                    <Clock className="w-4 h-4" />
-                                    <span>2 days ago</span>
-                                  </div>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                                  {job.description ||
-                                    "We're looking for an experienced full-stack developer to join our growing..."}
-                                </p>
-                              </div>
-                              <div className="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
-                                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                                  {job.logo ? (
-                                    <img
-                                      src={job.logo || "/placeholder.svg"}
-                                      alt={`${job.company} logo`}
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement
-                                        target.style.display = "none"
-                                        const fallback = target.nextElementSibling as HTMLElement
-                                        if (fallback) fallback.style.display = "flex"
-                                      }}
-                                    />
-                                  ) : null}
-                                  <div
-                                    className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground"
-                                    style={{ display: job.logo ? "none" : "flex" }}
-                                  >
-                                    {job.company.charAt(0)}
-                                  </div>
-                                </div>
-                                {job.skillMatch && (
-                                  <div className="flex flex-col items-center">
-                                    <div className={`text-3xl font-bold ${fitColor}`} style={{ lineHeight: "1" }}>
-                                      {job.skillMatch}%
+                            return (
+                              <div
+                                key={job.id}
+                                className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
+                                onClick={() => onViewJob?.(job)}
+                              >
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <h4 className="font-semibold text-lg">{job.title}</h4>
+                                      <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-xs font-medium rounded">
+                                        Open
+                                      </span>
                                     </div>
-                                    <div
-                                      className={`text-[10px] font-semibold ${fitColor} mt-1`}
-                                      style={{ lineHeight: "1" }}
-                                    >
-                                      {fitLevel}
+                                    <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
+                                    <div className="flex flex-col gap-1.5 text-sm text-muted-foreground mb-3">
+                                      <div className="flex items-center gap-1.5">
+                                        <MapPin className="w-4 h-4" />
+                                        <span>{job.location}</span>
+                                        <span className="mx-1">•</span>
+                                        <Briefcase className="w-4 h-4" />
+                                        <span>{job.type}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <DollarSign className="w-4 h-4" />
+                                        <span>{job.salary}</span>
+                                        <span className="mx-1">•</span>
+                                        <Clock className="w-4 h-4" />
+                                        <span>1 week ago</span>
+                                      </div>
                                     </div>
+                                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                                      {job.description || "Design and implement scalable backend services and APIs."}
+                                    </p>
                                   </div>
-                                )}
+                                  <div className="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
+                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                                      {job.logo ? (
+                                        <img
+                                          src={job.logo || "/placeholder.svg"}
+                                          alt={`${job.company} logo`}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement
+                                            target.style.display = "none"
+                                            const fallback = target.nextElementSibling as HTMLElement
+                                            if (fallback) fallback.style.display = "flex"
+                                          }}
+                                        />
+                                      ) : null}
+                                      <div
+                                        className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground"
+                                        style={{ display: job.logo ? "none" : "flex" }}
+                                      >
+                                        {job.company.charAt(0)}
+                                      </div>
+                                    </div>
+                                    {job.skillMatch && (
+                                      <div className="flex flex-col items-center">
+                                        <div className={`text-3xl font-bold ${fitColor}`} style={{ lineHeight: "1" }}>
+                                          {job.skillMatch}%
+                                        </div>
+                                        <div
+                                          className={`text-[10px] font-semibold ${fitColor} mt-1`}
+                                          style={{ lineHeight: "1" }}
+                                        >
+                                          {fitLevel}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onViewJob?.(job)
+                                  }}
+                                  className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
+                                >
+                                  View Application
+                                </button>
                               </div>
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onApplyForJob(job) // Use the imported prop onApplyForJob
-                              }}
-                              className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
-                            >
-                              Submit Application
-                            </button>
-                          </div>
-                        )
-                      })}
+                            )
+                          })}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+
+                  {/* Saved Jobs Section */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <h3 className="text-xl font-semibold">Saved Jobs</h3>
+                      <span className="px-2.5 py-0.5 bg-[#A16AE8] text-white text-sm font-medium rounded-full">
+                        {mockJobListings.filter((j) => j.saved && !j.applied).length}
+                      </span>
+                    </div>
+                    {mockJobListings.filter((j) => j.saved && !j.applied).length === 0 ? (
+                      <div className="text-center py-12 border border-dashed border-border rounded-lg">
+                        <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                        <p className="text-muted-foreground">You haven't saved any jobs yet</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {mockJobListings
+                          .filter((j) => j.saved && !j.applied)
+                          .map((job) => {
+                            const fitLevel =
+                              job.skillMatch && job.skillMatch >= 90
+                                ? "STRONG FIT"
+                                : job.skillMatch && job.skillMatch >= 80
+                                  ? "GOOD FIT"
+                                  : "MODERATE FIT"
+                            const fitColor =
+                              fitLevel === "STRONG FIT"
+                                ? "text-green-500"
+                                : fitLevel === "GOOD FIT"
+                                  ? "text-orange-500"
+                                  : "text-yellow-500"
+
+                            return (
+                              <div
+                                key={job.id}
+                                className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
+                                onClick={() => onViewJob?.(job)}
+                              >
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <h4 className="font-semibold text-lg">{job.title}</h4>
+                                      <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-xs font-medium rounded">
+                                        Open
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
+                                    <div className="flex flex-col gap-1.5 text-sm text-muted-foreground mb-3">
+                                      <div className="flex items-center gap-1.5">
+                                        <MapPin className="w-4 h-4" />
+                                        <span>{job.location}</span>
+                                        <span className="mx-1">•</span>
+                                        <Briefcase className="w-4 h-4" />
+                                        <span>{job.type}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <DollarSign className="w-4 h-4" />
+                                        <span>{job.salary}</span>
+                                        <span className="mx-1">•</span>
+                                        <Clock className="w-4 h-4" />
+                                        <span>2 days ago</span>
+                                      </div>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                                      {job.description ||
+                                        "We're looking for an experienced full-stack developer to join our growing..."}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
+                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                                      {job.logo ? (
+                                        <img
+                                          src={job.logo || "/placeholder.svg"}
+                                          alt={`${job.company} logo`}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement
+                                            target.style.display = "none"
+                                            const fallback = target.nextElementSibling as HTMLElement
+                                            if (fallback) fallback.style.display = "flex"
+                                          }}
+                                        />
+                                      ) : null}
+                                      <div
+                                        className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground"
+                                        style={{ display: job.logo ? "none" : "flex" }}
+                                      >
+                                        {job.company.charAt(0)}
+                                      </div>
+                                    </div>
+                                    {job.skillMatch && (
+                                      <div className="flex flex-col items-center">
+                                        <div className={`text-3xl font-bold ${fitColor}`} style={{ lineHeight: "1" }}>
+                                          {job.skillMatch}%
+                                        </div>
+                                        <div
+                                          className={`text-[10px] font-semibold ${fitColor} mt-1`}
+                                          style={{ lineHeight: "1" }}
+                                        >
+                                          {fitLevel}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onApplyForJob(job) // Use the imported prop onApplyForJob
+                                  }}
+                                  className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
+                                >
+                                  Submit Application
+                                </button>
+                              </div>
+                            )
+                          })}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

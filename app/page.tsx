@@ -123,13 +123,23 @@ export default function ChatPage() {
 
   const handleViewJob = (job: any) => {
     console.log("[v0] Opening job view for:", job.title)
-    setWorkspaceContent({
-      type: "job-view",
-      title: job.title,
-      job: job,
-    })
 
-    if (chatMainRef.current) {
+    const user = getCurrentUser()
+    if (user?.role === "hiring_manager" && job.type === "candidate-swipe") {
+      setWorkspaceContent({
+        type: "candidate-swipe",
+        title: `Candidates for ${job.title}`,
+        job: job,
+      })
+    } else {
+      setWorkspaceContent({
+        type: "job-view",
+        title: job.title,
+        job: job,
+      })
+    }
+
+    if (chatMainRef.current && user?.role !== "hiring_manager") {
       setTimeout(() => {
         if (chatMainRef.current) {
           chatMainRef.current.showJobViewSummary(job)
