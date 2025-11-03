@@ -28,6 +28,15 @@ export interface WorkspaceContent {
 
 export type JobStatus = "draft" | "open" | "closed" | "cancelled"
 
+export type StageStatus = "completed" | "pending" | "not-started" | "scheduled"
+
+export interface ApplicationStatus {
+  takeHomeChallenge: StageStatus
+  aiInterviews: StageStatus
+  hiringManager: StageStatus
+  jobOffer: StageStatus
+}
+
 export interface JobListing {
   id: string
   title: string
@@ -56,4 +65,5 @@ export interface JobListing {
   aboutClient?: string
   jobSummary?: string
   skillMatch?: number // Percentage (0-100) indicating how well candidate matches job requirements
+  applicationStatus?: ApplicationStatus // Added to track application stage completion
 }

@@ -21,6 +21,7 @@ interface JobViewProps {
   showApplicationStatus?: boolean
   onToggleApplicationView?: (show: boolean) => void
   onSendMessage?: (message: string) => void
+  isViewingExistingApplication?: boolean
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -94,11 +95,49 @@ export function JobView({
   showApplicationStatus = false,
   onToggleApplicationView,
   onSendMessage,
+  isViewingExistingApplication = false,
 }: JobViewProps) {
   console.log("[v0] JobView rendered with showApplicationStatus:", showApplicationStatus)
 
   const statusConfig = getStatusConfig(job.status || "open")
   const skillMatchConfig = job.skillMatch !== undefined ? getSkillMatchConfig(job.skillMatch) : null
+
+  const getStageStatusDisplay = (status: string) => {
+    switch (status) {
+      case "completed":
+        return {
+          label: "Completed",
+          className: "bg-green-500/10 text-green-500 border border-green-500/20",
+        }
+      case "pending":
+        return {
+          label: "Pending",
+          className: "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20",
+        }
+      case "scheduled":
+        return {
+          label: "Scheduled",
+          className: "bg-blue-500/10 text-blue-500 border border-blue-500/20",
+        }
+      default:
+        return {
+          label: "Not Started",
+          className: "bg-muted text-muted-foreground",
+        }
+    }
+  }
+
+  const takeHomeChallengeStatus = job.applicationStatus?.takeHomeChallenge || "not-started"
+  const aiInterviewsStatus = job.applicationStatus?.aiInterviews || "not-started"
+  const hiringManagerStatus = job.applicationStatus?.hiringManager || "not-started"
+  const jobOfferStatus = job.applicationStatus?.jobOffer || "not-started"
+
+  const displayHiringManagerStatus =
+    takeHomeChallengeStatus === "completed" &&
+    aiInterviewsStatus === "completed" &&
+    hiringManagerStatus === "not-started"
+      ? "scheduled"
+      : hiringManagerStatus
 
   const renderJobSummary = (summary: string) => {
     const lines = summary.split("\n").filter((line) => line.trim())
@@ -125,8 +164,16 @@ export function JobView({
 
   const handleApplyClick = () => {
     console.log("[v0] Apply button clicked for job:", job.title)
-    if (onApplyForJob) {
-      onApplyForJob(job)
+    if (job.applied) {
+      console.log("[v0] Job already applied, showing application status")
+      if (onToggleApplicationView) {
+        onToggleApplicationView(true)
+      }
+    } else {
+      console.log("[v0] Applying for job")
+      if (onApplyForJob) {
+        onApplyForJob(job)
+      }
     }
   }
 
@@ -139,8 +186,12 @@ export function JobView({
 
   const handleStageClick = (stageName: string) => {
     console.log("[v0] Stage clicked:", stageName)
-    if (onSendMessage) {
-      onSendMessage(stageName.toLowerCase())
+    if (onSendMessage && !isViewingExistingApplication) {
+      if (stageName === "Job Offer") {
+        onSendMessage("I would like to send a follow up message to the hiring manager regarding my application")
+      } else {
+        onSendMessage(stageName.toLowerCase())
+      }
     }
   }
 
@@ -315,10 +366,24 @@ export function JobView({
                 {/* Stage 1: Take Home Challenge */}
                 <div
                   onClick={() => handleStageClick("Take Home Challenge")}
-                  className="flex items-start gap-4 p-4 rounded-xl bg-accent/50 border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+                  className={`flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors ${
+                    takeHomeChallengeStatus === "completed"
+                      ? "bg-green-500/5"
+                      : takeHomeChallengeStatus === "pending"
+                        ? "bg-accent/50"
+                        : ""
+                  }`}
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#A16AE8] text-white flex items-center justify-center font-semibold">
-                    1
+                  <div
+                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
+                      takeHomeChallengeStatus === "completed"
+                        ? "bg-green-500 text-white"
+                        : takeHomeChallengeStatus === "pending"
+                          ? "bg-[#A16AE8] text-white"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {takeHomeChallengeStatus === "completed" ? <CheckCircle2 className="w-5 h-5" /> : "1"}
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground mb-1">Take Home Challenge</h3>
@@ -327,8 +392,10 @@ export function JobView({
                     </p>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
-                      Pending
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${getStageStatusDisplay(takeHomeChallengeStatus).className}`}
+                    >
+                      {getStageStatusDisplay(takeHomeChallengeStatus).label}
                     </span>
                   </div>
                 </div>
@@ -336,10 +403,24 @@ export function JobView({
                 {/* Stage 2: Teamified AI Interviews */}
                 <div
                   onClick={() => handleStageClick("Teamified AI Interviews")}
-                  className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+                  className={`flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors ${
+                    aiInterviewsStatus === "completed"
+                      ? "bg-green-500/5"
+                      : aiInterviewsStatus === "pending"
+                        ? "bg-accent/50"
+                        : ""
+                  }`}
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
-                    2
+                  <div
+                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
+                      aiInterviewsStatus === "completed"
+                        ? "bg-green-500 text-white"
+                        : aiInterviewsStatus === "pending"
+                          ? "bg-[#A16AE8] text-white"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {aiInterviewsStatus === "completed" ? <CheckCircle2 className="w-5 h-5" /> : "2"}
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground mb-1">Teamified AI Interviews</h3>
@@ -348,8 +429,10 @@ export function JobView({
                     </p>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                      Not Started
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${getStageStatusDisplay(aiInterviewsStatus).className}`}
+                    >
+                      {getStageStatusDisplay(aiInterviewsStatus).label}
                     </span>
                   </div>
                 </div>
@@ -357,20 +440,75 @@ export function JobView({
                 {/* Stage 3: Meet the hiring manager */}
                 <div
                   onClick={() => handleStageClick("Meet the hiring manager")}
-                  className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+                  className={`flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors ${
+                    displayHiringManagerStatus === "completed"
+                      ? "bg-green-500/5"
+                      : displayHiringManagerStatus === "pending" || displayHiringManagerStatus === "scheduled"
+                        ? "bg-accent/50"
+                        : ""
+                  }`}
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
-                    3
+                  <div
+                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
+                      displayHiringManagerStatus === "completed"
+                        ? "bg-green-500 text-white"
+                        : displayHiringManagerStatus === "pending" || displayHiringManagerStatus === "scheduled"
+                          ? "bg-[#A16AE8] text-white"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {displayHiringManagerStatus === "completed" ? <CheckCircle2 className="w-5 h-5" /> : "3"}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">Meet the hiring manager!</h3>
+                    <h3 className="font-semibold text-foreground mb-1">Meet the Hiring Manager!</h3>
                     <p className="text-sm text-muted-foreground">
-                      Final interview with the hiring manager to discuss the role and team
+                      {displayHiringManagerStatus === "scheduled"
+                        ? "External meeting scheduled with the hiring manager to discuss the role and team"
+                        : "Final interview with the hiring manager to discuss the role and team"}
                     </p>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                      Not Started
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${getStageStatusDisplay(displayHiringManagerStatus).className}`}
+                    >
+                      {getStageStatusDisplay(displayHiringManagerStatus).label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stage 4: Job Offer */}
+                <div
+                  onClick={() => handleStageClick("Job Offer")}
+                  className={`flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors ${
+                    jobOfferStatus === "completed"
+                      ? "bg-green-500/5"
+                      : jobOfferStatus === "pending"
+                        ? "bg-accent/50"
+                        : ""
+                  }`}
+                >
+                  <div
+                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
+                      jobOfferStatus === "completed"
+                        ? "bg-green-500 text-white"
+                        : jobOfferStatus === "pending"
+                          ? "bg-[#A16AE8] text-white"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {jobOfferStatus === "completed" ? <CheckCircle2 className="w-5 h-5" /> : "4"}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground mb-1">Job Offer</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Waiting for the hiring manager if they will proceed with a Job Offer for your application.
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${getStageStatusDisplay(jobOfferStatus).className}`}
+                    >
+                      {getStageStatusDisplay(jobOfferStatus).label}
                     </span>
                   </div>
                 </div>

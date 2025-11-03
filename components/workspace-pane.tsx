@@ -136,8 +136,14 @@ const mockJobListings: JobListing[] = [
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8CqoDVeRki0ggWWe4b6klV7L1rpAyu.png",
-    status: "draft",
+    status: "open",
     skillMatch: 75,
+    applicationStatus: {
+      takeHomeChallenge: "completed",
+      aiInterviews: "not-started",
+      hiringManager: "not-started",
+      jobOffer: "not-started",
+    },
     jobSummary:
       "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
     aboutClient:
@@ -277,6 +283,12 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8CqoDVeRki0ggWWe4b6klV7L1rpAyu.png",
     status: "open",
     skillMatch: 85,
+    applicationStatus: {
+      takeHomeChallenge: "not-started",
+      aiInterviews: "completed",
+      hiringManager: "not-started",
+      jobOffer: "not-started",
+    },
     jobSummary:
       "• Design and develop robust and scalable backend services and APIs\n• Implement microservices architecture and ensure seamless integration\n• Manage and optimize database performance and integrity\n• Write clean, efficient, and well-documented code\n• Collaborate with frontend teams to define API contracts",
     aboutClient:
@@ -446,6 +458,12 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8CqoDVeRki0ggWWe4b6klV7L1rpAyu.png",
     status: "open",
     skillMatch: 83,
+    applicationStatus: {
+      takeHomeChallenge: "completed",
+      aiInterviews: "completed",
+      hiringManager: "not-started",
+      jobOffer: "not-started",
+    },
     jobSummary:
       "• Implement and maintain security controls to protect systems and data\n• Conduct vulnerability assessments and penetration testing\n• Monitor security alerts and respond to incidents\n• Develop and enforce security policies and procedures\n• Stay up-to-date with the latest security threats and technologies",
     aboutClient:
@@ -529,6 +547,12 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-dQXWtYPZnlTH9UQP75JXSGSEbgNnFd.png",
     status: "closed",
     skillMatch: 93,
+    applicationStatus: {
+      takeHomeChallenge: "completed",
+      aiInterviews: "completed",
+      hiringManager: "completed",
+      jobOffer: "pending",
+    },
     jobSummary:
       "• Lead and mentor a team of 8-10 software engineers to deliver high-quality products\n• Define technical roadmap and architecture decisions\n• Collaborate with product and design teams on feature planning\n• Conduct performance reviews and support career development\n• Foster a culture of innovation and continuous improvement",
     aboutClient:
@@ -542,7 +566,7 @@ const mockJobListings: JobListing[] = [
       "Experience with Agile/Scrum methodologies",
     ],
     responsibilities: [
-      "Lead and mentor a team of software engineers",
+      "Lead and mentor a software engineers",
       "Define technical strategy and architecture decisions",
       "Collaborate with stakeholders on product roadmap",
       "Conduct performance reviews and support career development",
@@ -900,20 +924,10 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     setShowApplicationStatusLocal(show)
   }
 
-  // </CHANGE>
   const handleViewJobDetails = (job: JobListing) => {
-    if (onViewJob) {
-      onViewJob(job)
-    }
-  }
-
-  const handleApplyForJob = (job: JobListing) => {
-    console.log("[v0] handleApplyForJob called for:", job.title)
-    if (onApplyForJob) {
-      onApplyForJob(job)
-    }
-    setShowApplicationStatusLocal(true)
-    // Open the job view to show application status
+    console.log("[v0] handleViewJobDetails called for:", job.title, "applied:", job.applied)
+    // If the job is already applied, show application status by default
+    setShowApplicationStatusLocal(job.applied || false)
     if (onViewJob) {
       onViewJob(job)
     }
@@ -928,6 +942,13 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
       onSendMessage(`Can you analyze the skill gap for the ${job.title} role at ${job.company}?`)
     }
   }
+
+  useEffect(() => {
+    if (content.type === "job-view" && content.job) {
+      console.log("[v0] Job view opened, job.applied:", content.job.applied)
+      setShowApplicationStatusLocal(content.job.applied || false)
+    }
+  }, [content.type, content.job])
 
   useEffect(() => {
     const handleConfirmSubmission = () => {
@@ -945,7 +966,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             onSubmissionComplete()
           }
         }, 3000)
-        // </CHANGE>
       }, 2500)
     }
 
@@ -1036,7 +1056,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
           <div className="flex items-center justify-center">
             <div className="w-24 h-24 rounded-full border-4 border-muted border-t-[#A16AE8] border-r-[#8096FD] animate-spin" />
           </div>
-          {/* </CHANGE> */}
           <div className="space-y-2">
             <h3 className="text-2xl font-semibold">Submitting Your Challenge...</h3>
             <p className="text-muted-foreground">Please wait while we process your submission</p>
@@ -1065,7 +1084,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     )
   }
 
-  // Start
   if (content.type === "challenge-loading") {
     return (
       <div className="flex flex-col h-full border-l items-center justify-center bg-background">
@@ -1081,7 +1099,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
       </div>
     )
   }
-  // </CHANGE> End
 
   return (
     <TooltipProvider>
@@ -1191,7 +1208,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                 </svg>
               </button>
             </div>
-            {/* </CHANGE> */}
           </div>
         )}
 
@@ -1361,13 +1377,13 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             job={content.job}
             onBack={onBackToJobBoard}
             onRequestSkillGapAnalysis={handleRequestSkillGapAnalysis}
-            onApplyForJob={handleApplyForJob}
+            onApplyForJob={onApplyForJob} // Fixed: Use the imported prop onApplyForJob
             showApplicationStatus={showApplicationStatusLocal}
             onToggleApplicationView={handleToggleApplicationView}
             onSendMessage={onSendMessage}
+            isViewingExistingApplication={content.job.applied}
           />
         )}
-        {/* </CHANGE> */}
 
         {content.type === "job-board" && (
           <div className="flex-1 overflow-y-auto p-6">
@@ -1389,6 +1405,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {mockJobListings
                       .filter((j) => j.applied)
+                      .sort((a, b) => (b.skillMatch || 0) - (a.skillMatch || 0))
                       .map((job) => {
                         const fitLevel =
                           job.skillMatch && job.skillMatch >= 90
@@ -1406,10 +1423,10 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                         return (
                           <div
                             key={job.id}
-                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
-                            onClick={() => onViewJob?.(job)}
+                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer flex flex-col"
+                            onClick={() => handleViewJobDetails(job)}
                           >
-                            <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1 flex items-start justify-between mb-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                   <h4 className="font-semibold text-lg">{job.title}</h4>
@@ -1478,7 +1495,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                onViewJob?.(job)
+                                handleViewJobDetails(job)
                               }}
                               className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
                             >
@@ -1508,6 +1525,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {mockJobListings
                       .filter((j) => j.saved && !j.applied)
+                      .sort((a, b) => (b.skillMatch || 0) - (a.skillMatch || 0))
                       .map((job) => {
                         const fitLevel =
                           job.skillMatch && job.skillMatch >= 90
@@ -1525,10 +1543,10 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                         return (
                           <div
                             key={job.id}
-                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
-                            onClick={() => onViewJob?.(job)}
+                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer flex flex-col"
+                            onClick={() => handleViewJobDetails(job)}
                           >
-                            <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1 flex items-start justify-between mb-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                   <h4 className="font-semibold text-lg">{job.title}</h4>
@@ -1598,7 +1616,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleApplyForJob(job)
+                                handleViewJobDetails(job)
                               }}
                               className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
                             >
