@@ -1075,6 +1075,11 @@ ${loremParagraphs[1]}`
 
       // 13. Job Board (opens job board grid)
       if (lowerText === "job board") {
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
+          setActiveAgent(technicalRecruiter)
+        }
+
         const userMsg: Message = {
           id: Date.now().toString(),
           type: "user",
@@ -1086,7 +1091,7 @@ ${loremParagraphs[1]}`
           id: (Date.now() + 1).toString(),
           type: "ai",
           content: generateLargeResponse(),
-          agentId: activeAgent.id,
+          agentId: technicalRecruiter?.id || activeAgent.id,
         }
 
         setLocalMessages((prev) => [...prev, userMsg, aiMsg])
