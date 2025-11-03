@@ -138,12 +138,6 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8CqoDVeRki0ggWWe4b6klV7L1rpAyu.png",
     status: "open",
     skillMatch: 75,
-    applicationStatus: {
-      takeHomeChallenge: "completed",
-      aiInterviews: "not-started",
-      hiringManager: "not-started",
-      jobOffer: "not-started",
-    },
     jobSummary:
       "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
     aboutClient:
@@ -283,12 +277,6 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8CqoDVeRki0ggWWe4b6klV7L1rpAyu.png",
     status: "open",
     skillMatch: 85,
-    applicationStatus: {
-      takeHomeChallenge: "not-started",
-      aiInterviews: "completed",
-      hiringManager: "not-started",
-      jobOffer: "not-started",
-    },
     jobSummary:
       "• Design and develop robust and scalable backend services and APIs\n• Implement microservices architecture and ensure seamless integration\n• Manage and optimize database performance and integrity\n• Write clean, efficient, and well-documented code\n• Collaborate with frontend teams to define API contracts",
     aboutClient:
@@ -458,12 +446,6 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8CqoDVeRki0ggWWe4b6klV7L1rpAyu.png",
     status: "open",
     skillMatch: 83,
-    applicationStatus: {
-      takeHomeChallenge: "completed",
-      aiInterviews: "completed",
-      hiringManager: "not-started",
-      jobOffer: "not-started",
-    },
     jobSummary:
       "• Implement and maintain security controls to protect systems and data\n• Conduct vulnerability assessments and penetration testing\n• Monitor security alerts and respond to incidents\n• Develop and enforce security policies and procedures\n• Stay up-to-date with the latest security threats and technologies",
     aboutClient:
@@ -547,12 +529,6 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100%20%282%29-dQXWtYPZnlTH9UQP75JXSGSEbgNnFd.png",
     status: "closed",
     skillMatch: 93,
-    applicationStatus: {
-      takeHomeChallenge: "completed",
-      aiInterviews: "completed",
-      hiringManager: "completed",
-      jobOffer: "pending",
-    },
     jobSummary:
       "• Lead and mentor a team of 8-10 software engineers to deliver high-quality products\n• Define technical roadmap and architecture decisions\n• Collaborate with product and design teams on feature planning\n• Conduct performance reviews and support career development\n• Foster a culture of innovation and continuous improvement",
     aboutClient:
@@ -1381,7 +1357,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             showApplicationStatus={showApplicationStatusLocal}
             onToggleApplicationView={handleToggleApplicationView}
             onSendMessage={onSendMessage}
-            isViewingExistingApplication={content.job.applied}
           />
         )}
 
@@ -1405,7 +1380,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {mockJobListings
                       .filter((j) => j.applied)
-                      .sort((a, b) => (b.skillMatch || 0) - (a.skillMatch || 0))
                       .map((job) => {
                         const fitLevel =
                           job.skillMatch && job.skillMatch >= 90
@@ -1423,10 +1397,10 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                         return (
                           <div
                             key={job.id}
-                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer flex flex-col"
-                            onClick={() => handleViewJobDetails(job)}
+                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
+                            onClick={() => onViewJob?.(job)}
                           >
-                            <div className="flex-1 flex items-start justify-between mb-4">
+                            <div className="flex items-start justify-between mb-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                   <h4 className="font-semibold text-lg">{job.title}</h4>
@@ -1495,7 +1469,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleViewJobDetails(job)
+                                onViewJob?.(job)
                               }}
                               className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
                             >
@@ -1525,7 +1499,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {mockJobListings
                       .filter((j) => j.saved && !j.applied)
-                      .sort((a, b) => (b.skillMatch || 0) - (a.skillMatch || 0))
                       .map((job) => {
                         const fitLevel =
                           job.skillMatch && job.skillMatch >= 90
@@ -1543,10 +1516,10 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                         return (
                           <div
                             key={job.id}
-                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer flex flex-col"
-                            onClick={() => handleViewJobDetails(job)}
+                            className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
+                            onClick={() => onViewJob?.(job)}
                           >
-                            <div className="flex-1 flex items-start justify-between mb-4">
+                            <div className="flex items-start justify-between mb-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                   <h4 className="font-semibold text-lg">{job.title}</h4>
@@ -1616,7 +1589,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleViewJobDetails(job)
+                                onApplyForJob(job) // Use the imported prop onApplyForJob
                               }}
                               className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
                             >
