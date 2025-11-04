@@ -1,3 +1,4 @@
+import type React from "react"
 export type WorkspaceContentType =
   | "pdf"
   | "markdown"
@@ -18,6 +19,8 @@ export type WorkspaceContentType =
   | "candidate-swipe"
   | "job-swipe"
   | "match-success"
+  | "browse-candidates"
+  | "candidate-chat"
   | null
 
 export interface WorkspaceContent {
@@ -29,6 +32,7 @@ export interface WorkspaceContent {
   job?: JobListing
   candidate?: CandidateProfile
   matchedWith?: string
+  timestamp?: number // Added timestamp to ensure unique workspace instances for randomization
 }
 
 export type JobStatus = "draft" | "open" | "closed" | "cancelled"
@@ -83,6 +87,10 @@ export interface CandidateProfile {
   takeHomeChallengeScore?: number
   takeHomeChallengeSubmission?: string
   takeHomeChallengeNotes?: string
+  codeReviewPoints?: string[]
+  submissionFiles?: { name: string; url: string; type: string; size?: string }[]
+  submissionLinks?: string[]
+  githubRepo?: string
   aiInterviewStatus: "completed" | "pending" | "not_started"
   aiInterviewScore?: number
   aiInterviewRecordingUrl?: string
@@ -91,4 +99,29 @@ export interface CandidateProfile {
   matchedJobs?: string[]
   swipedRight?: boolean
   swipedLeft?: boolean
+}
+
+export interface WorkspacePaneProps {
+  isOpen: boolean
+  onClose: () => void
+  content: WorkspaceContent
+  onProfileSave?: () => void // Added callback for profile save
+  onUpgradePlan?: () => void // Added onUpgradePlan prop
+  onHiringManagerStepChange?: (step: number) => void
+  onViewJob?: (job: JobListing) => void // Added callback for viewing job details
+  onBackToJobBoard?: () => void // Added onBackToJobBoard prop
+  activeWorkspace?: string // Added activeWorkspace prop for context
+  onApplyForJob?: (job: JobListing) => void // Added prop
+  // Added onOpenWorkspace prop
+  onOpenWorkspace?: (workspaceType: WorkspaceContent["type"], data?: any) => void
+  // Added showApplicationStatus and onToggleApplicationView props
+  showApplicationStatus?: boolean
+  onToggleApplicationView?: (show: boolean) => void
+  onRequestSubmit?: () => void
+  onConfirmSubmit?: () => void
+  onSubmissionComplete?: () => void
+  onSendMessage?: (message: string) => void
+  // ADDED: onOpenCandidateChat prop to handle candidate chat
+  onOpenCandidateChat?: (candidate: CandidateProfile) => void
+  chatMainRef?: React.RefObject<any>
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation" // Added useRouter import to enable navigation to home page
 import { ChatSidebar } from "@/components/chat-sidebar"
 import { ChatMain } from "@/components/chat-main"
 import { WorkspacePane } from "@/components/workspace-pane"
@@ -8,24 +9,36 @@ import { ThemeProvider } from "@/components/theme-provider"
 import type { WorkspaceContent } from "@/types/workspace"
 import { getCurrentUser, clearNewSignupFlag, clearUserOnInitialLoad } from "@/lib/auth"
 import { AI_AGENTS } from "@/types/agents"
+import type { JobListing, CandidateProfile } from "@/types/job"
+
+export interface ChatMainRef {
+  handleProfileSaved: () => void
+  switchAgent: (agentId: string) => void
+  showPricingGuidance: () => void
+  showPaymentSuccess: () => void
+  showMyJobsSummary: (appliedCount: number, savedCount: number) => void
+  showJobBoardSummary: () => void
+  showJobViewSummary: (job: JobListing) => void
+  handleJobApplication: (job: JobListing) => void
+  handleSubmitChallengeRequest: () => void
+  handleSubmissionComplete: () => void
+  sendMessageFromWorkspace: (message: string) => void
+  showCandidateChat: (candidate: CandidateProfile) => void
+  introduceMatchedCandidate: (
+    candidateName: string,
+    hiringManagerName: string,
+    position: string,
+    company: string,
+  ) => void
+}
 
 export default function ChatPage() {
+  const router = useRouter() // Added router to enable navigation
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [workspaceContent, setWorkspaceContent] = useState<WorkspaceContent>({ type: null })
   const [initialAgent, setInitialAgent] = useState<string | null>(null)
   const [shouldShowWelcome, setShouldShowWelcome] = useState(false)
-  const chatMainRef = useRef<{
-    handleProfileSaved: () => void
-    switchAgent: (agentId: string) => void
-    showPricingGuidance: () => void
-    showPaymentSuccess: () => void
-    showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary to ref type
-    showJobViewSummary: (job: any) => void // Added showJobViewSummary to ref type
-    handleJobApplication: (job: any) => void // Added method for job application
-    handleSubmitChallengeRequest: () => void // Added method for challenge submission request
-    handleSubmissionComplete: () => void // Added handleSubmissionComplete to ref type
-    sendMessageFromWorkspace: (message: string) => void // Added sendMessageFromWorkspace method to ref type
-  } | null>(null)
+  const chatMainRef = useRef<ChatMainRef | null>(null)
 
   useEffect(() => {
     clearUserOnInitialLoad()
@@ -121,7 +134,7 @@ export default function ChatPage() {
     }
   }
 
-  const handleViewJob = (job: any) => {
+  const handleViewJob = (job: JobListing) => {
     console.log("[v0] Opening job view for:", job.title)
 
     const user = getCurrentUser()
@@ -152,11 +165,22 @@ export default function ChatPage() {
     console.log("[v0] My Jobs clicked")
     const user = getCurrentUser()
 
-    // Switch to Technical Recruiter AI Agent
-    const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-    if (technicalRecruiter && chatMainRef.current) {
-      console.log("[v0] Switching to Technical Recruiter agent")
-      chatMainRef.current.switchAgent(technicalRecruiter.id)
+    router.push("/")
+
+    if (user?.role === "hiring_manager") {
+      // Switch to Account Manager AI Agent for hiring managers
+      const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
+      if (accountManager && chatMainRef.current) {
+        console.log("[v0] Switching to Account Manager agent")
+        chatMainRef.current.switchAgent(accountManager.id)
+      }
+    } else {
+      // Switch to Technical Recruiter AI Agent for candidates
+      const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+      if (technicalRecruiter && chatMainRef.current) {
+        console.log("[v0] Switching to Technical Recruiter agent")
+        chatMainRef.current.switchAgent(technicalRecruiter.id)
+      }
     }
 
     // Open job board in workspace
@@ -175,7 +199,13 @@ export default function ChatPage() {
         if (chatMainRef.current) {
           chatMainRef.current.showMyJobsSummary(appliedCount, savedCount)
         }
-      }, 1000)
+      }, 500)
+    } else if (user?.role === "hiring_manager" && chatMainRef.current) {
+      setTimeout(() => {
+        if (chatMainRef.current) {
+          chatMainRef.current.showJobBoardSummary()
+        }
+      }, 500)
     }
   }
 
@@ -189,7 +219,7 @@ export default function ChatPage() {
     })
   }
 
-  const handleApplyForJob = (job: any) => {
+  const handleApplyForJob = (job: JobListing) => {
     console.log("[v0] handleApplyForJob called for:", job.title)
     if (chatMainRef.current) {
       chatMainRef.current.handleJobApplication(job)
@@ -217,6 +247,33 @@ export default function ChatPage() {
     }
   }
 
+  const handleOpenCandidateChat = (candidate: CandidateProfile) => {
+    console.log("[v0] handleOpenCandidateChat called for:", candidate.name)
+    console.log("[v0] chatMainRef.current exists:", !!chatMainRef.current)
+    console.log("[v0] chatMainRef.current.showCandidateChat exists:", !!chatMainRef.current?.showCandidateChat)
+    if (chatMainRef.current) {
+      chatMainRef.current.showCandidateChat(candidate)
+    }
+  }
+
+  const handleIntroduceMatchedCandidate = (
+    candidateName: string,
+    hiringManagerName: string,
+    position: string,
+    company: string,
+  ) => {
+    console.log(
+      "[v0] handleIntroduceMatchedCandidate called with:",
+      candidateName,
+      hiringManagerName,
+      position,
+      company,
+    )
+    if (chatMainRef.current) {
+      chatMainRef.current.introduceMatchedCandidate(candidateName, hiringManagerName, position, company)
+    }
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -226,6 +283,7 @@ export default function ChatPage() {
           onEditProfile={handleEditProfile}
           onUpgradePlan={handleUpgradePlan}
           onMyJobs={handleMyJobs}
+          workspaceType={workspaceContent.type}
         />
         <div className="flex-1 flex overflow-hidden">
           <div className={`${workspaceContent.type ? "w-2/5" : "w-full"} transition-all duration-300`}>
@@ -254,6 +312,9 @@ export default function ChatPage() {
                 onRequestSubmit={handleRequestSubmit}
                 onSubmissionComplete={handleSubmissionComplete}
                 onSendMessage={handleSendMessage}
+                onOpenCandidateChat={handleOpenCandidateChat}
+                chatMainRef={chatMainRef} // Pass chatMainRef to WorkspacePane
+                onIntroduceMatchedCandidate={handleIntroduceMatchedCandidate} // Added onIntroduceMatchedCandidate prop
               />
             </div>
           )}

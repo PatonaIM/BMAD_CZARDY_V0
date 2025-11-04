@@ -28,6 +28,7 @@ import type { WorkspaceContent } from "@/types/workspace"
 import { MarkdownRenderer } from "./markdown-renderer"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
+import { getCandidateConversation } from "@/lib/mock-conversations"
 
 interface ChatMainProps {
   isSidebarOpen: boolean
@@ -53,6 +54,10 @@ interface Message {
   hasActionButton?: boolean
   actionButtonText?: string
   actionButtonHandler?: string
+  avatar?: string // Profile picture URL for candidate messages
+  senderName?: string // Full name of the sender
+  timestamp?: string // Timestamp for the message
+  // </CHANGE>
 }
 
 // Define JobListing type for clarity in handleJobApplication
@@ -66,6 +71,22 @@ type JobListing = {
   description: string
   skillMatch: number
   // Add other relevant properties as needed
+}
+
+export interface ChatMainHandle {
+  sendMessage: (message: string) => void
+  showJobViewSummary: (job: JobListing) => void
+  switchAgent: (agentId: string) => void
+  showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
+  showJobBoardSummary: () => void
+  showCandidateChat: (candidate: any) => void
+  introduceMatchedCandidate: (
+    candidateName: string,
+    hiringManagerName: string,
+    position: string,
+    company: string,
+  ) => void
+  sendCandidateInsights: (candidate: any) => void // Added sendCandidateInsights
 }
 
 const welcomeQuestions = [
@@ -297,6 +318,15 @@ export const ChatMain = forwardRef<
     handleSubmissionComplete: () => void
     // </CHANGE>
     sendMessageFromWorkspace: (message: string) => void
+    showJobBoardSummary: () => void
+    showCandidateChat: (candidate: any) => void
+    introduceMatchedCandidate: (
+      candidateName: string,
+      hiringManagerName: string,
+      position: string,
+      company: string,
+    ) => void
+    sendCandidateInsights: (candidate: any) => void // Added sendCandidateInsights
   },
   ChatMainProps
 >(
@@ -744,6 +774,55 @@ ${loremParagraphs[1]}`
           },
         ])
       },
+      showJobBoardSummary: () => {
+        const summaryMessage = `Welcome to your Job Board! I'm here to help you manage your job postings and find the best candidates. 💼
+
+## Your Job Overview
+
+I can see you have several job postings across different stages:
+- **Draft Jobs:** Jobs you're still working on
+- **Open Jobs:** Active positions accepting applications
+- **Closed Jobs:** Completed or archived positions
+
+## How I Can Help You
+
+I'm your Account Manager AI, and I specialize in helping you:
+
+**Create New Jobs** 📝
+- Generate professional job descriptions
+- Set up requirements and qualifications
+- Define salary ranges and benefits
+
+**Manage Existing Jobs** 🔄
+- Update job details and requirements
+- Review and edit job descriptions
+- Close or reopen positions
+
+**Track Your Postings** 📊
+- Get updates on application counts
+- Monitor job performance
+- Review candidate matches
+
+## What Would You Like to Do?
+
+Whether you're creating a new position, updating an existing job, or need insights about your postings, I'm here to assist you every step of the way!`
+
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            type: "ai",
+            content: summaryMessage,
+            agentId: activeAgent.id,
+            promptSuggestions: [
+              { text: "Create a new job posting", icon: <Plus className="w-4 h-4" /> },
+              { text: "Update an existing job", icon: <FileText className="w-4 h-4" /> },
+              { text: "Show me job performance stats", icon: <Calculator className="w-4 h-4" /> },
+              { text: "Help me write a job description", icon: <Sparkles className="w-4 h-4" /> },
+            ],
+          },
+        ])
+      },
       showJobViewSummary: (job: JobListing) => {
         const skillMatchText =
           job.skillMatch >= 80 ? "excellent match" : job.skillMatch >= 60 ? "good match" : "moderate match"
@@ -798,9 +877,163 @@ ${loremParagraphs[1]}`
         console.log("[v0] sendMessageFromWorkspace called with:", message)
         const isCommand = handleCommandOrMessage(message)
         if (!isCommand) {
+          console.log("[v0] sendMessageFromWorkspace: Not a command, calling sendMessage")
           sendMessage({ text: message })
         }
         // </CHANGE>
+      },
+      showJobBoardSummary: () => {
+        const summaryMessage = `Welcome to your Job Board! I'm here to help you manage your job postings and find the best candidates. 💼
+
+## Your Job Overview
+
+I can see you have several job postings across different stages:
+- **Draft Jobs:** Jobs you're still working on
+- **Open Jobs:** Active positions accepting applications
+- **Closed Jobs:** Completed or archived positions
+
+## How I Can Help You
+
+I'm your Account Manager AI, and I specialize in helping you:
+
+**Create New Jobs** 📝
+- Generate professional job descriptions
+- Set up requirements and qualifications
+- Define salary ranges and benefits
+
+**Manage Existing Jobs** 🔄
+- Update job details and requirements
+- Review and edit job descriptions
+- Close or reopen positions
+
+**Track Your Postings** 📊
+- Get updates on application counts
+- Monitor job performance
+- Review candidate matches
+
+## What Would You Like to Do?
+
+Whether you're creating a new position, updating an existing job, or need insights about your postings, I'm here to assist you every step of the way!`
+
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            type: "ai",
+            content: summaryMessage,
+            agentId: activeAgent.id,
+            promptSuggestions: [
+              { text: "Create a new job posting", icon: <Plus className="w-4 h-4" /> },
+              { text: "Update an existing job", icon: <FileText className="w-4 h-4" /> },
+              { text: "Show me job performance stats", icon: <Calculator className="w-4 h-4" /> },
+              { text: "Help me write a job description", icon: <Sparkles className="w-4 h-4" /> },
+            ],
+          },
+        ])
+      },
+      showCandidateChat: (candidate: any) => {
+        console.log("[v0] showCandidateChat called with candidate:", candidate)
+        setLocalMessages([])
+        console.log("[v0] Messages cleared")
+
+        const conversationHistory = getCandidateConversation(candidate.id, candidate.name)
+        console.log("[v0] Conversation history retrieved:", conversationHistory)
+
+        // Create conversation messages from the candidate's unique history
+        const conversationMessages: Message[] = conversationHistory.map((msg, index) => ({
+          id: `${Date.now()}-${index}`,
+          type: msg.sender === "hiring_manager" ? "user" : "ai",
+          content: msg.content,
+          agentId: activeAgent.id,
+          ...(msg.sender === "candidate" && {
+            avatar: candidate.avatar,
+            senderName: candidate.name,
+          }),
+          timestamp: msg.timestamp,
+        }))
+        console.log("[v0] Conversation messages created:", conversationMessages.length, "messages")
+
+        setLocalMessages(conversationMessages)
+        console.log("[v0] Messages set, scrolling to bottom")
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+        }
+      },
+      introduceMatchedCandidate: (
+        candidateName: string,
+        hiringManagerName: string,
+        position: string,
+        company: string,
+      ) => {
+        // Reset chat by clearing all messages
+        setLocalMessages([])
+
+        // Switch to Technical Recruiter agent
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+        if (technicalRecruiter) {
+          setActiveAgent(technicalRecruiter)
+
+          // Determine pronoun based on hiring manager name (simple heuristic)
+          const pronoun = "he/she"
+
+          // Add introduction message from Technical Recruiter
+          setTimeout(() => {
+            setLocalMessages([
+              {
+                id: Date.now().toString(),
+                type: "ai",
+                content: `Hello ${candidateName}! I would like you to meet ${hiringManagerName}, ${pronoun} is a ${position} for ${company}. I created this group chat so you can finally meet and get teamified!`,
+                agentId: technicalRecruiter.id,
+                isAgentSwitch: true,
+              },
+            ])
+          }, 100)
+        }
+      },
+      sendCandidateInsights: (candidate: any) => {
+        // Switch to Technical Recruiter agent if not already
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
+          setActiveAgent(technicalRecruiter)
+        }
+
+        // Generate insights message based on candidate data
+        const skillMatch = candidate.skillMatch || 0
+        const experience = candidate.experience || "N/A"
+        const location = candidate.location || "Unknown"
+        const topSkills = candidate.skills?.slice(0, 3).join(", ") || "various skills"
+
+        let insightMessage = `I'm reviewing ${candidate.name}'s profile for you. `
+
+        if (skillMatch >= 90) {
+          insightMessage += `This is an exceptional match at ${skillMatch}%! `
+        } else if (skillMatch >= 75) {
+          insightMessage += `This is a strong match at ${skillMatch}%. `
+        } else {
+          insightMessage += `This candidate has a ${skillMatch}% skill match. `
+        }
+
+        insightMessage += `They have ${experience} of experience and are based in ${location}. `
+        insightMessage += `Their key strengths include ${topSkills}. `
+
+        if (candidate.takeHomeChallengeScore) {
+          insightMessage += `They scored ${candidate.takeHomeChallengeScore}/100 on the take-home challenge. `
+        }
+
+        insightMessage += `Would you like to review their profile in detail?`
+
+        // Add AI message with insights
+        setTimeout(() => {
+          setLocalMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              type: "ai",
+              content: insightMessage,
+              agentId: technicalRecruiter?.id || "technical-recruiter",
+            },
+          ])
+        }, 300) // Delay to sync with fade-in animation
       },
     }))
 
@@ -1125,6 +1358,54 @@ ${loremParagraphs[1]}`
         return true
       }
 
+      // Browse Candidates (opens candidate swipe interface)
+      if (lowerText === "browse candidates") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: `Perfect! I've opened the candidate browser for you. You can now swipe through our pool of talented candidates.
+
+**How it works:**
+
+- 👍 **Swipe Right (Heart)** - Save candidates you're interested in
+- 👎 **Swipe Left (X)** - Pass on candidates
+- 🔄 **Infinite Loop** - Browse through all candidates continuously
+
+Each candidate profile includes:
+- Professional background and experience
+- Skills and qualifications
+- Take-home challenge results
+- AI interview recordings
+- Contact information
+
+Take your time reviewing each profile and save the ones that match your requirements!`,
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+        // Open browse candidates workspace with job context if available
+        const workspaceData: WorkspaceContent = {
+          type: "browse-candidates",
+          title: "Browse Candidates",
+          timestamp: Date.now(),
+          ...(currentWorkspaceContent?.job && { job: currentWorkspaceContent.job }),
+        }
+
+        onOpenWorkspace(workspaceData)
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent(workspaceData)
+
+        return true
+      }
+
       // 15. Apply to this job (shows interview options)
       if (lowerText === "apply to this job") {
         const userMsg: Message = {
@@ -1265,6 +1546,12 @@ Are you ready to begin your Take Home Challenge?`,
           isAgentSwitch: true,
         },
       ])
+    }
+
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      }
     }
 
     // const isCentered = localMessages.length === 0 && aiMessages.length === 0
@@ -1477,19 +1764,33 @@ Are you ready to begin your Take Home Challenge?`,
                     {msg.type === "user" ? (
                       <div className="flex justify-end mb-6">
                         <div className="max-w-[80%] px-5 py-3 rounded-3xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg">
-                          <p className="text-sm leading-relaxed">{msg.content}</p>
+                          <p className="text-sm leading-relaxed" title={msg.timestamp}>
+                            {msg.content}
+                          </p>
+                          {/* </CHANGE> */}
                         </div>
                       </div>
                     ) : (
                       <div className="mb-6">
                         <div className="flex items-center gap-2 mb-3">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
-                            style={{ backgroundColor: messageAgent?.color }}
-                          >
-                            <span className="text-lg">{messageAgent?.icon}</span>
-                          </div>
-                          <span className="text-sm font-medium text-foreground">{messageAgent?.name}</span>
+                          {msg.avatar ? (
+                            <img
+                              src={msg.avatar || "/placeholder.svg"}
+                              alt={msg.senderName || "Candidate"}
+                              className="w-8 h-8 rounded-full object-cover shadow-sm"
+                            />
+                          ) : (
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                              style={{ backgroundColor: messageAgent?.color }}
+                            >
+                              <span className="text-lg">{messageAgent?.icon}</span>
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-foreground">
+                            {msg.senderName || messageAgent?.name}
+                          </span>
+                          {/* </CHANGE> */}
                         </div>
                         {msg.thinkingTime && (
                           <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
@@ -1497,7 +1798,8 @@ Are you ready to begin your Take Home Challenge?`,
                             <ChevronDown className="w-4 h-4" />
                           </div>
                         )}
-                        <div className="space-y-4">
+                        <div className="space-y-4" title={msg.timestamp}>
+                          {/* </CHANGE> */}
                           <MarkdownRenderer content={msg.content} />
 
                           {msg.promptSuggestions && msg.promptSuggestions.length > 0 && (

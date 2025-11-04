@@ -28,7 +28,7 @@ export function MatchSuccess({ candidateName, jobTitle, onOpenChat, onContinueSw
         </h1>
 
         <p className="text-xl text-muted-foreground mb-2">
-          You and <span className="font-semibold text-foreground">{candidateName}</span> matched!
+          <span className="font-semibold text-foreground">{candidateName}</span> is already waiting to meet you!
         </p>
 
         {jobTitle && <p className="text-sm text-muted-foreground mb-8">Position: {jobTitle}</p>}

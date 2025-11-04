@@ -31,9 +31,17 @@ interface ChatSidebarProps {
   onEditProfile?: () => void
   onUpgradePlan?: () => void
   onMyJobs?: () => void // Added callback for My Jobs
+  workspaceType?: string | null // Added workspaceType prop to track active workspace
 }
 
-export function ChatSidebar({ isOpen, onToggle, onEditProfile, onUpgradePlan, onMyJobs }: ChatSidebarProps) {
+export function ChatSidebar({
+  isOpen,
+  onToggle,
+  onEditProfile,
+  onUpgradePlan,
+  onMyJobs,
+  workspaceType,
+}: ChatSidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -127,7 +135,7 @@ export function ChatSidebar({ isOpen, onToggle, onEditProfile, onUpgradePlan, on
               label="New chat"
               isOpen={isOpen}
               onClick={() => handleNavigation("/")}
-              isActive={pathname === "/"}
+              isActive={pathname === "/" && !workspaceType}
             />
             <SidebarButton icon={Search} label="Search chats" isOpen={isOpen} onClick={() => {}} />
             {user && (
@@ -139,7 +147,15 @@ export function ChatSidebar({ isOpen, onToggle, onEditProfile, onUpgradePlan, on
                 isActive={pathname === "/library"}
               />
             )}
-            {user && <SidebarButton icon={Briefcase} label="My Jobs" isOpen={isOpen} onClick={onMyJobs} />}
+            {user && (
+              <SidebarButton
+                icon={Briefcase}
+                label="My Jobs"
+                isOpen={isOpen}
+                onClick={onMyJobs}
+                isActive={workspaceType === "job-board"}
+              />
+            )}
           </nav>
 
           {/* Chats Section */}
