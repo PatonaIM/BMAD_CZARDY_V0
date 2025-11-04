@@ -13,7 +13,6 @@ import {
   Users,
   Star,
   Pencil,
-  Check,
   X,
   Bold,
   Italic,
@@ -737,6 +736,20 @@ export default function JobView({
                     style={{ whiteSpace: "pre-wrap" }}
                   />
                 </div>
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+                  <button
+                    onClick={handleCancelEditJobSummary}
+                    className="px-4 py-2 rounded-lg border border-border hover:bg-accent transition-colors text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveJobSummary}
+                    className="px-4 py-2 rounded-lg bg-[#A16AE8] text-white hover:bg-[#8f5cd4] transition-colors text-sm font-medium"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             ) : (
               <div ref={jobSummaryRef}>{renderJobSummary(job.jobSummary || job.description)}</div>
@@ -788,19 +801,17 @@ export default function JobView({
                       </button>
                     </div>
 
-                    <div className="flex gap-2 justify-end pt-4 border-t border-border">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                       <button
                         onClick={handleCancelSkillEdit}
-                        className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors flex items-center gap-2"
+                        className="px-4 py-2 rounded-lg border border-border hover:bg-accent transition-colors text-sm font-medium"
                       >
-                        <X className="w-4 h-4" />
                         Cancel
                       </button>
                       <button
                         onClick={handleSaveSkills}
-                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all flex items-center gap-2"
+                        className="px-4 py-2 rounded-lg bg-[#A16AE8] text-white hover:bg-[#8f5cd4] transition-colors text-sm font-medium"
                       >
-                        <Check className="w-4 h-4" />
                         Save Changes
                       </button>
                     </div>
@@ -896,19 +907,17 @@ export default function JobView({
                       </button>
                     </div>
 
-                    <div className="flex gap-2 justify-end pt-4 border-t border-border">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                       <button
                         onClick={handleCancelBenefitEdit}
-                        className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors flex items-center gap-2"
+                        className="px-4 py-2 rounded-lg border border-border hover:bg-accent transition-colors text-sm font-medium"
                       >
-                        <X className="w-4 h-4" />
                         Cancel
                       </button>
                       <button
                         onClick={handleSaveBenefits}
-                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all flex items-center gap-2"
+                        className="px-4 py-2 rounded-lg bg-[#A16AE8] text-white hover:bg-[#8f5cd4] transition-colors text-sm font-medium"
                       >
-                        <Check className="w-4 h-4" />
                         Save Changes
                       </button>
                     </div>
@@ -977,23 +986,6 @@ export default function JobView({
             <ArrowLeft className="w-5 h-5" />
             Back to Job Details
           </button>
-        )}
-
-        {isEditingSummary && (
-          <div className="flex gap-4 sticky bottom-6 bg-background/80 backdrop-blur-sm p-4 rounded-xl border border-border">
-            <button
-              onClick={handleCancelEditJobSummary}
-              className="flex-1 px-6 py-3 rounded-xl border-2 border-border hover:bg-muted transition-all font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveJobSummary}
-              className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-semibold hover:shadow-lg transition-all"
-            >
-              Save Changes
-            </button>
-          </div>
         )}
       </div>
     </div>
