@@ -345,3 +345,103 @@ export function getCandidateConversation(candidateId: string, candidateName?: st
 
   return conversation?.messages || []
 }
+
+export function saveCandidateMessage(
+  candidateId: string,
+  candidateName: string,
+  sender: "hiring_manager" | "candidate",
+  content: string,
+): void {
+  let conversation = conversations.find((conv) => conv.candidateId === candidateId)
+
+  // If conversation doesn't exist, create a new one
+  if (!conversation) {
+    conversation = {
+      candidateId,
+      candidateName,
+      messages: [],
+    }
+    conversations.push(conversation)
+  }
+
+  // Add the new message
+  const timestamp = new Date().toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
+
+  conversation.messages.push({
+    sender,
+    content,
+    timestamp,
+  })
+}
+
+export function getCandidateProfile(candidateId: string, candidateName?: string) {
+  // Map candidate names to their profiles
+  const candidateProfiles: Record<string, any> = {
+    "cand-1": {
+      name: "Sarah Chen",
+      title: "Senior Full-Stack Developer",
+      experience: "6 years",
+      personality: "Professional, enthusiastic, detail-oriented, loves mentoring",
+      skills: ["React", "Node.js", "AWS", "Microservices", "Team Leadership"],
+      background: "Led microservices migration, reduced deployment time by 70%, manages team of 5 developers",
+    },
+    "cand-2": {
+      name: "Michael Rodriguez",
+      title: "Full-Stack Engineer",
+      experience: "3 years",
+      personality: "Friendly, eager to learn, positive attitude, growth-focused",
+      skills: ["React", "Node.js", "MongoDB", "TypeScript", "E-commerce"],
+      background: "Built polished e-commerce projects, loves learning new technologies, values code quality",
+    },
+    "cand-3": {
+      name: "Priya Sharma",
+      title: "Software Engineer",
+      experience: "8 years",
+      personality: "Technical, precise, backend-focused, analytical",
+      skills: ["Distributed Systems", "PostgreSQL", "Redis", "Node.js", "System Design"],
+      background: "Expert in database optimization, high-scale systems (10M+ requests/day), performance benchmarking",
+    },
+    "cand-4": {
+      name: "James Wilson",
+      title: "Frontend Developer",
+      experience: "3 years",
+      personality: "Creative, design-focused, enthusiastic about UX and accessibility",
+      skills: ["React", "Animations", "Accessibility", "UI/UX Design", "Tailwind CSS"],
+      background: "Creates delightful user experiences, tests with screen readers, pixel-perfect implementations",
+    },
+    "cand-5": {
+      name: "Elena Popescu",
+      title: "Full-Stack Developer",
+      experience: "7 years",
+      personality: "Experienced, professional, security-conscious, detail-oriented",
+      skills: ["Payment Systems", "Security", "Stripe", "OAuth", "PCI Compliance"],
+      background: "Built secure payment systems, expert in encryption and security best practices, fintech experience",
+    },
+  }
+
+  let profile = candidateProfiles[candidateId]
+
+  // If not found by ID, try to find by name
+  if (!profile && candidateName) {
+    const nameToId: Record<string, string> = {
+      "Sarah Chen": "cand-1",
+      "Michael Rodriguez": "cand-2",
+      "Priya Sharma": "cand-3",
+      "James Wilson": "cand-4",
+      "Elena Popescu": "cand-5",
+    }
+    const id = nameToId[candidateName]
+    if (id) {
+      profile = candidateProfiles[id]
+    }
+  }
+
+  return profile
+}

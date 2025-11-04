@@ -30,6 +30,7 @@ export interface ChatMainRef {
     position: string,
     company: string,
   ) => void
+  showJobInsights: (job: JobListing) => void // Added showJobInsights to ChatMainRef
 }
 
 export default function ChatPage() {
@@ -152,7 +153,13 @@ export default function ChatPage() {
       })
     }
 
-    if (chatMainRef.current && user?.role !== "hiring_manager") {
+    if (chatMainRef.current && user?.role === "hiring_manager" && job.type !== "candidate-swipe") {
+      setTimeout(() => {
+        if (chatMainRef.current) {
+          chatMainRef.current.showJobInsights(job)
+        }
+      }, 500)
+    } else if (chatMainRef.current && user?.role !== "hiring_manager") {
       setTimeout(() => {
         if (chatMainRef.current) {
           chatMainRef.current.showJobViewSummary(job)

@@ -28,7 +28,7 @@ import type { WorkspaceContent } from "@/types/workspace"
 import { MarkdownRenderer } from "./markdown-renderer"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
-import { getCandidateConversation } from "@/lib/mock-conversations"
+import { getCandidateConversation, saveCandidateMessage } from "@/lib/mock-conversations"
 
 interface ChatMainProps {
   isSidebarOpen: boolean
@@ -70,6 +70,15 @@ type JobListing = {
   jobSummary?: string
   description: string
   skillMatch: number
+  matchedCandidates?: Array<{
+    id: string
+    name: string
+    skillMatch?: number
+    skills?: string[]
+    experience?: string
+    takeHomeChallengeScore?: number
+    location?: string
+  }>
   // Add other relevant properties as needed
 }
 
@@ -87,6 +96,8 @@ export interface ChatMainHandle {
     company: string,
   ) => void
   sendCandidateInsights: (candidate: any) => void // Added sendCandidateInsights
+  showJobInsights: (job: JobListing) => void
+  // </CHANGE>
 }
 
 const welcomeQuestions = [
@@ -327,6 +338,8 @@ export const ChatMain = forwardRef<
       company: string,
     ) => void
     sendCandidateInsights: (candidate: any) => void // Added sendCandidateInsights
+    showJobInsights: (job: JobListing) => void
+    // </CHANGE>
   },
   ChatMainProps
 >(
@@ -348,6 +361,7 @@ export const ChatMain = forwardRef<
     const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
     const [localMessages, setLocalMessages] = useState<Message[]>([])
     const [hasChallengeWelcomeShown, setHasChallengeWelcomeShown] = useState(false)
+    const [currentChatCandidate, setCurrentChatCandidate] = useState<any>(null)
     const lastUserMessageRef = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -624,6 +638,37 @@ Your code has been sent to our technical team for review. Here's what happens ne
       setLocalMessages((prev) => [...prev, followUpMessage])
     }
     // </CHANGE>
+    // </CHANGE>
+
+    const handleShowCandidateChat = (candidate: any) => {
+      console.log("[v0] handleShowCandidateChat called with candidate:", candidate)
+      setCurrentChatCandidate(candidate)
+      setLocalMessages([])
+      console.log("[v0] Messages cleared")
+
+      const conversationHistory = getCandidateConversation(candidate.id, candidate.name)
+      console.log("[v0] Conversation history retrieved:", conversationHistory)
+
+      // Create conversation messages from the candidate's unique history
+      const conversationMessages: Message[] = conversationHistory.map((msg, index) => ({
+        id: `${Date.now()}-${index}`,
+        type: msg.sender === "hiring_manager" ? "user" : "ai",
+        content: msg.content,
+        agentId: activeAgent.id,
+        ...(msg.sender === "candidate" && {
+          avatar: candidate.avatar,
+          senderName: candidate.name,
+        }),
+        timestamp: msg.timestamp,
+      }))
+      console.log("[v0] Conversation messages created:", conversationMessages.length, "messages")
+
+      setLocalMessages(conversationMessages)
+      console.log("[v0] Messages set, scrolling to bottom")
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      }
+    }
     // </CHANGE>
 
     useImperativeHandle(ref, () => ({
@@ -931,34 +976,8 @@ Whether you're creating a new position, updating an existing job, or need insigh
           },
         ])
       },
-      showCandidateChat: (candidate: any) => {
-        console.log("[v0] showCandidateChat called with candidate:", candidate)
-        setLocalMessages([])
-        console.log("[v0] Messages cleared")
-
-        const conversationHistory = getCandidateConversation(candidate.id, candidate.name)
-        console.log("[v0] Conversation history retrieved:", conversationHistory)
-
-        // Create conversation messages from the candidate's unique history
-        const conversationMessages: Message[] = conversationHistory.map((msg, index) => ({
-          id: `${Date.now()}-${index}`,
-          type: msg.sender === "hiring_manager" ? "user" : "ai",
-          content: msg.content,
-          agentId: activeAgent.id,
-          ...(msg.sender === "candidate" && {
-            avatar: candidate.avatar,
-            senderName: candidate.name,
-          }),
-          timestamp: msg.timestamp,
-        }))
-        console.log("[v0] Conversation messages created:", conversationMessages.length, "messages")
-
-        setLocalMessages(conversationMessages)
-        console.log("[v0] Messages set, scrolling to bottom")
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
-        }
-      },
+      showCandidateChat: handleShowCandidateChat,
+      // </CHANGE>
       introduceMatchedCandidate: (
         candidateName: string,
         hiringManagerName: string,
@@ -991,9 +1010,9 @@ Whether you're creating a new position, updating an existing job, or need insigh
         }
       },
       sendCandidateInsights: (candidate: any) => {
-        // Switch to Technical Recruiter agent if not already
+        // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
+        if (technicalRecruiter) {
           setActiveAgent(technicalRecruiter)
         }
 
@@ -1035,6 +1054,91 @@ Whether you're creating a new position, updating an existing job, or need insigh
           ])
         }, 300) // Delay to sync with fade-in animation
       },
+      showJobInsights: (job: JobListing) => {
+        // Switch to Account Manager agent
+        const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
+        if (accountManager) {
+          setActiveAgent(accountManager)
+        }
+
+        // Calculate insights
+        const candidateCount = job.matchedCandidates?.length || 0
+        const candidates = job.matchedCandidates || []
+
+        // Find highest scoring candidate
+        let highestScoringCandidate = null
+        let highestScore = 0
+
+        if (candidates.length > 0) {
+          highestScoringCandidate = candidates.reduce((prev, current) => {
+            const prevScore = prev.skillMatch || 0
+            const currentScore = current.skillMatch || 0
+            return currentScore > prevScore ? current : prev
+          })
+          highestScore = highestScoringCandidate.skillMatch || 0
+        }
+
+        // Generate insights message
+        let insightMessage = `## ${job.title} - Job Overview\n\n`
+
+        if (candidateCount === 0) {
+          insightMessage += `Currently, there are **no candidates** matched to this position yet. `
+          insightMessage += `I recommend browsing for candidates or adjusting your job requirements to attract more applicants.\n\n`
+        } else if (candidateCount === 1) {
+          insightMessage += `You have **1 candidate** matched to this position. `
+        } else {
+          insightMessage += `You have **${candidateCount} candidates** matched to this position. `
+        }
+
+        if (highestScoringCandidate) {
+          insightMessage += `\n\n### Top Candidate\n\n`
+          insightMessage += `**${highestScoringCandidate.name}** is your highest match at **${highestScore}% skill compatibility**. `
+
+          const reasons = []
+          if (highestScoringCandidate.skills && highestScoringCandidate.skills.length > 0) {
+            reasons.push(`strong technical skills in ${highestScoringCandidate.skills.slice(0, 2).join(" and ")}`)
+          }
+          if (highestScoringCandidate.experience) {
+            reasons.push(`${highestScoringCandidate.experience} of relevant experience`)
+          }
+          if (highestScoringCandidate.takeHomeChallengeScore && highestScoringCandidate.takeHomeChallengeScore >= 80) {
+            reasons.push(`excellent challenge score of ${highestScoringCandidate.takeHomeChallengeScore}/100`)
+          }
+
+          if (reasons.length > 0) {
+            insightMessage += `They stand out due to their ${reasons.join(", ")}.`
+          }
+        }
+
+        insightMessage += `\n\n### What You Can Do Next\n\n`
+        insightMessage += `Here are some suggested actions:\n\n`
+
+        if (candidateCount > 0) {
+          insightMessage += `- **"Start browsing candidates"** - Review all matched candidates in detail\n`
+          insightMessage += `- **"Connect with ${highestScoringCandidate?.name || "top candidates"}"** - Reach out to your best matches\n`
+          insightMessage += `- **"Compare candidates"** - See how candidates stack up against each other\n`
+        } else {
+          insightMessage += `- **"Browse for candidates"** - Search our talent pool for potential matches\n`
+          insightMessage += `- **"Refine job requirements"** - Adjust criteria to attract more candidates\n`
+        }
+        insightMessage += `- **"Update job description"** - Make changes to the posting\n`
+        insightMessage += `- **"View job analytics"** - See performance metrics for this position\n\n`
+        insightMessage += `How would you like to proceed?`
+
+        // Add AI message with insights
+        setTimeout(() => {
+          setLocalMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              type: "ai",
+              content: insightMessage,
+              agentId: accountManager?.id || "account-manager",
+            },
+          ])
+        }, 500) // Delay to allow workspace to open
+      },
+      // </CHANGE>
     }))
 
     const handlePreviewClick = (fileType: string) => {
@@ -1499,6 +1603,71 @@ Are you ready to begin your Take Home Challenge?`,
         return true
       }
 
+      // 16. Connect with Candidate - initiates a chat with a specific candidate
+      if (lowerText.startsWith("connect with")) {
+        const candidateName = text.substring("connect with".length).trim()
+        // In a real app, you'd likely look up the candidate by name or ID here.
+        // For this example, we'll simulate finding a candidate.
+        const mockCandidate = {
+          id: `cand-${Date.now()}`,
+          name: candidateName,
+          avatar: "/candidate-avatar.jpg", // Placeholder avatar
+          skillMatch: 85, // Example skill match
+          experience: "5 years",
+          location: "New York",
+          skills: ["React", "Node.js", "TypeScript"],
+        }
+
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: `Sure, I'll open a chat with ${candidateName}.`,
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+        setTimeout(() => {
+          handleShowCandidateChat(mockCandidate)
+        }, 500)
+        // </CHANGE>
+
+        return true
+      }
+
+      // 17. Compare Candidates - opens a comparison view
+      if (lowerText === "compare candidates") {
+        const userMsg: Message = {
+          id: Date.now().toString(),
+          type: "user",
+          content: text,
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "ai",
+          content: `Alright, opening the candidate comparison tool. You can select up to 3 candidates to compare side-by-side.`,
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+        // Simulate opening candidate comparison workspace
+        onOpenWorkspace({ type: "compare-candidates", title: "Compare Candidates" })
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent({ type: "compare-candidates", title: "Compare Candidates" })
+
+        return true
+      }
+
       // Not a command, return false to send to OpenAI
       return false
     }
@@ -1508,6 +1677,133 @@ Are you ready to begin your Take Home Challenge?`,
       if (!inputMessage.trim()) return
 
       console.log("[v0] handleSubmit: Sending message:", inputMessage)
+
+      if (currentChatCandidate) {
+        console.log("[v0] In candidate chat, sending message to candidate:", currentChatCandidate.name)
+
+        // Add hiring manager's message to local messages
+        const hiringManagerMessage: Message = {
+          id: `${Date.now()}-hm`,
+          type: "user",
+          content: inputMessage,
+          agentId: activeAgent.id,
+          timestamp: new Date().toLocaleString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }),
+        }
+
+        setLocalMessages((prev) => [...prev, hiringManagerMessage])
+        setInputMessage("")
+
+        // Save hiring manager's message to conversation
+        saveCandidateMessage(currentChatCandidate.id, currentChatCandidate.name, "hiring_manager", inputMessage)
+
+        // Get conversation history for context
+        const conversationHistory = getCandidateConversation(currentChatCandidate.id, currentChatCandidate.name)
+
+        try {
+          const candidateMessageId = `${Date.now()}-candidate`
+
+          // Call API to get candidate's response
+          const response = await fetch("/api/candidate-chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.JSON.stringify({
+              candidateId: currentChatCandidate.id,
+              candidateName: currentChatCandidate.name,
+              conversationHistory,
+              newMessage: inputMessage,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to get candidate response")
+          }
+
+          // Read the streaming response
+          const reader = response.body?.getReader()
+          const decoder = new TextDecoder()
+          let candidateResponse = ""
+
+          if (reader) {
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+
+              const chunk = decoder.decode(value)
+              candidateResponse += chunk
+
+              // Update the candidate's message in real-time
+              setLocalMessages((prev) => {
+                const lastMessage = prev[prev.length - 1]
+                if (lastMessage && lastMessage.type === "ai" && lastMessage.id === candidateMessageId) {
+                  // Update existing message
+                  return [
+                    ...prev.slice(0, -1),
+                    {
+                      ...lastMessage,
+                      content: candidateResponse,
+                    },
+                  ]
+                } else {
+                  // Add new candidate message
+                  return [
+                    ...prev,
+                    {
+                      id: candidateMessageId,
+                      type: "ai" as const,
+                      content: candidateResponse,
+                      agentId: activeAgent.id,
+                      avatar: currentChatCandidate.avatar,
+                      senderName: currentChatCandidate.name,
+                      timestamp: new Date().toLocaleString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      }),
+                    },
+                  ]
+                }
+              })
+            }
+
+            // Save candidate's response to conversation
+            saveCandidateMessage(currentChatCandidate.id, currentChatCandidate.name, "candidate", candidateResponse)
+          }
+        } catch (error) {
+          console.error("[v0] Error getting candidate response:", error)
+          // Add error message
+          setLocalMessages((prev) => [
+            ...prev,
+            {
+              id: `${Date.now()}-error`,
+              type: "ai" as const,
+              content: "Sorry, I'm having trouble responding right now. Please try again.",
+              agentId: activeAgent.id,
+              avatar: currentChatCandidate.avatar,
+              senderName: currentChatCandidate.name,
+              timestamp: new Date().toLocaleString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              }),
+            },
+          ])
+        }
+
+        return
+      }
 
       const isCommand = handleCommandOrMessage(inputMessage)
       if (!isCommand) {
@@ -1519,20 +1815,28 @@ Are you ready to begin your Take Home Challenge?`,
       }
     }
 
-    const handleSuggestionClick = (suggestionText: string) => {
-      setInputMessage(suggestionText)
+    const handleSuggestionClick = (text: string) => {
+      setInputMessage(text)
+      // Optionally, you can also submit the message immediately:
+      // handleSubmit({ preventDefault: () => {} } as React.FormEvent)
     }
 
-    const handlePromptSuggestionClick = (suggestionText: string) => {
-      const isCommand = handleCommandOrMessage(suggestionText)
-      if (!isCommand) {
-        sendMessage({ text: suggestionText })
-      }
+    const handlePromptSuggestionClick = (text: string) => {
+      setInputMessage(text)
+      // Submit the message immediately after clicking a prompt suggestion
+      handleSubmit({ preventDefault: () => {} } as React.FormEvent)
     }
 
     const handleAgentChange = (agent: AIAgent) => {
       setActiveAgent(agent)
       setIsAgentDropdownOpen(false)
+
+      // If switching agent while in a candidate chat, reset candidate chat state
+      if (currentChatCandidate) {
+        setCurrentChatCandidate(null)
+        // Optionally, you might want to clear localMessages or show a warning
+        // setLocalMessages([])
+      }
 
       const introMessage = generateAgentIntroduction(agent)
 
