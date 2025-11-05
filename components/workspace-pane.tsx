@@ -736,7 +736,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 78,
     jobSummary:
       "• Develop and execute comprehensive marketing strategies\n• Manage digital marketing campaigns across multiple channels\n• Analyze campaign performance and optimize ROI\n• Collaborate with sales team on lead generation\n• Build and manage marketing team",
@@ -766,7 +766,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 72,
     jobSummary:
       "• Prospect and qualify leads through outbound activities\n• Schedule meetings for account executives\n• Maintain accurate records in CRM system\n• Meet monthly quota for qualified opportunities\n• Collaborate with marketing on campaigns",
@@ -796,7 +796,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 80,
     jobSummary:
       "• Provide strategic HR guidance to business leaders\n• Manage employee relations and performance issues\n• Lead talent acquisition and retention initiatives\n• Develop and implement HR policies and programs\n• Support organizational change and development",
@@ -826,7 +826,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 75,
     jobSummary:
       "• Prepare financial reports and analysis for management\n• Support budgeting and forecasting processes\n• Analyze financial performance and variances\n• Develop financial models for business decisions\n• Collaborate with accounting team on month-end close",
@@ -856,7 +856,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 82,
     jobSummary:
       "• Write blog posts, case studies, and whitepapers\n• Optimize content for SEO and user engagement\n• Collaborate with marketing team on content strategy\n• Edit and proofread content from other team members\n• Maintain brand voice and style guidelines",
@@ -886,7 +886,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 70,
     jobSummary:
       "• Provide first and second-level technical support\n• Troubleshoot hardware and software issues\n• Manage user accounts and access permissions\n• Maintain IT equipment inventory\n• Document support procedures and solutions",
@@ -916,7 +916,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 84,
     jobSummary:
       "• Gather and document business requirements\n• Analyze business processes and identify improvements\n• Create functional specifications for development teams\n• Facilitate workshops with stakeholders\n• Support UAT and implementation activities",
@@ -946,7 +946,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 90,
     jobSummary:
       "• Review and negotiate commercial contracts\n• Provide legal advice on business matters\n• Ensure compliance with regulations\n• Manage intellectual property portfolio\n• Support M&A and corporate transactions",
@@ -976,7 +976,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 87,
     jobSummary:
       "• Manage day-to-day operations and workflows\n• Identify and implement process improvements\n• Lead operations team and support their development\n• Monitor KPIs and operational metrics\n• Collaborate with other departments on initiatives",
@@ -1006,7 +1006,7 @@ const mockJobListings: JobListing[] = [
     saved: false,
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
-    status: "closed",
+    status: "open", // Changed from "closed" to "open" to make available for browsing
     skillMatch: 79,
     jobSummary:
       "• Design marketing collateral and digital assets\n• Create visual content for social media and website\n• Maintain brand consistency across all materials\n• Collaborate with marketing team on campaigns\n• Support product team with UI design assets",
@@ -1033,7 +1033,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement enterprise cloud solutions on AWS and Azure.",
     requirements: ["AWS/Azure", "Cloud architecture", "Microservices", "7+ years experience"],
     applied: false,
-    saved: true,
+    saved: false, // Changed from true to false to make available for browsing
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
     status: "open",
@@ -1063,7 +1063,7 @@ const mockJobListings: JobListing[] = [
     description: "Build modern web applications using React and TypeScript.",
     requirements: ["React", "TypeScript", "Next.js", "5+ years experience"],
     applied: false,
-    saved: true,
+    saved: false, // Changed from true to false to make available for browsing
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-68gUuSiBQGK2cI3hLc8Y4qDoW2F3cq.png",
     status: "open",
@@ -1093,7 +1093,7 @@ const mockJobListings: JobListing[] = [
     description: "Develop and deploy ML models for cybersecurity applications.",
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "4+ years experience"],
     applied: false,
-    saved: true,
+    saved: false, // Changed from true to false to make available for browsing
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-YLpzlGSivDsK2fFXLdnF7N0ewgUM3d.jpeg",
     status: "open",
@@ -1123,7 +1123,7 @@ const mockJobListings: JobListing[] = [
     description: "Design beautiful and intuitive user experiences for mobile and web.",
     requirements: ["Figma", "UI/UX design", "User research", "4+ years experience"],
     applied: false,
-    saved: true,
+    saved: false, // Changed from true to false to make available for browsing
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
     status: "open",
@@ -1153,7 +1153,7 @@ const mockJobListings: JobListing[] = [
     description: "Build scalable web applications using modern technologies.",
     requirements: ["React", "Node.js", "PostgreSQL", "4+ years experience"],
     applied: false,
-    saved: true,
+    saved: false, // Changed from true to false to make available for browsing
     invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100-NwpwYu9vSkuPkpVvtw9Esz8i2xD0Q4.png",
     status: "open",
@@ -3355,6 +3355,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {mockJobListings
                             .filter((j) => !j.applied && !j.invited && !j.saved && j.status === "open")
+                            .sort(() => Math.random() - 0.5)
                             .map((job) => (
                               <div
                                 key={job.id}
@@ -3408,6 +3409,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       )}
                     </div>
                   )}
+                  {/* </CHANGE> */}
                 </div>
                 // </CHANGE>
               )}
