@@ -21,8 +21,13 @@ import {
   FileText,
   MapPin,
   DollarSign,
+  ArrowLeft,
+  ImageIcon,
+  Play,
+  Mail,
+  Search,
 } from "lucide-react"
-import { useState, useEffect, useMemo, type RefObject } from "react" // Added RefObject
+import { useState, useEffect, useMemo, type RefObject, useRef } from "react" // Added useRef
 import type { WorkspaceContent, JobListing, CandidateProfile } from "@/types/workspace"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -44,6 +49,8 @@ import { mockCandidates, getRandomizedCandidates } from "@/lib/mock-candidates"
 import { getCurrentUser } from "@/lib/auth"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet" // Added for candidate-chat
 import { CandidateChat } from "@/components/candidate-chat" // Added for candidate-chat
+import { CandidateProfileView } from "@/components/candidate-profile-view" // Added for candidate-profile-view
+import { BrowseCandidates } from "@/components/browse-candidates" // Added for browse-candidates
 
 // Mock getCurrentUser function - replace with actual implementation if needed
 // const getCurrentUser = () => ({
@@ -64,20 +71,33 @@ interface WorkspacePaneProps {
   onHiringManagerStepChange?: (step: number) => void
   onViewJob?: (job: JobListing) => void // Added callback for viewing job details
   onBackToJobBoard?: () => void // Added onBackToJobBoard prop
-  activeWorkspace?: string // Added activeWorkspace prop for context
   onApplyForJob?: (job: JobListing) => void // Added prop
-  // Added onOpenWorkspace prop
-  onOpenWorkspace?: (workspaceType: WorkspaceContent["type"], data?: any) => void
-  // Added showApplicationStatus and onToggleApplicationView props
+  // ADDED: onOpenWorkspace prop
+  onOpenWorkspace?: (content: WorkspaceContent) => void // Updated to accept WorkspaceContent
+  // ADDED: showApplicationStatus and onToggleApplicationView props
   showApplicationStatus?: boolean
   onToggleApplicationView?: (show: boolean) => void
   onRequestSubmit?: () => void
   onConfirmSubmit?: () => void
   onSubmissionComplete?: () => void
   onSendMessage?: (message: string) => void
-  // ADDED: onOpenCandidateChat prop to handle candidate chat
-  onOpenCandidateChat?: (candidate: CandidateProfile) => void
-  chatMainRef?: RefObject<any> // Added chatMainRef prop type
+  onSendAIMessage?: (message: string, agentId?: string) => void
+  // </CHANGE>
+  // ADDED: onOpenCandidateChat prop
+  onOpenCandidateChat?: (candidate: CandidateProfile, job?: JobListing) => void
+  chatMainRef?: RefObject<any> // Added chatMainRef prop
+  // ADDED: onIntroduceMatchedCandidate prop
+  onIntroduceMatchedCandidate?: (
+    candidate: CandidateProfile,
+    hiringManagerName: string,
+    position: string,
+    company: string,
+  ) => void
+  // ADDED: onCloseWorkspace prop
+  onCloseWorkspace?: () => void
+  // ADDED: onClearMessages prop
+  onClearMessages?: () => void // Added onClearMessages prop
+  onOpenWorkspace?: (content: WorkspaceContent) => void
 }
 
 const mockJobListings: JobListing[] = [
@@ -94,6 +114,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["5+ years experience", "React & Node.js", "TypeScript", "AWS"],
     applied: false,
     saved: true,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100-NwpwYu9vSkuPkpVvtw9Esz8i2xD0Q4.png",
     status: "open",
     skillMatch: 88,
@@ -145,6 +166,7 @@ const mockJobListings: JobListing[] = [
     description: "Join our AI team to build cutting-edge machine learning solutions.",
     requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "3+ years experience"],
     applied: true,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
     status: "open",
     skillMatch: 75,
@@ -173,6 +195,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead product strategy and execution for our flagship product in Sydney.",
     requirements: ["5+ years PM experience", "Agile/Scrum", "Data-driven", "B2B SaaS"],
     saved: true,
+    invited: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "open",
     skillMatch: 82,
@@ -201,7 +224,8 @@ const mockJobListings: JobListing[] = [
     posted: "5 days ago",
     description: "Build and maintain our cloud infrastructure and CI/CD pipelines.",
     requirements: ["Kubernetes", "Docker", "AWS/GCP", "Terraform", "4+ years experience"],
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/zai_logo-Cq0AIlmsHLB2w2rRB0YLRxZIsIsIsI.png",
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
     status: "closed",
     skillMatch: 70,
     jobSummary:
@@ -230,6 +254,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["React", "TypeScript", "CSS/Tailwind", "3+ years experience"],
     applied: false,
     saved: true,
+    invited: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-68gUuSiBQGK2cI3hLc8Y4qDoW2F3cq.png",
     status: "open",
     skillMatch: 92,
@@ -258,7 +283,8 @@ const mockJobListings: JobListing[] = [
     description: "Analyze complex datasets and build predictive models to drive business insights.",
     requirements: ["Python", "SQL", "Machine Learning", "Statistics", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_logo-Eq2CKnowJND4y4tTD2ANTzBKuKuKuK.png",
+    invited: true,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-YLpzlGSivDsK2fFXLdnF7N0ewgUM3d.jpeg",
     status: "draft",
     skillMatch: 78,
     jobSummary:
@@ -285,6 +311,7 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement scalable backend services and APIs.",
     requirements: ["Node.js or Java", "Microservices", "Databases", "5+ years experience"],
     applied: true,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
     status: "open",
     skillMatch: 85,
@@ -313,6 +340,7 @@ const mockJobListings: JobListing[] = [
     description: "Ensure software quality through comprehensive testing and automation.",
     requirements: ["Test automation", "Selenium/Cypress", "API testing", "3+ years experience"],
     applied: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100-NwpwYu9vSkuPkpVvtw9Esz8i2xD0Q4.png",
     status: "closed",
     skillMatch: 72,
@@ -341,7 +369,8 @@ const mockJobListings: JobListing[] = [
     description: "Build native iOS applications with cutting-edge features.",
     requirements: ["Swift", "iOS SDK", "UIKit/SwiftUI", "4+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/zai_logo-Cq0AIlmsHLB2w2rRB0YLRxZIsIsIsI.png",
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
     status: "open",
     skillMatch: 80,
     jobSummary:
@@ -370,13 +399,14 @@ const mockJobListings: JobListing[] = [
     requirements: ["Figma", "User research", "Prototyping", "4+ years experience"],
     applied: false,
     saved: true,
+    invited: true,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "draft",
     skillMatch: 86,
     jobSummary:
       "• Design intuitive and engaging user interfaces for web and mobile applications\n• Conduct user research and usability testing to inform design decisions\n• Create wireframes, mockups, and interactive prototypes using Figma\n• Develop and maintain design systems and style guides\n• Collaborate with product and engineering teams to ensure design feasibility",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia. Established in 2015, we've grown from a small startup to a publicly-traded company serving over 2,000 enterprise customers. Our comprehensive suite of business management tools helps organizations streamline operations, improve productivity, and drive growth. We're committed to innovation and customer success, investing heavily in R&D and maintaining a customer satisfaction rate of over 95%. Our Sydney headquarters houses our product development, sales, and customer success teams, creating a collaborative environment where ideas flourish. We've been recognized as one of Australia's fastest-growing tech companies for three consecutive years. Join us to be part of a dynamic team that's shaping the future of enterprise software.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia. Established in 2015, we've grown from a small startup to a publicly-traded company serving over 2,000 enterprise customers. Our comprehensive suite of business management tools helps organizations streamline operations, improve productivity, and drive growth. We're committed to innovation and customer success, investing heavily in R&D and maintaining a customer satisfaction rate of over 95%. Our Sydney headquarters houses our product development, sales, and customer success teams, creating a collaborative environment where ideas flourish. We've been recognized as one of Australia's fastest-growing tech companies for three consecutive years. Join us to be part of a dynamic team that's shaping the future of enterprise software.",
     benefits: [
       "Competitive salary and annual performance incentives",
       "Comprehensive health and wellness benefits",
@@ -398,7 +428,8 @@ const mockJobListings: JobListing[] = [
     description: "Design and implement enterprise-level cloud solutions.",
     requirements: ["AWS/Azure", "System design", "Architecture patterns", "7+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_logo-Eq2CKnowJND4y4tTD2ANTzBKuKuKuK.png",
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-YLpzlGSivDsK2fFXLdnF7N0ewgUM3d.jpeg",
     status: "open",
     skillMatch: 89,
     jobSummary:
@@ -426,6 +457,7 @@ const mockJobListings: JobListing[] = [
     description: "Facilitate agile processes and remove impediments for development teams.",
     requirements: ["Scrum certification", "Agile methodologies", "Team facilitation", "3+ years experience"],
     applied: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-68gUuSiBQGK2cI3hLc8Y4qDoW2F3cq.png",
     status: "closed",
     skillMatch: 77,
@@ -454,6 +486,7 @@ const mockJobListings: JobListing[] = [
     description: "Protect our systems and data through robust security measures.",
     requirements: ["Security protocols", "Penetration testing", "SIEM tools", "5+ years experience"],
     applied: true,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
     status: "open",
     skillMatch: 83,
@@ -482,6 +515,7 @@ const mockJobListings: JobListing[] = [
     description: "Create clear and comprehensive technical documentation.",
     requirements: ["Technical writing", "API documentation", "Markdown", "3+ years experience"],
     applied: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100-NwpwYu9vSkuPkpVvtw9Esz8i2xD0Q4.png",
     status: "draft",
     skillMatch: 74,
@@ -509,7 +543,8 @@ const mockJobListings: JobListing[] = [
     description: "Analyze business needs and translate them into technical requirements.",
     requirements: ["Business analysis", "Requirements gathering", "SQL", "3+ years experience"],
     applied: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/zai_logo-Cq0AIlmsHLB2w2rRB0YLRxZIsIsIsI.png",
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
     status: "open",
     skillMatch: 84,
     jobSummary:
@@ -537,6 +572,7 @@ const mockJobListings: JobListing[] = [
     description: "Lead and mentor a team of software engineers to deliver high-quality products.",
     requirements: ["7+ years engineering experience", "3+ years management", "Technical leadership", "Agile/Scrum"],
     applied: true,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100-NwpwYu9vSkuPkpVvtw9Esz8i2xD0Q4.png",
     status: "closed",
     skillMatch: 93,
@@ -589,6 +625,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["SQL", "Python/R", "Data visualization", "5+ years experience"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "open",
     skillMatch: 88,
@@ -640,6 +677,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["B2B SaaS experience", "Account management", "Communication skills", "3+ years"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "open",
     skillMatch: 85,
@@ -674,6 +712,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Digital marketing", "Content strategy", "Analytics", "5+ years experience"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 78,
@@ -703,6 +742,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Sales experience", "Communication skills", "CRM proficiency", "2+ years"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 72,
@@ -732,6 +772,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["HR experience", "Employee relations", "Talent management", "5+ years"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 80,
@@ -761,6 +802,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Financial modeling", "Excel", "Accounting knowledge", "3+ years experience"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 75,
@@ -790,6 +832,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Writing skills", "SEO knowledge", "Content strategy", "3+ years experience"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 82,
@@ -819,6 +862,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["IT support experience", "Troubleshooting", "Windows/Mac", "2+ years"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 70,
@@ -848,6 +892,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Requirements gathering", "Process mapping", "Stakeholder management", "4+ years"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 84,
@@ -877,6 +922,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Law degree", "Commercial law", "Contract negotiation", "5+ years experience"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 90,
@@ -906,6 +952,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Operations management", "Process optimization", "Team leadership", "6+ years"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 87,
@@ -935,6 +982,7 @@ const mockJobListings: JobListing[] = [
     requirements: ["Adobe Creative Suite", "Brand design", "Digital design", "3+ years experience"],
     applied: false,
     saved: false,
+    invited: false,
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "closed",
     skillMatch: 79,
@@ -949,6 +997,156 @@ const mockJobListings: JobListing[] = [
       "Latest design tools and software",
       "Professional development",
       "Flexible working hours",
+    ],
+  },
+  {
+    id: "29",
+    title: "Cloud Solutions Architect",
+    company: "Archa",
+    companyWebsite: "https://archa.io",
+    location: "Singapore",
+    type: "Full-time",
+    salary: "$95k - $130k",
+    posted: "1 week ago",
+    description: "Design and implement enterprise cloud solutions on AWS and Azure.",
+    requirements: ["AWS/Azure", "Cloud architecture", "Microservices", "7+ years experience"],
+    applied: false,
+    saved: true,
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
+    status: "open",
+    skillMatch: 91,
+    jobSummary:
+      "• Design scalable cloud architectures for enterprise clients\n• Lead cloud migration projects and implementations\n• Provide technical guidance on cloud best practices\n• Optimize cloud infrastructure for cost and performance\n• Mentor development teams on cloud technologies",
+    aboutClient:
+      "Archa is a fast-growing AI startup focused on developing next-generation machine learning platforms for enterprises.",
+    benefits: [
+      "Excellent salary package with bonuses",
+      "Comprehensive health insurance",
+      "Remote work flexibility",
+      "Professional certifications support",
+      "Stock options",
+      "Annual team retreats",
+    ],
+  },
+  {
+    id: "30",
+    title: "Senior React Developer",
+    company: "Thriday",
+    companyWebsite: "https://thriday.com.au",
+    location: "Remote (Asia Pacific)",
+    type: "Full-time",
+    salary: "$55k - $75k",
+    posted: "3 days ago",
+    description: "Build modern web applications using React and TypeScript.",
+    requirements: ["React", "TypeScript", "Next.js", "5+ years experience"],
+    applied: false,
+    saved: true,
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thriday-68gUuSiBQGK2cI3hLc8Y4qDoW2F3cq.png",
+    status: "open",
+    skillMatch: 94,
+    jobSummary:
+      "• Develop high-quality React applications with TypeScript\n• Build reusable component libraries and design systems\n• Optimize application performance and user experience\n• Collaborate with designers and backend developers\n• Mentor junior developers and conduct code reviews",
+    aboutClient:
+      "Thriday is a FinTech startup revolutionizing personal finance management with user-friendly digital tools.",
+    benefits: [
+      "Competitive salary",
+      "Fully remote position",
+      "Flexible working hours",
+      "Health insurance coverage",
+      "Learning and development budget",
+      "Modern tech stack",
+    ],
+  },
+  {
+    id: "31",
+    title: "Machine Learning Engineer",
+    company: "Fortify",
+    companyWebsite: "https://fortify.com",
+    location: "Bangalore, India",
+    type: "Full-time",
+    salary: "$50k - $70k",
+    posted: "5 days ago",
+    description: "Develop and deploy ML models for cybersecurity applications.",
+    requirements: ["Python", "TensorFlow/PyTorch", "ML algorithms", "4+ years experience"],
+    applied: false,
+    saved: true,
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/fortify_technology_logo-YLpzlGSivDsK2fFXLdnF7N0ewgUM3d.jpeg",
+    status: "open",
+    skillMatch: 87,
+    jobSummary:
+      "• Design and implement ML models for threat detection\n• Train and optimize models using large security datasets\n• Deploy models to production environments\n• Monitor model performance and implement improvements\n• Collaborate with security researchers on new approaches",
+    aboutClient:
+      "Fortify is a cybersecurity firm dedicated to protecting businesses from evolving digital threats through advanced security solutions.",
+    benefits: [
+      "Competitive compensation",
+      "Health and wellness benefits",
+      "Remote work options",
+      "Conference attendance opportunities",
+      "Cutting-edge ML infrastructure",
+      "Research publication support",
+    ],
+  },
+  {
+    id: "32",
+    title: "Product Designer",
+    company: "Zai",
+    companyWebsite: "https://zai.com",
+    location: "Melbourne, Australia",
+    type: "Full-time",
+    salary: "$75k - $95k",
+    posted: "1 week ago",
+    description: "Design beautiful and intuitive user experiences for mobile and web.",
+    requirements: ["Figma", "UI/UX design", "User research", "4+ years experience"],
+    applied: false,
+    saved: true,
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    status: "open",
+    skillMatch: 89,
+    jobSummary:
+      "• Design end-to-end user experiences for digital products\n• Conduct user research and usability testing\n• Create wireframes, prototypes, and high-fidelity designs\n• Collaborate with product and engineering teams\n• Maintain and evolve design systems",
+    aboutClient:
+      "Zai is a rapidly growing software company specializing in cloud-native solutions and infrastructure management.",
+    benefits: [
+      "Excellent salary package",
+      "Premium health insurance",
+      "Flexible work arrangements",
+      "Latest design tools and equipment",
+      "Professional development budget",
+      "Creative team environment",
+    ],
+  },
+  {
+    id: "33",
+    title: "Full Stack Engineer",
+    company: "Teamified",
+    companyWebsite: "https://teamified.com",
+    location: "Quezon City, Philippines",
+    type: "Full-time",
+    salary: "$40k - $60k",
+    posted: "2 days ago",
+    description: "Build scalable web applications using modern technologies.",
+    requirements: ["React", "Node.js", "PostgreSQL", "4+ years experience"],
+    applied: false,
+    saved: true,
+    invited: false,
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100-NwpwYu9vSkuPkpVvtw9Esz8i2xD0Q4.png",
+    status: "open",
+    skillMatch: 92,
+    jobSummary:
+      "• Develop full-stack features from database to UI\n• Build RESTful APIs and integrate with frontend\n• Write clean, maintainable, and tested code\n• Optimize application performance and scalability\n• Participate in agile development processes",
+    aboutClient:
+      "Teamified is a leading HR technology company that helps businesses build and manage high-performing teams through innovative software solutions.",
+    benefits: [
+      "Competitive salary",
+      "HMO coverage",
+      "Hybrid work setup",
+      "Performance bonuses",
+      "Career growth opportunities",
+      "Modern office facilities",
     ],
   },
 ]
@@ -1028,18 +1226,69 @@ export const WorkspacePane = ({
   onBackToJobBoard,
   onApplyForJob,
   // ADDED: onOpenWorkspace prop
-  onOpenWorkspace,
+  onOpenWorkspace, // Updated to accept WorkspaceContent
   onRequestSubmit,
   onConfirmSubmit,
   onSubmissionComplete,
   onSendMessage, // Added from updates
+  onSendAIMessage,
+  // </CHANGE>
   // ADDED: onOpenCandidateChat prop
   onOpenCandidateChat,
   chatMainRef, // Added chatMainRef prop
+  onIntroduceMatchedCandidate, // Added prop
+  onCloseWorkspace, // Added prop
+  onClearMessages, // Added prop
 }: WorkspacePaneProps) => {
   console.log("[v0] WorkspacePane rendered with content.type:", content.type)
 
   const currentUser = useMemo(() => getCurrentUser(), [])
+
+  const sentInsightsForCandidate = useRef<string | null>(null)
+  // </CHANGE>
+
+  // This useEffect sends AI insights when a candidate profile is opened
+  useEffect(() => {
+    if (content.type === "candidate-profile-view" && content.candidate && onSendAIMessage) {
+      const candidate = content.candidate
+      const skillMatchLabel =
+        candidate.skillMatch >= 80
+          ? "Excellent"
+          : candidate.skillMatch >= 60
+            ? "Good"
+            : candidate.skillMatch >= 40
+              ? "Fair"
+              : "Limited"
+      const skillMatchColor =
+        candidate.skillMatch >= 80
+          ? "strong"
+          : candidate.skillMatch >= 60
+            ? "moderate"
+            : candidate.skillMatch >= 40
+              ? "fair"
+              : "limited"
+
+      let message = `${candidate.name} is a ${candidate.title} with ${candidate.experience} of experience, currently based in ${candidate.location}. `
+
+      if (candidate.summary) {
+        message += `${candidate.summary.split(".")[0]}. `
+      }
+
+      message += `\n\nTheir skill match score is **${candidate.skillMatch}%** (${skillMatchLabel}), which indicates a ${skillMatchColor} alignment with the role requirements. `
+
+      if (candidate.aiGeneratedInsights && candidate.aiGeneratedInsights.length > 0) {
+        message += `\n\nHere are my key insights about ${candidate.name}:\n\n`
+        candidate.aiGeneratedInsights.forEach((insight) => {
+          message += `• ${insight}\n`
+        })
+      }
+
+      message += `\n\nWould you like to proceed with this candidate or would you like me to show you more options?`
+      // </CHANGE>
+
+      onSendAIMessage(message, "technical-recruiter")
+    }
+  }, [content.type, content.candidate, onSendAIMessage])
 
   const [isGithubOpen, setIsGithubOpen] = useState(false)
   const [githubConnected, setGithubConnected] = useState(true)
@@ -1060,6 +1309,8 @@ export const WorkspacePane = ({
   const [isSubmittingChallenge, setIsSubmittingChallenge] = useState(false)
   const [submissionComplete, setSubmissionComplete] = useState(false)
 
+  const [jobJustApplied, setJobJustApplied] = useState(false)
+
   const [showApplicationStatusLocal, setShowApplicationStatusLocal] = useState(false)
 
   const [swipedCandidates, setSwipedCandidates] = useState<{
@@ -1075,14 +1326,134 @@ export const WorkspacePane = ({
 
   const [browseCandidates, setBrowseCandidates] = useState<CandidateProfile[]>(getRandomizedCandidates())
 
+  // FIX: Declare jobStatusFilter
+  const [jobStatusFilter, setJobStatusFilter] = useState("open")
+  const [candidateJobFilter, setCandidateJobFilter] = useState<"applied" | "invited" | "saved">("applied")
+
   useEffect(() => {
     if (content.type === "browse-candidates") {
       console.log("[v0] Randomizing candidates for browse-candidates workspace")
       setBrowseCandidates(getRandomizedCandidates())
     }
   }, [content])
+  // </CHANGE>
 
-  const [jobStatusFilter, setJobStatusFilter] = useState<"draft" | "open" | "closed">("open")
+  const handleSwipeLeft = (candidate: CandidateProfile) => {
+    console.log("[v0] Swiped left on candidate:", candidate.name)
+    setSwipedCandidates((prev) => ({
+      ...prev,
+      left: [...prev.left, candidate.id],
+    }))
+
+    if (content.type === "candidate-profile-view") {
+      // If we have a candidates array and current index, show next candidate
+      if (content.candidates && content.currentCandidateIndex !== undefined) {
+        const nextIndex = content.currentCandidateIndex + 1
+
+        // If there are more candidates, show the next one
+        if (nextIndex < content.candidates.length) {
+          const nextCandidate = content.candidates[nextIndex]
+          if (onOpenWorkspace) {
+            onOpenWorkspace({
+              ...content,
+              candidate: nextCandidate,
+              currentCandidateIndex: nextIndex,
+              title: `Profile: ${nextCandidate.name}`,
+            })
+          }
+          return // Don't close the workspace
+        }
+      }
+
+      // No more candidates or no candidates array - navigate back
+      if (content.sourceView === "browse-candidates" && content.job && onOpenWorkspace) {
+        // Return to browse-candidates if opened from there
+        onOpenWorkspace({
+          type: "browse-candidates",
+          job: content.job,
+          title: `Browse Candidates for ${content.job.title}`,
+        })
+      } else if (content.job && onOpenWorkspace) {
+        // Return to job view if opened from matched candidates
+        onOpenWorkspace({
+          type: "job-view",
+          job: content.job,
+        })
+      } else {
+        // Close workspace if opened from elsewhere
+        onClose()
+      }
+    }
+    // </CHANGE>
+  }
+
+  const handleSwipeRight = (candidate: CandidateProfile) => {
+    console.log("[v0] Swiped right on candidate:", candidate.name)
+    setSwipedCandidates((prev) => ({
+      ...prev,
+      right: [...prev.right, candidate.id],
+    }))
+
+    // Simulate mutual match (in real app, check if candidate also swiped right)
+    const isMutualMatch = Math.random() > 0.5 // 50% chance for demo
+    if (isMutualMatch) {
+      setMatchedCandidate(candidate)
+      setShowMatchSuccess(true)
+
+      if (content.type === "browse-candidates" && content.job) {
+        setMatchedCandidatesPerJob((prev) => ({
+          ...prev,
+          [content.job.id]: [...(prev[content.job.id] || []), candidate],
+        }))
+      }
+    } else {
+      if (onSendAIMessage) {
+        const message = `Great choice! I've sent an application invite to ${candidate.name}. They'll need to complete all required assessments before you can start chatting with them. I'll let you know once they've completed everything!`
+        onSendAIMessage(message, "technical-recruiter")
+      }
+    }
+
+    if (content.type === "candidate-profile-view") {
+      // If we have a candidates array and current index, show next candidate
+      if (content.candidates && content.currentCandidateIndex !== undefined) {
+        const nextIndex = content.currentCandidateIndex + 1
+
+        // If there are more candidates, show the next one
+        if (nextIndex < content.candidates.length) {
+          const nextCandidate = content.candidates[nextIndex]
+          if (onOpenWorkspace) {
+            onOpenWorkspace({
+              ...content,
+              candidate: nextCandidate,
+              currentCandidateIndex: nextIndex,
+              title: `Profile: ${nextCandidate.name}`,
+            })
+          }
+          return // Don't close the workspace
+        }
+      }
+
+      // No more candidates or no candidates array - navigate back
+      if (content.sourceView === "browse-candidates" && content.job && onOpenWorkspace) {
+        // Return to browse-candidates if opened from there
+        onOpenWorkspace({
+          type: "browse-candidates",
+          job: content.job,
+          title: `Browse Candidates for ${content.job.title}`,
+        })
+      } else if (content.job && onOpenWorkspace) {
+        // Return to job view if opened from matched candidates
+        onOpenWorkspace({
+          type: "job-view",
+          job: content.job,
+        })
+      } else {
+        // Close workspace if opened from elsewhere
+        onClose()
+      }
+    }
+    // </CHANGE>
+  }
 
   const [fileContents, setFileContents] = useState<Record<string, string>>({
     "app/main.py": `from fastapi import FastAPI
@@ -1311,7 +1682,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   }
 
   const handleToggleApplicationView = (show: boolean) => {
-    console.log("[v0] handleToggleApplicationView called with:", show)
+    console.log("[v0] handleToggleApplicationView called with show:", show)
     setShowApplicationStatusLocal(show)
   }
 
@@ -1488,6 +1859,212 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     )
   }
 
+  if (content.type === "pdf") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 bg-muted/20">
+          <div className="max-w-4xl mx-auto bg-background rounded-lg shadow-lg p-8 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b">
+              <FileText className="w-6 h-6 text-red-500" />
+              <div>
+                <h3 className="font-semibold">Resume - Elena Popescu</h3>
+                <p className="text-sm text-muted-foreground">PDF Document • 2 pages</p>
+              </div>
+            </div>
+            <div className="space-y-4 text-sm">
+              <div>
+                <h4 className="font-semibold mb-2">Professional Summary</h4>
+                <p className="text-muted-foreground">
+                  Experienced software engineer with 5+ years in full-stack development. Specialized in React, Node.js,
+                  and cloud architecture. Proven track record of delivering scalable solutions.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Experience</h4>
+                <div className="space-y-3">
+                  <div>
+                    <p className="font-medium">Senior Software Engineer - TechCorp</p>
+                    <p className="text-xs text-muted-foreground">2020 - Present</p>
+                    <p className="text-muted-foreground mt-1">
+                      Led development of microservices architecture serving 1M+ users. Implemented CI/CD pipelines
+                      reducing deployment time by 60%.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Software Engineer - StartupXYZ</p>
+                    <p className="text-xs text-muted-foreground">2018 - 2020</p>
+                    <p className="text-muted-foreground mt-1">
+                      Built customer-facing web applications using React and TypeScript. Collaborated with design team
+                      to improve UX metrics by 40%.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Education</h4>
+                <p className="font-medium">B.S. Computer Science - University of Technology</p>
+                <p className="text-xs text-muted-foreground">2014 - 2018</p>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {["React", "Node.js", "TypeScript", "AWS", "Docker", "PostgreSQL", "GraphQL", "CI/CD"].map(
+                    (skill) => (
+                      <span key={skill} className="px-3 py-1 bg-muted rounded-full text-xs">
+                        {skill}
+                      </span>
+                    ),
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (content.type === "image") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-semibold">Portfolio Images</h3>
+                <p className="text-sm text-muted-foreground">Project screenshots and designs</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="aspect-video bg-muted rounded-lg overflow-hidden group cursor-pointer">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-blue-500/20 group-hover:scale-105 transition-transform">
+                    <ImageIcon className="w-16 h-16 text-muted-foreground/50" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (content.type === "video") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-5xl mx-auto space-y-6">
+            <div className="aspect-video bg-black rounded-lg overflow-hidden relative group">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <button className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Play className="w-10 h-10 text-black ml-1" />
+                </button>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                <p className="text-white font-medium">Introduction Video - Elena Popescu</p>
+                <p className="text-white/70 text-sm">Duration: 3:45</p>
+              </div>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-6 space-y-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Video Transcript
+              </h3>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  <span className="text-foreground font-medium">[00:00]</span> Hi, I'm Elena Popescu, and I'm excited to
+                  introduce myself as a candidate for the Senior Software Engineer position.
+                </p>
+                <p>
+                  <span className="text-foreground font-medium">[00:15]</span> I have over 5 years of experience in
+                  full-stack development, specializing in React, Node.js, and cloud architecture.
+                </p>
+                <p>
+                  <span className="text-foreground font-medium">[00:35]</span> In my current role at TechCorp, I've led
+                  the development of microservices that serve over 1 million users daily.
+                </p>
+                <p>
+                  <span className="text-foreground font-medium">[01:00]</span> I'm passionate about building scalable
+                  solutions and mentoring junior developers on the team.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (content.type === "challenge-loading") {
     return (
       <div className="flex flex-col h-full border-l items-center justify-center bg-background">
@@ -1500,6 +2077,69 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             <p className="text-muted-foreground">Preparing your coding environment</p>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if (content.type === "candidate-profile-view" && content.candidate) {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          {/* Added back button handler to navigate back to job view */}
+          <button
+            onClick={() => {
+              console.log("[v0] Back button clicked in candidate-profile-view")
+              console.log("[v0] content.job exists:", !!content.job)
+              console.log("[v0] content.job:", content.job)
+              console.log("[v0] onOpenWorkspace exists:", !!onOpenWorkspace)
+
+              if (content.job && onOpenWorkspace) {
+                console.log("[v0] Navigating back to job view for:", content.job.title)
+                onOpenWorkspace({ type: "job-view", job: content.job, title: content.job.title })
+              } else {
+                console.log("[v0] Closing workspace - job info missing or onOpenWorkspace not available")
+                onClose()
+              }
+            }}
+            className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+            aria-label="Back to job view"
+          >
+            <span className="text-lg font-semibold">←</span>
+          </button>
+          <h2 className="text-lg font-semibold">{content.title}</h2>
+
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <CandidateProfileView
+          candidate={content.candidate}
+          showSwipeButtons={content.showSwipeButtons}
+          onSwipe={(candidate, direction) => {
+            if (direction === "left") {
+              handleSwipeLeft(candidate)
+            } else {
+              handleSwipeRight(candidate)
+            }
+          }}
+        />
       </div>
     )
   }
@@ -1519,55 +2159,39 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     )
   }
 
-  const handleSwipeLeft = (candidate: CandidateProfile) => {
-    console.log("[v0] Swiped left on candidate:", candidate.name)
-    setSwipedCandidates((prev) => ({
-      ...prev,
-      left: [...prev.left, candidate.id],
-    }))
-  }
-
-  const handleSwipeRight = (candidate: CandidateProfile) => {
-    console.log("[v0] Swiped right on candidate:", candidate.name)
-    setSwipedCandidates((prev) => ({
-      ...prev,
-      right: [...prev.right, candidate.id],
-    }))
-
-    // Simulate mutual match (in real app, check if candidate also swiped right)
-    const isMutualMatch = Math.random() > 0.5 // 50% chance for demo
-    if (isMutualMatch) {
-      setMatchedCandidate(candidate)
-      setShowMatchSuccess(true)
-
-      if (content.job) {
-        setMatchedCandidatesPerJob((prev) => ({
-          ...prev,
-          [content.job.id]: [...(prev[content.job.id] || []), candidate],
-        }))
-      }
-    }
-  }
-
   const handleOpenMatchChat = () => {
     console.log("[v0] Opening chat with matched candidate:", matchedCandidate?.name)
 
-    if (chatMainRef?.current && matchedCandidate && content.job) {
-      const user = currentUser
-      if (user) {
-        // Use hiring manager's name and job details for introduction
+    if (matchedCandidate && content.job) {
+      const user = getCurrentUser()
+      if (user && onIntroduceMatchedCandidate) {
         const hiringManagerName = user.name
-        const position = content.job.title
-        const company = content.job.company
-        const candidateName = matchedCandidate.name
+        const position = content.job.title // Use the job title as the position
+        const company = user.company || "the company"
 
-        // Call the new method to introduce the candidate
-        chatMainRef.current.introduceMatchedCandidate(candidateName, hiringManagerName, position, company)
+        console.log("[v0] Introducing matched candidate with:", {
+          candidateName: matchedCandidate.name,
+          hiringManagerName,
+          position,
+          company,
+        })
+
+        // Call the introduction function to reset chat and send introduction
+        onIntroduceMatchedCandidate(matchedCandidate, hiringManagerName, position, company)
+      }
+      // </CHANGE>
+
+      if (onOpenWorkspace) {
+        onOpenWorkspace({
+          type: "candidate-profile-view",
+          title: matchedCandidate.name,
+          candidate: matchedCandidate,
+          job: content.job,
+        })
       }
     }
 
     setShowMatchSuccess(false)
-    onClose()
   }
 
   const handleContinueSwiping = () => {
@@ -1586,19 +2210,20 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   const handleBrowseMoreCandidates = () => {
     console.log("[v0] Browse more candidates clicked")
     if (content.job && onOpenWorkspace) {
-      onOpenWorkspace("candidate-swipe", { job: content.job })
+      onOpenWorkspace({ type: "candidate-swipe", job: content.job })
     }
   }
 
-  // CHANGE: Call parent handler to show chat in left pane instead of opening workspace
-  const handleOpenCandidateChat = (candidate: CandidateProfile) => {
+  const handleOpenCandidateChat = (candidate: CandidateProfile, job?: JobListing) => {
     console.log("[v0] Opening chat with candidate:", candidate.name)
+    console.log("[v0] workspace-pane.tsx - job parameter:", job)
+    console.log("[v0] workspace-pane.tsx - job exists:", !!job)
     if (onOpenCandidateChat) {
-      onOpenCandidateChat(candidate)
+      onOpenCandidateChat(candidate, job)
     }
   }
-  // </CHANGE>
 
+  // Render MatchSuccess component directly here if showMatchSuccess is true
   if (showMatchSuccess && matchedCandidate) {
     return (
       <div className="flex flex-col h-full border-l">
@@ -1612,18 +2237,58 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     )
   }
 
+  const handleCandidateSelect = (candidate: CandidateProfile) => {
+    if (onOpenWorkspace) {
+      const currentIndex = browseCandidates.findIndex((c) => c.id === candidate.id)
+      onOpenWorkspace({
+        type: "candidate-profile-view",
+        candidate: candidate,
+        candidates: browseCandidates, // Pass full array for navigation
+        currentCandidateIndex: currentIndex, // Pass current index
+        title: `Profile: ${candidate.name}`,
+        showSwipeButtons: true,
+        job: content.type === "browse-candidates" ? content.job : undefined, // Pass job context if available
+        sourceView: content.type === "browse-candidates" ? "browse-candidates" : undefined,
+      })
+      // </CHANGE>
+    }
+  }
+
+  const handleCandidateShown = (candidate: CandidateProfile) => {
+    if (chatMainRef?.current?.sendCandidateInsights && sentInsightsForCandidate.current !== candidate.id) {
+      console.log("[v0] Sending insights for candidate:", candidate.name)
+      sentInsightsForCandidate.current = candidate.id
+      chatMainRef.current.sendCandidateInsights(candidate)
+    }
+    // </CHANGE>
+  }
+
+  // REMOVED: handleBrowseCandidatesLoadingComplete function
+
+  // Function to handle applying for a job and toggling application status
+  const handleApplyForJobWithStatusToggle = (job: JobListing) => {
+    console.log("[v0] Applying for job:", job.title)
+    if (onApplyForJob) {
+      onApplyForJob(job)
+    }
+    // Assuming apply action sets job.applied to true
+    // Update local state to reflect application status immediately for UI feedback
+    setJobJustApplied(true) // This will trigger a re-render and update the job's applied status in JobView
+    setShowApplicationStatusLocal(true) // Also show the application status view
+  }
+
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full border-l">
-        {content.title && (
+        {content.title && content.type !== "browse-candidates" && content.type !== "job-board" && (
           <div className="flex items-center px-6 py-4 border-b">
             {content.type === "candidate-swipe" && (
               <button
                 onClick={handleBackToMyJobs}
                 className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-                aria-label="Back to my jobs"
+                aria-label="Back to job view"
               >
-                <span className="text-lg font-semibold">←</span>
+                <ArrowLeft className="w-4 h-4" /> {/* Changed to ArrowLeft */}
               </button>
             )}
             {content.type === "job-view" && (
@@ -1632,17 +2297,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                 className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
                 aria-label="Back to job board"
               >
-                <span className="text-lg font-semibold">←</span>
-              </button>
-            )}
-            {/* Added conditional title rendering for browse-candidates */}
-            {content.type === "browse-candidates" && (
-              <button
-                onClick={handleBackToMyJobs}
-                className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-                aria-label="Back to job board"
-              >
-                <span className="text-lg font-semibold">←</span>
+                <ArrowLeft className="w-4 h-4" /> {/* Changed to ArrowLeft */}
               </button>
             )}
             <h2 className="text-lg font-semibold">{content.title}</h2>
@@ -1916,18 +2571,73 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
         )}
 
         {content.type === "browse-candidates" && (
-          <CandidateSwipe
-            candidates={browseCandidates}
-            jobTitle="Browse Candidates"
-            onReject={handleSwipeLeft}
-            onAccept={handleSwipeRight}
-            // onSendMessage={onSendMessage} // Removed: sendMessage is not directly used here anymore
-            onCandidateShown={(candidate) => {
-              if (chatMainRef?.current?.sendCandidateInsights) {
-                chatMainRef.current.sendCandidateInsights(candidate)
-              }
-            }}
-          />
+          <div className="flex flex-col h-full border-l">
+            <div className="flex items-center px-6 py-4 border-b">
+              <button
+                onClick={() => {
+                  if (onBackToJobBoard) {
+                    onBackToJobBoard()
+                  } else {
+                    onClose()
+                  }
+                }}
+                className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                aria-label="Back to job board"
+              >
+                <span className="text-lg font-semibold">←</span>
+              </button>
+              <h2 className="text-lg font-semibold">{content.title}</h2>
+
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+                aria-label="Close workspace"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <BrowseCandidates
+              candidates={browseCandidates}
+              onCandidateSelect={handleCandidateSelect}
+              onSwipe={(candidate, direction) => {
+                if (direction === "left") {
+                  handleSwipeLeft(candidate)
+                } else {
+                  handleSwipeRight(candidate)
+                }
+              }}
+              onCandidateShown={handleCandidateShown}
+            />
+            {showMatchSuccess && matchedCandidate && (
+              <MatchSuccess
+                candidate={matchedCandidate}
+                onClose={() => {
+                  setShowMatchSuccess(false)
+                  setMatchedCandidate(null)
+                }}
+                onSendMessage={(message) => {
+                  if (onSendMessage) {
+                    onSendMessage(message)
+                  }
+                  setShowMatchSuccess(false)
+                  setMatchedCandidate(null)
+                }}
+              />
+            )}
+          </div>
         )}
 
         {content.type === "job-view" && content.job && (
@@ -1936,10 +2646,11 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
               ...content.job,
               jobSummary: updatedJobSummaries[content.job.id] || content.job.jobSummary,
               matchedCandidates: matchedCandidatesPerJob[content.job.id] || content.job.matchedCandidates || [], // Ensure matchedCandidates is always available
+              applied: content.job.applied || jobJustApplied,
             }}
             onBack={onBackToJobBoard}
             onRequestSkillGapAnalysis={handleRequestSkillGapAnalysis}
-            onApplyForJob={onApplyForJob} // Fixed: Use the imported prop onApplyForJob
+            onApplyForJob={handleApplyForJobWithStatusToggle}
             showApplicationStatus={showApplicationStatusLocal}
             onToggleApplicationView={handleToggleApplicationView}
             onSendMessage={onSendMessage}
@@ -2094,7 +2805,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                               className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
                             >
                               <span>View Candidates</span>
-                              <Badge className="bg-white/20 text-white hover:bg-white/30 border-0">
+                              <Badge className="bg-green-500 text-white hover:bg-green-600 border-0">
                                 {job.matchedCandidates?.length || 0}
                               </Badge>
                             </button>
@@ -2104,247 +2815,272 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                   </div>
                 </div>
               ) : (
-                // Candidate View - Applied and Saved Jobs (shows all companies)
-                <>
-                  {/* Applied Jobs Section */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-6">
-                      <h3 className="text-xl font-semibold">Applied Jobs</h3>
-                      <span className="px-2.5 py-0.5 bg-[#A16AE8] text-white text-sm font-medium rounded-full">
-                        {mockJobListings.filter((j) => j.applied).length}
-                      </span>
+                // Candidate View - Job Board with Applied/Invited/Saved tabs
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    {/* Tab Navigation - aligned left */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCandidateJobFilter("applied")}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          candidateJobFilter === "applied"
+                            ? "bg-[#A16AE8] text-white"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        Applied Jobs
+                        <span className="ml-2 px-2 py-0.5 bg-white/20 text-xs rounded-full">
+                          {mockJobListings.filter((j) => j.applied).length}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => setCandidateJobFilter("invited")}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          candidateJobFilter === "invited"
+                            ? "bg-[#A16AE8] text-white"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        Invited Jobs
+                        <span className="ml-2 px-2 py-0.5 bg-white/20 text-xs rounded-full">
+                          {mockJobListings.filter((j) => j.invited && !j.applied).length}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => setCandidateJobFilter("saved")}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          candidateJobFilter === "saved"
+                            ? "bg-[#A16AE8] text-white"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        Saved Jobs
+                        <span className="ml-2 px-2 py-0.5 bg-white/20 text-xs rounded-full">
+                          {mockJobListings.filter((j) => j.saved && !j.applied && !j.invited).length}
+                        </span>
+                      </button>
                     </div>
-                    {mockJobListings.filter((j) => j.applied).length === 0 ? (
-                      <div className="text-center py-12 border border-dashed border-border rounded-lg">
-                        <Briefcase className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                        <p className="text-muted-foreground">You haven't applied to any jobs yet</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {mockJobListings
-                          .filter((j) => j.applied)
-                          .map((job) => {
-                            const fitLevel =
-                              job.skillMatch && job.skillMatch >= 90
-                                ? "STRONG FIT"
-                                : job.skillMatch && job.skillMatch >= 80
-                                  ? "GOOD FIT"
-                                  : "MODERATE FIT"
-                            const fitColor =
-                              fitLevel === "STRONG FIT"
-                                ? "text-green-500"
-                                : fitLevel === "GOOD FIT"
-                                  ? "text-orange-500"
-                                  : "text-yellow-500"
 
-                            return (
-                              <div
-                                key={job.id}
-                                className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
-                                onClick={() => onViewJob?.(job)}
-                              >
-                                <div className="flex items-start justify-between mb-4">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <h4 className="font-semibold text-lg">{job.title}</h4>
-                                      <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-xs font-medium rounded">
-                                        Open
-                                      </span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
-                                    <div className="flex flex-col gap-1.5 text-sm text-muted-foreground mb-3">
-                                      <div className="flex items-center gap-1.5">
-                                        <MapPin className="w-4 h-4" />
-                                        <span>{job.location}</span>
-                                        <span className="mx-1">•</span>
-                                        <Briefcase className="w-4 h-4" />
-                                        <span>{job.type}</span>
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <DollarSign className="w-4 h-4" />
-                                        <span>{job.salary}</span>
-                                        <span className="mx-1">•</span>
-                                        <Clock className="w-4 h-4" />
-                                        <span>1 week ago</span>
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                                      {job.description || "Design and implement scalable backend services and APIs."}
-                                    </p>
-                                  </div>
-                                  <div className="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
-                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                    <button
+                      onClick={() => {
+                        console.log("[v0] Browse Jobs clicked")
+                        // TODO: Implement browse jobs functionality
+                      }}
+                      className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <Search className="w-4 h-4" />
+                      Browse Jobs
+                    </button>
+                  </div>
+                  {/* </CHANGE> */}
+
+                  {/* Applied Jobs Section */}
+                  {candidateJobFilter === "applied" && (
+                    <div>
+                      {mockJobListings.filter((j) => j.applied).length === 0 ? (
+                        <div className="text-center py-12 border border-dashed border-border rounded-lg">
+                          <Briefcase className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                          <p className="text-muted-foreground">You haven't applied to any jobs yet</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {mockJobListings
+                            .filter((j) => j.applied)
+                            .map((job) => {
+                              const fitLevel =
+                                job.skillMatch && job.skillMatch >= 90
+                                  ? "STRONG FIT"
+                                  : job.skillMatch && job.skillMatch >= 80
+                                    ? "GOOD FIT"
+                                    : "MODERATE FIT"
+                              const fitColor =
+                                fitLevel === "STRONG FIT"
+                                  ? "text-green-500"
+                                  : fitLevel === "GOOD FIT"
+                                    ? "text-orange-500"
+                                    : "text-yellow-500"
+
+                              return (
+                                <div
+                                  key={job.id}
+                                  onClick={() => onViewJob?.(job)}
+                                  className="border border-border rounded-lg p-5 hover:border-[#A16AE8] transition-colors cursor-pointer bg-card"
+                                >
+                                  <div className="flex items-start gap-4 mb-4">
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
                                       {job.logo ? (
                                         <img
                                           src={job.logo || "/placeholder.svg"}
-                                          alt={`${job.company} logo`}
+                                          alt={job.company}
                                           className="w-full h-full object-cover"
-                                          onError={(e) => {
-                                            const target = e.target as HTMLImageElement
-                                            target.style.display = "none"
-                                            const fallback = target.nextElementSibling as HTMLElement
-                                            if (fallback) fallback.style.display = "flex"
-                                          }}
                                         />
-                                      ) : null}
-                                      <div
-                                        className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground"
-                                        style={{ display: job.logo ? "none" : "flex" }}
-                                      >
-                                        {job.company.charAt(0)}
+                                      ) : (
+                                        <Briefcase className="w-6 h-6 text-muted-foreground" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-semibold text-base mb-1 truncate">{job.title}</h4>
+                                      <p className="text-sm text-muted-foreground mb-2">{job.company}</p>
+                                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                                        <span className="flex items-center gap-1">
+                                          <MapPin className="w-3 h-3" />
+                                          {job.location}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <DollarSign className="w-3 h-3" />
+                                          {job.salary}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <Clock className="w-3 h-3" />
+                                          {job.posted}
+                                        </span>
                                       </div>
                                     </div>
-                                    {job.skillMatch && (
-                                      <div className="flex flex-col items-center">
-                                        <div className={`text-3xl font-bold ${fitColor}`} style={{ lineHeight: "1" }}>
-                                          {job.skillMatch}%
-                                        </div>
-                                        <div
-                                          className={`text-[10px] font-semibold ${fitColor} mt-1`}
-                                          style={{ lineHeight: "1" }}
-                                        >
-                                          {fitLevel}
-                                        </div>
+                                  </div>
+                                  <div className="flex items-center justify-between pt-3 border-t border-border">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                        <span className="text-xs font-medium text-green-600">Applied</span>
                                       </div>
-                                    )}
+                                      <span className="text-xs text-muted-foreground">•</span>
+                                      <span className="text-xs text-muted-foreground">{job.skillMatch}% match</span>
+                                    </div>
                                   </div>
                                 </div>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onViewJob?.(job)
-                                  }}
-                                  className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
-                                >
-                                  View Application
-                                </button>
+                              )
+                            })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Invited Jobs Section */}
+                  {candidateJobFilter === "invited" && (
+                    <div>
+                      {mockJobListings.filter((j) => j.invited && !j.applied).length === 0 ? (
+                        <div className="text-center py-12 border border-dashed border-border rounded-lg">
+                          <Mail className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                          <p className="text-muted-foreground">You haven't been invited to any jobs yet</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {mockJobListings
+                            .filter((j) => j.invited && !j.applied)
+                            .map((job) => (
+                              <div
+                                key={job.id}
+                                onClick={() => onViewJob?.(job)}
+                                className="border border-border rounded-lg p-5 hover:border-[#A16AE8] transition-colors bg-card cursor-pointer"
+                              >
+                                <div className="flex items-start gap-4 mb-4">
+                                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                                    {job.logo ? (
+                                      <img
+                                        src={job.logo || "/placeholder.svg"}
+                                        alt={job.company}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <Briefcase className="w-6 h-6 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold text-base mb-1 truncate">{job.title}</h4>
+                                    <p className="text-sm text-muted-foreground mb-2">{job.company}</p>
+                                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                                      <span className="flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        {job.location}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <DollarSign className="w-3 h-3" />
+                                        {job.salary}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {job.posted}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <Mail className="w-3.5 h-3.5 text-[#A16AE8]" />
+                                    <span className="text-xs font-medium text-[#A16AE8]">Invited</span>
+                                  </div>
+                                  <span className="text-xs text-muted-foreground">•</span>
+                                  <span className="text-xs text-muted-foreground">{job.skillMatch}% match</span>
+                                </div>
                               </div>
-                            )
-                          })}
-                      </div>
-                    )}
-                  </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Saved Jobs Section */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-6">
-                      <h3 className="text-xl font-semibold">Saved Jobs</h3>
-                      <span className="px-2.5 py-0.5 bg-[#A16AE8] text-white text-sm font-medium rounded-full">
-                        {mockJobListings.filter((j) => j.saved && !j.applied).length}
-                      </span>
-                    </div>
-                    {mockJobListings.filter((j) => j.saved && !j.applied).length === 0 ? (
-                      <div className="text-center py-12 border border-dashed border-border rounded-lg">
-                        <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                        <p className="text-muted-foreground">You haven't saved any jobs yet</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {mockJobListings
-                          .filter((j) => j.saved && !j.applied)
-                          .map((job) => {
-                            const fitLevel =
-                              job.skillMatch && job.skillMatch >= 90
-                                ? "STRONG FIT"
-                                : job.skillMatch && job.skillMatch >= 80
-                                  ? "GOOD FIT"
-                                  : "MODERATE FIT"
-                            const fitColor =
-                              fitLevel === "STRONG FIT"
-                                ? "text-green-500"
-                                : fitLevel === "GOOD FIT"
-                                  ? "text-orange-500"
-                                  : "text-yellow-500"
-
-                            return (
+                  {candidateJobFilter === "saved" && (
+                    <div>
+                      {mockJobListings.filter((j) => j.saved && !j.applied && !j.invited).length === 0 ? (
+                        <div className="text-center py-12 border border-dashed border-border rounded-lg">
+                          <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                          <p className="text-muted-foreground">You haven't saved any jobs yet</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {mockJobListings
+                            .filter((j) => j.saved && !j.applied && !j.invited)
+                            .map((job) => (
                               <div
                                 key={job.id}
-                                className="relative p-6 border border-border rounded-lg hover:border-[#A16AE8] transition-all bg-card/50 backdrop-blur cursor-pointer"
                                 onClick={() => onViewJob?.(job)}
+                                className="border border-border rounded-lg p-5 hover:border-[#A16AE8] transition-colors bg-card cursor-pointer"
                               >
-                                <div className="flex items-start justify-between mb-4">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <h4 className="font-semibold text-lg">{job.title}</h4>
-                                      <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-xs font-medium rounded">
-                                        Open
-                                      </span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
-                                    <div className="flex flex-col gap-1.5 text-sm text-muted-foreground mb-3">
-                                      <div className="flex items-center gap-1.5">
-                                        <MapPin className="w-4 h-4" />
-                                        <span>{job.location}</span>
-                                        <span className="mx-1">•</span>
-                                        <Briefcase className="w-4 h-4" />
-                                        <span>{job.type}</span>
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <DollarSign className="w-4 h-4" />
-                                        <span>{job.salary}</span>
-                                        <span className="mx-1">•</span>
-                                        <Clock className="w-4 h-4" />
-                                        <span>2 days ago</span>
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                                      {job.description ||
-                                        "We're looking for an experienced full-stack developer to join our growing..."}
-                                    </p>
-                                  </div>
-                                  <div className="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
-                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                                      {job.logo ? (
-                                        <img
-                                          src={job.logo || "/placeholder.svg"}
-                                          alt={`${job.company} logo`}
-                                          className="w-full h-full object-cover"
-                                          onError={(e) => {
-                                            const target = e.target as HTMLImageElement
-                                            target.style.display = "none"
-                                            const fallback = target.nextElementSibling as HTMLElement
-                                            if (fallback) fallback.style.display = "flex"
-                                          }}
-                                        />
-                                      ) : null}
-                                      <div
-                                        className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground"
-                                        style={{ display: job.logo ? "none" : "flex" }}
-                                      >
-                                        {job.company.charAt(0)}
-                                      </div>
-                                    </div>
-                                    {job.skillMatch && (
-                                      <div className="flex flex-col items-center">
-                                        <div className={`text-3xl font-bold ${fitColor}`} style={{ lineHeight: "1" }}>
-                                          {job.skillMatch}%
-                                        </div>
-                                        <div
-                                          className={`text-[10px] font-semibold ${fitColor} mt-1`}
-                                          style={{ lineHeight: "1" }}
-                                        >
-                                          {fitLevel}
-                                        </div>
-                                      </div>
+                                <div className="flex items-start gap-4 mb-4">
+                                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                                    {job.logo ? (
+                                      <img
+                                        src={job.logo || "/placeholder.svg"}
+                                        alt={job.company}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <Briefcase className="w-6 h-6 text-muted-foreground" />
                                     )}
                                   </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold text-base mb-1 truncate">{job.title}</h4>
+                                    <p className="text-sm text-muted-foreground mb-2">{job.company}</p>
+                                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                                      <span className="flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        {job.location}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <DollarSign className="w-3 h-3" />
+                                        {job.salary}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {job.posted}
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onApplyForJob?.(job)
-                                  }}
-                                  className="w-full py-2.5 bg-[#A16AE8] hover:bg-[#8f5cd4] text-white font-medium rounded-lg transition-colors"
-                                >
-                                  Submit Application
-                                </button>
+                                <div className="flex items-center gap-2">
+                                  {job.skillMatch && (
+                                    <span className="text-xs text-muted-foreground">{job.skillMatch}% match</span>
+                                  )}
+                                </div>
                               </div>
-                            )
-                          })}
-                      </div>
-                    )}
-                  </div>
-                </>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                // </CHANGE>
               )}
             </div>
           </div>

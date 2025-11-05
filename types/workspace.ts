@@ -11,6 +11,7 @@ export type WorkspaceContentType =
   | "table"
   | "analytics"
   | "candidate-profile"
+  | "candidate-profile-view" // Added new workspace type for viewing candidate profiles
   | "hiring-manager-profile"
   | "candidate-pricing"
   | "payment-success"
@@ -31,8 +32,12 @@ export interface WorkspaceContent {
   amount?: string
   job?: JobListing
   candidate?: CandidateProfile
+  candidates?: CandidateProfile[] // Full list of candidates for swiping through
+  currentCandidateIndex?: number // Current index in the candidates array
   matchedWith?: string
   timestamp?: number // Added timestamp to ensure unique workspace instances for randomization
+  showSwipeButtons?: boolean // Added flag to show swipe buttons in candidate profile view
+  sourceView?: "browse-candidates" | "job-view" // Track where the profile was opened from
 }
 
 export type JobStatus = "draft" | "open" | "closed" | "cancelled"
@@ -121,7 +126,6 @@ export interface WorkspacePaneProps {
   onConfirmSubmit?: () => void
   onSubmissionComplete?: () => void
   onSendMessage?: (message: string) => void
-  // ADDED: onOpenCandidateChat prop to handle candidate chat
-  onOpenCandidateChat?: (candidate: CandidateProfile) => void
+  onOpenCandidateChat?: (candidate: CandidateProfile, job?: JobListing) => void
   chatMainRef?: React.RefObject<any>
 }

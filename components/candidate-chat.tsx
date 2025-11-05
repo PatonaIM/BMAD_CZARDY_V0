@@ -78,15 +78,73 @@ const getMockConversation = (candidateName: string, jobTitle?: string): Message[
   ]
 }
 
+const formatTimestamp = (date: Date): string => {
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  if (diffInSeconds < 60) {
+    return "Just now"
+  } else if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60)
+    return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`
+  } else if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600)
+    return `${hours} ${hours === 1 ? "hour" : "hours"} ago`
+  } else {
+    const days = Math.floor(diffInSeconds / 86400)
+    return `${days} ${days === 1 ? "day" : "days"} ago`
+  }
+}
+
 export function CandidateChat({ candidate, jobTitle }: CandidateChatProps) {
-  const [messages] = useState<Message[]>(getMockConversation(candidate.name, jobTitle))
+  const [messages, setMessages] = useState<Message[]>(getMockConversation(candidate.name, jobTitle))
   const [newMessage, setNewMessage] = useState("")
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
-      // In a real app, this would send the message to the backend
-      console.log("[v0] Sending message:", newMessage)
+      const newMsg: Message = {
+        id: `msg-${Date.now()}`,
+        sender: "hiring-manager",
+        senderName: "You",
+        content: newMessage.trim(),
+        timestamp: formatTimestamp(new Date()),
+      }
+
+      setMessages((prev) => [...prev, newMsg])
+      console.log("[v0] Message sent:", newMessage)
       setNewMessage("")
+
+      setTimeout(
+        () => {
+          const candidateResponse: Message = {
+            id: `msg-${Date.now()}-response`,
+            sender: "candidate",
+            senderName: candidate.name,
+            content: getCandidateResponse(newMessage.trim()),
+            timestamp: formatTimestamp(new Date()),
+          }
+          setMessages((prev) => [...prev, candidateResponse])
+        },
+        2000 + Math.random() * 1000,
+      )
+    }
+  }
+
+  const getCandidateResponse = (userMessage: string): string => {
+    const lowerMessage = userMessage.toLowerCase()
+
+    if (lowerMessage.includes("interview") || lowerMessage.includes("call") || lowerMessage.includes("meeting")) {
+      return "I'd be happy to schedule a call! I'm generally available on weekdays between 9 AM and 5 PM. What time works best for you?"
+    } else if (lowerMessage.includes("experience") || lowerMessage.includes("background")) {
+      return "I have extensive experience in this field. I'd love to share more details about my previous projects and how they relate to this role. Would you like me to elaborate on any specific area?"
+    } else if (lowerMessage.includes("salary") || lowerMessage.includes("compensation")) {
+      return "I'm open to discussing compensation based on the full scope of the role and benefits package. Could we schedule a time to discuss this in more detail?"
+    } else if (lowerMessage.includes("start") || lowerMessage.includes("available")) {
+      return "I'm currently available and could start within 2-3 weeks notice period. Is there a specific timeline you're working with?"
+    } else if (lowerMessage.includes("question") || lowerMessage.includes("?")) {
+      return "That's a great question! I'd be happy to provide more information. Could you give me a bit more context about what you'd like to know?"
+    } else {
+      return "Thank you for reaching out! I'm very interested in this opportunity and would love to discuss further. Please let me know if you need any additional information from me."
     }
   }
 

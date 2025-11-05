@@ -41,7 +41,7 @@ interface JobViewProps {
   onUpdateJob?: (jobId: string, updatedJob: JobListing) => void
   matchedCandidates?: CandidateProfile[]
   onBrowseMoreCandidates?: () => void
-  onOpenCandidateChat?: (candidate: CandidateProfile) => void
+  onOpenCandidateChat?: (candidate: CandidateProfile, job?: JobListing) => void
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -131,6 +131,7 @@ export default function JobView({
   const [newBenefitInput, setNewBenefitInput] = useState("")
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [candidatesPage, setCandidatesPage] = useState(1) // Added pagination state
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
   const jobSummaryRef = useRef<HTMLDivElement>(null)
 
@@ -293,7 +294,11 @@ export default function JobView({
     console.log("[v0] Apply button clicked for job:", job.title)
     if (job.applied && onToggleApplicationView) {
       console.log("[v0] Job already applied, showing application status")
-      onToggleApplicationView(true)
+      setIsTransitioning(true)
+      setTimeout(() => {
+        onToggleApplicationView(true)
+        setIsTransitioning(false)
+      }, 300)
     } else if (onApplyForJob) {
       console.log("[v0] handleApplyForJob called for:", job.title)
       onApplyForJob(job)
@@ -303,7 +308,11 @@ export default function JobView({
   const handleBackToDetails = () => {
     console.log("[v0] Back to details clicked")
     if (onToggleApplicationView) {
-      onToggleApplicationView(false)
+      setIsTransitioning(true)
+      setTimeout(() => {
+        onToggleApplicationView(false)
+        setIsTransitioning(false)
+      }, 300)
     }
   }
 
@@ -457,7 +466,7 @@ export default function JobView({
                 {onClose && (
                   <button
                     onClick={onClose}
-                    className="px-4 py-2 rounded-lg border-2 border-[#A16AE8] text-[#A16AE8] font-medium hover:bg-[#A16AE8]/10 transition-all"
+                    className="px-4 py-2 rounded-lg border-2 border-[#A16AE8] text-[#A16AE8] font-medium hover:bg-[#A16AE8]/10 hover:border-[#A16AE8] transition-all"
                   >
                     Close
                   </button>
@@ -477,7 +486,14 @@ export default function JobView({
                   {paginatedCandidates.map((candidate, index) => (
                     <div
                       key={candidate.id}
-                      onClick={() => onOpenCandidateChat?.(candidate)}
+                      onClick={() => {
+                        console.log("[v0] Opening chat with candidate:", candidate.name)
+                        console.log("[v0] job-view.tsx - job object:", job)
+                        console.log("[v0] job-view.tsx - job exists:", !!job)
+                        console.log("[v0] job-view.tsx - job.id:", job?.id)
+                        console.log("[v0] job-view.tsx - job.title:", job?.title)
+                        onOpenCandidateChat?.(candidate, job)
+                      }}
                       className={`flex items-center gap-4 p-4 hover:bg-muted/50 transition-all cursor-pointer ${
                         index !== paginatedCandidates.length - 1 ? "border-b border-border" : ""
                       }`}
@@ -563,81 +579,108 @@ export default function JobView({
           </div>
         )}
 
-        {showApplicationStatus && (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <h2 className="text-lg font-semibold mb-6">Application Status</h2>
+        <div
+          className={`space-y-6 transition-all duration-500 ease-in-out ${
+            showApplicationStatus
+              ? "opacity-100 translate-y-0 max-h-[2000px]"
+              : "opacity-0 -translate-y-4 max-h-0 overflow-hidden pointer-events-none"
+          }`}
+        >
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <h2 className="text-lg font-semibold mb-6">Application Status</h2>
 
-              <div className="space-y-4">
-                {/* Stage 1: Take Home Challenge */}
-                <div
-                  onClick={() => handleStageClick("Take Home Challenge")}
-                  className="flex items-start gap-4 p-4 rounded-xl bg-accent/50 border border-border cursor-pointer hover:bg-accent/70 transition-colors"
-                >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#A16AE8] text-white flex items-center justify-center font-semibold">
-                    1
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">Take Home Challenge</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Complete a practical coding challenge to demonstrate your technical skills
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
-                      Pending
-                    </span>
-                  </div>
-                </div>
+            {/* Stage 1: Take Home Challenge */}
+            <div
+              onClick={() => handleStageClick("Take Home Challenge")}
+              className="flex items-start gap-4 p-4 rounded-xl bg-accent/50 border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#A16AE8] text-white flex items-center justify-center font-semibold">
+                1
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-1">Take Home Challenge</h3>
+                <p className="text-sm text-muted-foreground">
+                  Complete a practical coding challenge to demonstrate your technical skills
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                  Pending
+                </span>
+              </div>
+            </div>
 
-                {/* Stage 2: Teamified AI Interviews */}
-                <div
-                  onClick={() => handleStageClick("Teamified AI Interviews")}
-                  className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
-                >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
-                    2
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">Teamified AI Interviews</h3>
-                    <p className="text-sm text-muted-foreground">
-                      AI-powered interview to assess your skills and cultural fit
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                      Not Started
-                    </span>
-                  </div>
-                </div>
+            {/* Stage 2: Teamified AI Interviews */}
+            <div
+              onClick={() => handleStageClick("Teamified AI Interviews")}
+              className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
+                2
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-1">Teamified AI Interviews</h3>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered interview to assess your skills and cultural fit
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                  Not Started
+                </span>
+              </div>
+            </div>
 
-                {/* Stage 3: Meet the hiring manager */}
-                <div
-                  onClick={() => handleStageClick("Meet the hiring manager")}
-                  className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
-                >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
-                    3
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">Meet the hiring manager!</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Final interview with the hiring manager to discuss the role and team
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                      Not Started
-                    </span>
-                  </div>
-                </div>
+            {/* Stage 3: Meet the hiring manager */}
+            <div
+              onClick={() => handleStageClick("Meet the hiring manager")}
+              className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
+                3
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-1">Meet the hiring manager!</h3>
+                <p className="text-sm text-muted-foreground">
+                  Final interview with the hiring manager to discuss the role and team
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                  Not Started
+                </span>
+              </div>
+            </div>
+
+            {/* Stage 4: Job Offer */}
+            <div
+              onClick={() => handleStageClick("Job Offer")}
+              className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
+                4
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-1">Job Offer</h3>
+                <p className="text-sm text-muted-foreground">
+                  Review and accept your job offer with compensation details and benefits
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                  Not Started
+                </span>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         <div
-          className={`space-y-6 transition-opacity duration-500 ${showApplicationStatus ? "opacity-0 h-0 overflow-hidden" : "opacity-100"}`}
+          className={`space-y-6 transition-all duration-500 ease-in-out ${
+            showApplicationStatus
+              ? "opacity-0 -translate-y-4 max-h-0 overflow-hidden pointer-events-none"
+              : "opacity-100 translate-y-0 max-h-[10000px]"
+          }`}
         >
           {userRole === "candidate" && (
             <div className="bg-card rounded-2xl border border-border p-6">
@@ -984,7 +1027,7 @@ export default function JobView({
             className="w-full px-6 py-3 rounded-xl border-2 border-[#A16AE8] text-[#A16AE8] font-semibold hover:bg-[#A16AE8]/10 transition-all flex items-center justify-center gap-2"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Job Details
+            View Job Details
           </button>
         )}
       </div>

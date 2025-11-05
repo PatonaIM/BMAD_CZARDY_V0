@@ -25,12 +25,14 @@ export interface ChatMainRef {
   sendMessageFromWorkspace: (message: string) => void
   showCandidateChat: (candidate: CandidateProfile) => void
   introduceMatchedCandidate: (
-    candidateName: string,
+    candidate: CandidateProfile,
     hiringManagerName: string,
     position: string,
     company: string,
   ) => void
-  showJobInsights: (job: JobListing) => void // Added showJobInsights to ChatMainRef
+  showJobInsights: (job: JobListing) => void
+  sendAIMessageFromWorkspace: (message: string, agentId?: string) => void
+  clearMessages: () => void // Added clearMessages method to reset chat
 }
 
 export default function ChatPage() {
@@ -254,30 +256,66 @@ export default function ChatPage() {
     }
   }
 
-  const handleOpenCandidateChat = (candidate: CandidateProfile) => {
+  const handleOpenCandidateChat = (candidate: CandidateProfile, job?: JobListing) => {
     console.log("[v0] handleOpenCandidateChat called for:", candidate.name)
+    console.log("[v0] handleOpenCandidateChat - candidate:", candidate)
+    console.log("[v0] handleOpenCandidateChat - job:", job)
+    console.log("[v0] handleOpenCandidateChat - job exists:", !!job)
     console.log("[v0] chatMainRef.current exists:", !!chatMainRef.current)
     console.log("[v0] chatMainRef.current.showCandidateChat exists:", !!chatMainRef.current?.showCandidateChat)
+
+    setWorkspaceContent({
+      type: "candidate-profile-view",
+      title: candidate.name,
+      candidate: candidate,
+      job: job, // Store job info for back navigation
+    })
+
+    console.log("[v0] Workspace content set with job:", job)
+
     if (chatMainRef.current) {
       chatMainRef.current.showCandidateChat(candidate)
     }
   }
 
   const handleIntroduceMatchedCandidate = (
-    candidateName: string,
+    candidate: CandidateProfile,
     hiringManagerName: string,
     position: string,
     company: string,
   ) => {
     console.log(
       "[v0] handleIntroduceMatchedCandidate called with:",
-      candidateName,
+      candidate.name,
       hiringManagerName,
       position,
       company,
     )
     if (chatMainRef.current) {
-      chatMainRef.current.introduceMatchedCandidate(candidateName, hiringManagerName, position, company)
+      chatMainRef.current.introduceMatchedCandidate(candidate, hiringManagerName, position, company)
+    }
+  }
+
+  const handleSendAIMessage = (message: string, agentId?: string) => {
+    console.log("[v0] handleSendAIMessage called with message:", message.substring(0, 50) + "...")
+    console.log("[v0] handleSendAIMessage agentId:", agentId)
+    console.log("[v0] chatMainRef.current exists:", !!chatMainRef.current)
+    console.log(
+      "[v0] chatMainRef.current.sendAIMessageFromWorkspace exists:",
+      !!chatMainRef.current?.sendAIMessageFromWorkspace,
+    )
+    // </CHANGE>
+    if (chatMainRef.current) {
+      chatMainRef.current.sendAIMessageFromWorkspace(message, agentId)
+      console.log("[v0] sendAIMessageFromWorkspace called successfully")
+      // </CHANGE>
+    }
+  }
+
+  const handleClearMessages = () => {
+    console.log("[v0] Clear messages clicked")
+    if (chatMainRef.current) {
+      chatMainRef.current.clearMessages()
     }
   }
 
@@ -322,6 +360,9 @@ export default function ChatPage() {
                 onOpenCandidateChat={handleOpenCandidateChat}
                 chatMainRef={chatMainRef} // Pass chatMainRef to WorkspacePane
                 onIntroduceMatchedCandidate={handleIntroduceMatchedCandidate} // Added onIntroduceMatchedCandidate prop
+                onSendAIMessage={handleSendAIMessage} // Added onSendAIMessage prop
+                onClearMessages={handleClearMessages} // Added onClearMessages prop
+                onOpenWorkspace={setWorkspaceContent}
               />
             </div>
           )}

@@ -82,6 +82,18 @@ type JobListing = {
   // Add other relevant properties as needed
 }
 
+// Define CandidateProfile type for clarity
+type CandidateProfile = {
+  id: string
+  name: string
+  avatar?: string
+  skillMatch?: number
+  experience?: string
+  location?: string
+  skills?: string[]
+  takeHomeChallengeScore?: number
+}
+
 export interface ChatMainHandle {
   sendMessage: (message: string) => void
   showJobViewSummary: (job: JobListing) => void
@@ -90,7 +102,7 @@ export interface ChatMainHandle {
   showJobBoardSummary: () => void
   showCandidateChat: (candidate: any) => void
   introduceMatchedCandidate: (
-    candidateName: string,
+    candidate: CandidateProfile,
     hiringManagerName: string,
     position: string,
     company: string,
@@ -98,6 +110,10 @@ export interface ChatMainHandle {
   sendCandidateInsights: (candidate: any) => void // Added sendCandidateInsights
   showJobInsights: (job: JobListing) => void
   // </CHANGE>
+  sendMessageFromWorkspace: (message: string) => void
+  sendAIMessageFromWorkspace: (message: string, agentId?: string) => void // Added method to send AI messages from workspace
+  // </CHANGE>
+  clearMessages: () => void // Expose clearMessages method
 }
 
 const welcomeQuestions = [
@@ -329,10 +345,12 @@ export const ChatMain = forwardRef<
     handleSubmissionComplete: () => void
     // </CHANGE>
     sendMessageFromWorkspace: (message: string) => void
+    sendAIMessageFromWorkspace: (message: string, agentId?: string) => void // Added method to send AI messages from workspace
+    // </CHANGE>
     showJobBoardSummary: () => void
     showCandidateChat: (candidate: any) => void
     introduceMatchedCandidate: (
-      candidateName: string,
+      candidate: CandidateProfile,
       hiringManagerName: string,
       position: string,
       company: string,
@@ -340,6 +358,7 @@ export const ChatMain = forwardRef<
     sendCandidateInsights: (candidate: any) => void // Added sendCandidateInsights
     showJobInsights: (job: JobListing) => void
     // </CHANGE>
+    clearMessages: () => void // Expose clearMessages method
   },
   ChatMainProps
 >(
@@ -361,7 +380,7 @@ export const ChatMain = forwardRef<
     const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
     const [localMessages, setLocalMessages] = useState<Message[]>([])
     const [hasChallengeWelcomeShown, setHasChallengeWelcomeShown] = useState(false)
-    const [currentChatCandidate, setCurrentChatCandidate] = useState<any>(null)
+    const [currentChatCandidate, setCurrentChatCandidate] = useState<CandidateProfile | null>(null) // Updated to CandidateProfile
     const lastUserMessageRef = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -415,7 +434,7 @@ export const ChatMain = forwardRef<
 
         return {
           id: msg.id,
-          type: msg.role === "user" ? "user" : "ai",
+          type: msg.role === "user" ? "user" : "ai", // Corrected: user role should map to "user" type
           content,
           agentId: messageAgent.id,
           responseType,
@@ -449,7 +468,7 @@ export const ChatMain = forwardRef<
       if (messagesChanged) {
         setLocalMessages(newMessages)
       }
-    }, [aiMessages, activeAgent])
+    }, [aiMessages, activeAgent, localMessages]) // Added localMessages here
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -640,7 +659,8 @@ Your code has been sent to our technical team for review. Here's what happens ne
     // </CHANGE>
     // </CHANGE>
 
-    const handleShowCandidateChat = (candidate: any) => {
+    const handleShowCandidateChat = (candidate: CandidateProfile) => {
+      // Updated type to CandidateProfile
       console.log("[v0] handleShowCandidateChat called with candidate:", candidate)
       setCurrentChatCandidate(candidate)
       setLocalMessages([])
@@ -671,6 +691,11 @@ Your code has been sent to our technical team for review. Here's what happens ne
     }
     // </CHANGE>
 
+    const clearMessages = () => {
+      console.log("[v0] Clearing all messages")
+      setLocalMessages([])
+    }
+    // </CHANGE>
     useImperativeHandle(ref, () => ({
       handleProfileSaved: () => {
         setLocalMessages((prev) => [
@@ -869,6 +894,8 @@ Whether you're creating a new position, updating an existing job, or need insigh
         ])
       },
       showJobViewSummary: (job: JobListing) => {
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+
         const skillMatchText =
           job.skillMatch >= 80 ? "excellent match" : job.skillMatch >= 60 ? "good match" : "moderate match"
 
@@ -898,7 +925,7 @@ ${loremParagraphs[1]}`
             id: Date.now().toString(),
             type: "ai",
             content: summaryMessage,
-            agentId: activeAgent.id,
+            agentId: technicalRecruiter?.id || "technical-recruiter",
             promptSuggestions: [
               { text: "Apply to this Job", icon: <Briefcase className="w-4 h-4" /> },
               { text: "Save this job for later", icon: <FileText className="w-4 h-4" /> },
@@ -925,8 +952,33 @@ ${loremParagraphs[1]}`
           console.log("[v0] sendMessageFromWorkspace: Not a command, calling sendMessage")
           sendMessage({ text: message })
         }
+      },
+      sendAIMessageFromWorkspace: (message: string, agentId?: string) => {
+        console.log("[v0] sendAIMessageFromWorkspace called")
+        console.log("[v0] Message:", message.substring(0, 50) + "...")
+        console.log("[v0] AgentId parameter:", agentId)
+        console.log("[v0] Active agent:", activeAgent.id)
+        // </CHANGE>
+        const agent = agentId || activeAgent.id
+        console.log("[v0] Final agent ID being used:", agent)
+        // </CHANGE>
+        const aiMessage: Message = {
+          id: Date.now().toString(),
+          type: "ai",
+          content: message,
+          agentId: agent,
+        }
+        console.log("[v0] AI message object created:", {
+          id: aiMessage.id,
+          type: aiMessage.type,
+          agentId: aiMessage.agentId,
+        })
+        // </CHANGE>
+        setLocalMessages((prev) => [...prev, aiMessage])
+        console.log("[v0] AI message added to localMessages")
         // </CHANGE>
       },
+      // </CHANGE>
       showJobBoardSummary: () => {
         const summaryMessage = `Welcome to your Job Board! I'm here to help you manage your job postings and find the best candidates. 💼
 
@@ -979,12 +1031,13 @@ Whether you're creating a new position, updating an existing job, or need insigh
       showCandidateChat: handleShowCandidateChat,
       // </CHANGE>
       introduceMatchedCandidate: (
-        candidateName: string,
+        candidate: CandidateProfile, // Updated type to CandidateProfile
         hiringManagerName: string,
         position: string,
         company: string,
       ) => {
-        // Reset chat by clearing all messages
+        setCurrentChatCandidate(candidate)
+
         setLocalMessages([])
 
         // Switch to Technical Recruiter agent
@@ -992,16 +1045,18 @@ Whether you're creating a new position, updating an existing job, or need insigh
         if (technicalRecruiter) {
           setActiveAgent(technicalRecruiter)
 
-          // Determine pronoun based on hiring manager name (simple heuristic)
-          const pronoun = "he/she"
-
-          // Add introduction message from Technical Recruiter
           setTimeout(() => {
             setLocalMessages([
               {
                 id: Date.now().toString(),
                 type: "ai",
-                content: `Hello ${candidateName}! I would like you to meet ${hiringManagerName}, ${pronoun} is a ${position} for ${company}. I created this group chat so you can finally meet and get teamified!`,
+                content: `Hi ${candidate.name}! 🎉 I'm excited to introduce you to ${hiringManagerName}, who is the ${position} at ${company}. 
+
+${hiringManagerName} has been reviewing candidates for this role and was really impressed with your profile, particularly your experience with ${candidate.skills.slice(0, 2).join(" and ")}. They believe you could be a great fit for their team!
+
+I've created this group chat so you two can connect directly. ${hiringManagerName}, feel free to share more about the role and what you're looking for. ${candidate.name}, this is a great opportunity to ask questions and learn more about the position and the team.
+
+Looking forward to seeing this conversation develop! 🚀`,
                 agentId: technicalRecruiter.id,
                 isAgentSwitch: true,
               },
@@ -1012,7 +1067,7 @@ Whether you're creating a new position, updating an existing job, or need insigh
       sendCandidateInsights: (candidate: any) => {
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-        if (technicalRecruiter) {
+        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
           setActiveAgent(technicalRecruiter)
         }
 
@@ -1057,7 +1112,7 @@ Whether you're creating a new position, updating an existing job, or need insigh
       showJobInsights: (job: JobListing) => {
         // Switch to Account Manager agent
         const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
-        if (accountManager) {
+        if (accountManager && activeAgent.id !== "account-manager") {
           setActiveAgent(accountManager)
         }
 
@@ -1094,29 +1149,28 @@ Whether you're creating a new position, updating an existing job, or need insigh
           insightMessage += `\n\n### Top Candidate\n\n`
           insightMessage += `**${highestScoringCandidate.name}** is your highest match at **${highestScore}% skill compatibility**. `
 
-          const reasons = []
-          if (highestScoringCandidate.skills && highestScoringCandidate.skills.length > 0) {
-            reasons.push(`strong technical skills in ${highestScoringCandidate.skills.slice(0, 2).join(" and ")}`)
-          }
           if (highestScoringCandidate.experience) {
-            reasons.push(`${highestScoringCandidate.experience} of relevant experience`)
-          }
-          if (highestScoringCandidate.takeHomeChallengeScore && highestScoringCandidate.takeHomeChallengeScore >= 80) {
-            reasons.push(`excellent challenge score of ${highestScoringCandidate.takeHomeChallengeScore}/100`)
+            insightMessage += `They bring ${highestScoringCandidate.experience} of experience `
           }
 
-          if (reasons.length > 0) {
-            insightMessage += `They stand out due to their ${reasons.join(", ")}.`
+          if (highestScoringCandidate.location) {
+            insightMessage += `and are based in ${highestScoringCandidate.location}. `
+          }
+
+          if (highestScoringCandidate.skills && highestScoringCandidate.skills.length > 0) {
+            const topSkills = highestScoringCandidate.skills.slice(0, 3).join(", ")
+            insightMessage += `\n\nKey skills: ${topSkills}`
+          }
+
+          if (highestScoringCandidate.takeHomeChallengeScore) {
+            insightMessage += `\n\nThey scored **${highestScoringCandidate.takeHomeChallengeScore}/100** on the take-home challenge.`
           }
         }
 
-        insightMessage += `\n\n### What You Can Do Next\n\n`
-        insightMessage += `Here are some suggested actions:\n\n`
-
+        insightMessage += `\n\n### Next Steps\n\n`
         if (candidateCount > 0) {
-          insightMessage += `- **"Start browsing candidates"** - Review all matched candidates in detail\n`
-          insightMessage += `- **"Connect with ${highestScoringCandidate?.name || "top candidates"}"** - Reach out to your best matches\n`
-          insightMessage += `- **"Compare candidates"** - See how candidates stack up against each other\n`
+          insightMessage += `- **"Review candidates"** - View detailed profiles and compare qualifications\n`
+          insightMessage += `- **"Schedule interviews"** - Set up meetings with top candidates\n`
         } else {
           insightMessage += `- **"Browse for candidates"** - Search our talent pool for potential matches\n`
           insightMessage += `- **"Refine job requirements"** - Adjust criteria to attract more candidates\n`
@@ -1139,6 +1193,8 @@ Whether you're creating a new position, updating an existing job, or need insigh
         }, 500) // Delay to allow workspace to open
       },
       // </CHANGE>
+      // </CHANGE>
+      clearMessages, // Added clearMessages to the exposed ref methods
     }))
 
     const handlePreviewClick = (fileType: string) => {
@@ -1471,6 +1527,7 @@ Whether you're creating a new position, updating an existing job, or need insigh
           agentId: activeAgent.id,
         }
 
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         const aiMsg: Message = {
           id: (Date.now() + 1).toString(),
           type: "ai",
@@ -1478,20 +1535,24 @@ Whether you're creating a new position, updating an existing job, or need insigh
 
 **How it works:**
 
-- 👍 **Swipe Right (Heart)** - Save candidates you're interested in
-- 👎 **Swipe Left (X)** - Pass on candidates
-- 🔄 **Infinite Loop** - Browse through all candidates continuously
+- ✅ **Swipe Right (Check)** - Save candidates you're interested in
+- ❌ **Swipe Left (X)** - Pass on candidates
 
 Each candidate profile includes:
-- Professional background and experience
-- Skills and qualifications
-- Take-home challenge results
-- AI interview recordings
-- Contact information
+- Name and professional title
+- Location and years of experience
+- Skills and qualifications with visual badges
+- Skill match percentage
+- AI interview video with transcript
+- Take-home challenge submission (GitHub repo, files, and AI feedback)
+- Contact information (email, phone, LinkedIn, GitHub, portfolio)
+- Professional summary and background
+- Full resume access
 
 Take your time reviewing each profile and save the ones that match your requirements!`,
-          agentId: activeAgent.id,
+          agentId: technicalRecruiter?.id || "technical-recruiter",
         }
+        // </CHANGE>
 
         setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
@@ -1608,7 +1669,8 @@ Are you ready to begin your Take Home Challenge?`,
         const candidateName = text.substring("connect with".length).trim()
         // In a real app, you'd likely look up the candidate by name or ID here.
         // For this example, we'll simulate finding a candidate.
-        const mockCandidate = {
+        const mockCandidate: CandidateProfile = {
+          // Updated type to CandidateProfile
           id: `cand-${Date.now()}`,
           name: candidateName,
           avatar: "/candidate-avatar.jpg", // Placeholder avatar
@@ -1713,7 +1775,7 @@ Are you ready to begin your Take Home Challenge?`,
           const response = await fetch("/api/candidate-chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.JSON.stringify({
+            body: JSON.stringify({
               candidateId: currentChatCandidate.id,
               candidateName: currentChatCandidate.name,
               conversationHistory,
