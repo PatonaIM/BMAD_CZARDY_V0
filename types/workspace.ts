@@ -42,6 +42,8 @@ export interface WorkspaceContent {
 
 export type JobStatus = "draft" | "open" | "closed" | "cancelled"
 
+export type ApplicationStage = "applied" | "take-home-challenge" | "ai-interview" | "final-review" | "offer"
+
 export interface JobListing {
   id: string
   title: string
@@ -70,6 +72,10 @@ export interface JobListing {
   aboutClient?: string
   jobSummary?: string
   skillMatch?: number // Percentage (0-100) indicating how well candidate matches job requirements
+  applicationStage?: ApplicationStage
+  takeHomeChallengeCompleted?: boolean
+  aiInterviewCompleted?: boolean
+  finalReviewCompleted?: boolean
 }
 
 export interface CandidateProfile {

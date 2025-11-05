@@ -51,6 +51,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { CandidateChat } from "@/components/candidate-chat" // Added for candidate-chat
 import { CandidateProfileView } from "@/components/candidate-profile-view" // Added for candidate-profile-view
 import { BrowseCandidates } from "@/components/browse-candidates" // Added for browse-candidates
+import { CandidateProfileForm } from "@/components/candidate-profile-form-full"
+import { HiringManagerProfileForm } from "@/components/hiring-manager-profile-form-full"
+import { CandidatePricing } from "@/components/candidate-pricing-full"
+import { PaymentSuccess } from "@/components/payment-success-full"
 
 // Mock getCurrentUser function - replace with actual implementation if needed
 // const getCurrentUser = () => ({
@@ -170,6 +174,10 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
     status: "open",
     skillMatch: 75,
+    applicationStage: "applied",
+    takeHomeChallengeCompleted: false,
+    aiInterviewCompleted: false,
+    finalReviewCompleted: false,
     jobSummary:
       "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
     aboutClient:
@@ -315,6 +323,10 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
     status: "open",
     skillMatch: 85,
+    applicationStage: "take-home-challenge",
+    takeHomeChallengeCompleted: true,
+    aiInterviewCompleted: false,
+    finalReviewCompleted: false,
     jobSummary:
       "• Design and develop robust and scalable backend services and APIs\n• Implement microservices architecture and ensure seamless integration\n• Manage and optimize database performance and integrity\n• Write clean, efficient, and well-documented code\n• Collaborate with frontend teams to define API contracts",
     aboutClient:
@@ -490,6 +502,10 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
     status: "open",
     skillMatch: 83,
+    applicationStage: "ai-interview",
+    takeHomeChallengeCompleted: true,
+    aiInterviewCompleted: true,
+    finalReviewCompleted: false,
     jobSummary:
       "• Implement and maintain security controls to protect systems and data\n• Conduct vulnerability assessments and penetration testing\n• Monitor security alerts and respond to incidents\n• Develop and enforce security policies and procedures\n• Stay up-to-date with the latest security threats and technologies",
     aboutClient:
@@ -576,6 +592,10 @@ const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100-NwpwYu9vSkuPkpVvtw9Esz8i2xD0Q4.png",
     status: "closed",
     skillMatch: 93,
+    applicationStage: "offer",
+    takeHomeChallengeCompleted: true,
+    aiInterviewCompleted: true,
+    finalReviewCompleted: true,
     jobSummary:
       "• Lead and mentor a team of 8-10 software engineers to deliver high-quality products\n• Define technical roadmap and architecture decisions\n• Collaborate with product and design teams on feature planning\n• Conduct performance reviews and support career development\n• Foster a culture of innovation and continuous improvement",
     aboutClient:
@@ -689,7 +709,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Manage portfolio of enterprise customer accounts\n• Drive product adoption and customer satisfaction\n• Identify upsell and expansion opportunities\n• Conduct business reviews and success planning\n• Collaborate with sales and product teams",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Base salary plus commission",
       "Health insurance coverage",
@@ -719,7 +739,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Develop and execute comprehensive marketing strategies\n• Manage digital marketing campaigns across multiple channels\n• Analyze campaign performance and optimize ROI\n• Collaborate with sales team on lead generation\n• Build and manage marketing team",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Competitive salary and bonuses",
       "Health and dental insurance",
@@ -749,7 +769,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Prospect and qualify leads through outbound activities\n• Schedule meetings for account executives\n• Maintain accurate records in CRM system\n• Meet monthly quota for qualified opportunities\n• Collaborate with marketing on campaigns",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Base salary plus commission",
       "Health insurance",
@@ -779,7 +799,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Provide strategic HR guidance to business leaders\n• Manage employee relations and performance issues\n• Lead talent acquisition and retention initiatives\n• Develop and implement HR policies and programs\n• Support organizational change and development",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Competitive salary package",
       "Comprehensive health benefits",
@@ -809,7 +829,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Prepare financial reports and analysis for management\n• Support budgeting and forecasting processes\n• Analyze financial performance and variances\n• Develop financial models for business decisions\n• Collaborate with accounting team on month-end close",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Competitive salary",
       "Health insurance coverage",
@@ -839,7 +859,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Write blog posts, case studies, and whitepapers\n• Optimize content for SEO and user engagement\n• Collaborate with marketing team on content strategy\n• Edit and proofread content from other team members\n• Maintain brand voice and style guidelines",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Competitive salary",
       "Remote work flexibility",
@@ -869,7 +889,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Provide first and second-level technical support\n• Troubleshoot hardware and software issues\n• Manage user accounts and access permissions\n• Maintain IT equipment inventory\n• Document support procedures and solutions",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Competitive salary",
       "Health insurance",
@@ -899,7 +919,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Gather and document business requirements\n• Analyze business processes and identify improvements\n• Create functional specifications for development teams\n• Facilitate workshops with stakeholders\n• Support UAT and implementation activities",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Competitive salary package",
       "Health and wellness benefits",
@@ -929,7 +949,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Review and negotiate commercial contracts\n• Provide legal advice on business matters\n• Ensure compliance with regulations\n• Manage intellectual property portfolio\n• Support M&A and corporate transactions",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Excellent salary package",
       "Premium health insurance",
@@ -959,7 +979,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Manage day-to-day operations and workflows\n• Identify and implement process improvements\n• Lead operations team and support their development\n• Monitor KPIs and operational metrics\n• Collaborate with other departments on initiatives",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Competitive salary and bonuses",
       "Health insurance coverage",
@@ -989,7 +1009,7 @@ const mockJobListings: JobListing[] = [
     jobSummary:
       "• Design marketing collateral and digital assets\n• Create visual content for social media and website\n• Maintain brand consistency across all materials\n• Collaborate with marketing team on campaigns\n• Support product team with UI design assets",
     aboutClient:
-      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+      "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a presence across Australia, New Zealand, and Southeast Asia.",
     benefits: [
       "Competitive salary",
       "Health insurance",
@@ -1859,6 +1879,111 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     )
   }
 
+  if (content.type === "candidate-profile") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title || "Candidate Profile"}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <CandidateProfileForm onSave={onProfileSave} onClose={onClose} onUpgradePlan={onUpgradePlan} />
+      </div>
+    )
+  }
+
+  if (content.type === "hiring-manager-profile") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title || "Enterprise Setup"}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <HiringManagerProfileForm onSave={onProfileSave} onClose={onClose} onStepChange={onHiringManagerStepChange} />
+      </div>
+    )
+  }
+
+  if (content.type === "candidate-pricing") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title || "Upgrade to Premium"}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <CandidatePricing onClose={onClose} />
+      </div>
+    )
+  }
+
+  if (content.type === "payment-success") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <PaymentSuccess
+          planName={content.planName || "Enterprise Plan"}
+          amount={content.amount || "$500/mo"}
+          onClose={onClose}
+        />
+      </div>
+    )
+  }
+
   if (content.type === "pdf") {
     return (
       <div className="flex flex-col h-full border-l">
@@ -2275,6 +2400,108 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     // Update local state to reflect application status immediately for UI feedback
     setJobJustApplied(true) // This will trigger a re-render and update the job's applied status in JobView
     setShowApplicationStatusLocal(true) // Also show the application status view
+  }
+
+  // ADDED: Handle different content types for forms and payments
+  if (content.type === "candidate-profile-form") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <CandidateProfileForm onProfileSave={onProfileSave} />
+      </div>
+    )
+  }
+
+  if (content.type === "hiring-manager-profile-form") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <HiringManagerProfileForm onProfileSave={onProfileSave} />
+      </div>
+    )
+  }
+
+  if (content.type === "candidate-pricing") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <CandidatePricing onUpgradePlan={onUpgradePlan} />
+      </div>
+    )
+  }
+
+  if (content.type === "payment-success") {
+    return (
+      <div className="flex flex-col h-full border-l items-center justify-center bg-background">
+        <PaymentSuccess onClose={onClose} />
+      </div>
+    )
   }
 
   return (
