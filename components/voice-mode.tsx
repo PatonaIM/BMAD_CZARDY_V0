@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react"
 import { X, Pause, Play } from "lucide-react"
 import { RealtimeClient } from "@/lib/realtime-client"
 import type { WorkspaceContent } from "@/types/workspace"
 import type { AIAgent } from "@/types/agents"
+import { AI_AGENTS } from "@/types/agents"
 
 interface VoiceModeProps {
   onClose: () => void
@@ -18,393 +19,502 @@ interface VoiceModeProps {
   onAgentChange: (agent: AIAgent) => void
 }
 
-function getVoiceForAgent(agentId: string): string {
-  const voiceMap: Record<string, string> = {
-    "account-manager": "echo", // Lawrence - male voice
-    "technical-recruiter": "verse", // Danny - male voice
-    "sales-marketing": "shimmer", // Darlyn - female voice
-    "hr-manager": "shimmer", // Siona - female voice
-    "financial-controller": "echo", // Dave - male voice
-  }
-
-  const selectedVoice = voiceMap[agentId] || "echo"
-  console.log("[v0] Voice selection for agent:", agentId, "→", selectedVoice)
-  return selectedVoice
+export interface VoiceModeRef {
+  handleVerbalAgentSwitch: (agent: AIAgent) => void
 }
 
-export function VoiceMode({
-  onClose,
-  onTranscriptionUpdate,
-  onCommandDetected,
-  agentName,
-  agentId,
-  currentWorkspaceContent,
-  allAgents,
-  currentAgent,
-  onAgentChange,
-}: VoiceModeProps) {
-  const [isConnecting, setIsConnecting] = useState(true)
-  const [isListening, setIsListening] = useState(false)
-  const [isUserSpeaking, setIsUserSpeaking] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  const [currentTranscript, setCurrentTranscript] = useState("")
-  const [aiResponse, setAiResponse] = useState("")
-  const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
-  const [isReconnecting, setIsReconnecting] = useState(false)
-  const clientRef = useRef<RealtimeClient | null>(null)
-  const transcriptBufferRef = useRef<string>("")
-  const aiResponseBufferRef = useRef<string>("")
-  const hasRequestedIntroRef = useRef(false)
-  const agentDropdownRef = useRef<HTMLDivElement>(null)
+export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
+  (
+    {
+      onClose,
+      onTranscriptionUpdate,
+      onCommandDetected,
+      agentName,
+      agentId,
+      currentWorkspaceContent,
+      allAgents,
+      currentAgent,
+      onAgentChange,
+    },
+    ref,
+  ) => {
+    const [isConnecting, setIsConnecting] = useState(true)
+    const [isListening, setIsListening] = useState(false)
+    const [isUserSpeaking, setIsUserSpeaking] = useState(false)
+    const [isSpeaking, setIsSpeaking] = useState(false)
+    const [isPaused, setIsPaused] = useState(false)
+    const [currentTranscript, setCurrentTranscript] = useState("")
+    const [aiResponse, setAiResponse] = useState("")
+    const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
+    const [isReconnecting, setIsReconnecting] = useState(false)
+    const clientRef = useRef<RealtimeClient | null>(null)
+    const transcriptBufferRef = useRef<string>("")
+    const aiResponseBufferRef = useRef<string>("")
+    const hasRequestedIntroRef = useRef(false)
+    const isIntroducingRef = useRef(false) // Added ref to track if introduction is in progress
+    const pendingAgentSwitchRef = useRef<AIAgent | null>(null) // Added ref to track pending agent switch after confirmation speech completes
+    const agentDropdownRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const initializeVoiceMode = async () => {
-      try {
-        const client = new RealtimeClient()
+    useEffect(() => {
+      const initializeVoiceMode = async () => {
+        try {
+          const client = new RealtimeClient()
 
-        client.onConnectionReady(() => {
-          console.log("[v0] Voice mode connection ready")
-          setIsConnecting(false)
+          client.onConnectionReady(() => {
+            console.log("[v0] Voice mode connection ready")
+            setIsConnecting(false)
 
-          const systemInstructions = getAgentSystemPrompt(agentId, currentWorkspaceContent)
-          client.sendMessage({
-            type: "session.update",
-            session: {
-              turn_detection: { type: "server_vad" },
-              input_audio_transcription: { model: "whisper-1" },
-              instructions: systemInstructions,
-            },
+            const systemInstructions = getAgentSystemPrompt(agentId, currentWorkspaceContent)
+
+            client.sendMessage({
+              type: "session.update",
+              session: {
+                turn_detection: {
+                  type: "server_vad",
+                  threshold: 0.7, // Higher threshold = less sensitive (default is 0.5)
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 800, // Longer silence required to detect speech end (default is 500ms)
+                },
+                input_audio_transcription: { model: "whisper-1" },
+                instructions: systemInstructions,
+              },
+            })
+
+            if (!hasRequestedIntroRef.current) {
+              hasRequestedIntroRef.current = true
+              isIntroducingRef.current = true
+              setTimeout(() => {
+                client.requestIntroduction()
+              }, 500)
+            }
           })
 
-          if (!hasRequestedIntroRef.current) {
-            hasRequestedIntroRef.current = true
-            setTimeout(() => {
-              client.requestIntroduction()
-            }, 500)
-          }
-        })
+          await client.connect(agentId)
+          clientRef.current = client
 
-        await client.connect(agentId)
-        clientRef.current = client
-
-        client.onMessage(async (message) => {
-          if (message.type === "input_audio_buffer.speech_started") {
-            setIsUserSpeaking(true)
-            setIsListening(false)
-          }
-
-          if (message.type === "input_audio_buffer.speech_stopped") {
-            setIsUserSpeaking(false)
-          }
-
-          if (message.type === "conversation.item.input_audio_transcription.completed") {
-            const userText = message.transcript
-            transcriptBufferRef.current = userText
-            setCurrentTranscript(userText)
-            setIsListening(false)
-
-            if (onCommandDetected) {
-              const isCommand = await onCommandDetected(userText)
-              if (isCommand) {
-                // Command was handled, clear the transcript buffer so it doesn't get saved to chat
-                transcriptBufferRef.current = ""
-                setCurrentTranscript("")
+          client.onMessage(async (message) => {
+            if (message.type === "input_audio_buffer.speech_started") {
+              if (!isIntroducingRef.current) {
+                setIsUserSpeaking(true)
+                setIsListening(false)
               }
             }
-          }
 
-          if (message.type === "response.audio_transcript.delta") {
-            aiResponseBufferRef.current += message.delta
-            setAiResponse(aiResponseBufferRef.current)
-          }
-
-          if (message.type === "response.audio_transcript.done") {
-            const finalAiText = message.transcript
-            aiResponseBufferRef.current = finalAiText
-            setAiResponse(finalAiText)
-
-            if (transcriptBufferRef.current || finalAiText) {
-              onTranscriptionUpdate(transcriptBufferRef.current, finalAiText)
+            if (message.type === "input_audio_buffer.speech_stopped") {
+              setIsUserSpeaking(false)
             }
 
-            transcriptBufferRef.current = ""
-            aiResponseBufferRef.current = ""
-            setCurrentTranscript("")
-            setAiResponse("")
-            setIsListening(true)
-          }
-        })
+            if (message.type === "conversation.item.input_audio_transcription.completed") {
+              if (isIntroducingRef.current) {
+                console.log("[v0] Ignoring user input during AI introduction")
+                return
+              }
 
-        client.onAudioStateChange((isPlaying) => {
-          setIsSpeaking(isPlaying)
-          if (!isPlaying) {
-            setIsListening(true)
-          } else {
-            setIsListening(false)
-          }
-        })
-      } catch (error) {
-        console.error("[VoiceMode] Initialization error:", error)
-        setIsConnecting(false)
+              const userText = message.transcript
+              const trimmedText = userText.trim()
+
+              // Ignore empty, very short, or filler-only transcriptions
+              if (!trimmedText || trimmedText.length < 3) {
+                console.log("[v0] Ignoring empty or too short transcription:", userText)
+                return
+              }
+
+              const fillerWords = ["um", "uh", "hmm", "mm", "mhm", "uh-huh", "mm-hmm", "ah", "oh", "er", "erm"]
+              const isFillerOnly = fillerWords.includes(trimmedText.toLowerCase())
+              if (isFillerOnly) {
+                console.log("[v0] Ignoring filler word transcription:", userText)
+                return
+              }
+
+              console.log("[v0] Processing user transcription:", userText)
+
+              transcriptBufferRef.current = userText
+              setCurrentTranscript(userText)
+              setIsListening(false)
+
+              if (onCommandDetected) {
+                const isCommand = await onCommandDetected(userText)
+                if (isCommand) {
+                  // Command was handled, clear the transcript buffer so it doesn't get saved to chat
+                  transcriptBufferRef.current = ""
+                  setCurrentTranscript("")
+                }
+              }
+            }
+
+            if (message.type === "response.audio_transcript.delta") {
+              aiResponseBufferRef.current += message.delta
+              setAiResponse(aiResponseBufferRef.current)
+            }
+
+            if (message.type === "response.audio_transcript.done") {
+              const finalAiText = message.transcript
+              aiResponseBufferRef.current = finalAiText
+              setAiResponse(finalAiText)
+
+              if (isIntroducingRef.current) {
+                console.log("[v0] AI introduction completed")
+                isIntroducingRef.current = false
+              }
+
+              // Save to chat (only if there's content to save)
+              if (transcriptBufferRef.current || finalAiText) {
+                onTranscriptionUpdate(transcriptBufferRef.current, finalAiText)
+              }
+
+              transcriptBufferRef.current = ""
+              aiResponseBufferRef.current = ""
+              setCurrentTranscript("")
+              setAiResponse("")
+              setIsListening(true)
+            }
+
+            if (message.type === "response.done") {
+              console.log("[v0] AI response fully completed (including audio)")
+
+              // If there's a pending agent switch, wait a bit for audio to finish playing, then perform the switch
+              if (pendingAgentSwitchRef.current) {
+                console.log("[v0] AI finished generating confirmation, waiting for audio playback to complete...")
+                const agentToSwitch = pendingAgentSwitchRef.current
+                pendingAgentSwitchRef.current = null
+
+                // Wait 3 seconds to ensure the audio has finished playing
+                // This accounts for audio buffering, playback delay, and network latency
+                setTimeout(async () => {
+                  console.log("[v0] Audio playback should be complete, now switching to:", agentToSwitch.firstName)
+                  await performAgentSwitch(agentToSwitch)
+                }, 3000)
+              }
+            }
+          })
+
+          client.onAudioStateChange((isPlaying) => {
+            setIsSpeaking(isPlaying)
+            if (!isPlaying) {
+              setIsListening(true)
+            } else {
+              setIsListening(false)
+            }
+          })
+        } catch (error) {
+          console.error("[VoiceMode] Initialization error:", error)
+          setIsConnecting(false)
+        }
       }
-    }
 
-    initializeVoiceMode()
+      initializeVoiceMode()
 
-    return () => {
-      console.log("[v0] Voice mode cleanup: disconnecting Realtime API")
+      return () => {
+        console.log("[v0] Voice mode cleanup: disconnecting Realtime API")
+        if (clientRef.current) {
+          clientRef.current.disconnect()
+          clientRef.current = null
+        }
+      }
+    }, [agentId]) // Only agentId in dependencies to prevent reconnection on workspace changes
+
+    useEffect(() => {
+      if (clientRef.current && !isConnecting) {
+        console.log("[v0] Updating workspace context without reconnecting")
+        const systemInstructions = getAgentSystemPrompt(agentId, currentWorkspaceContent)
+        clientRef.current.sendMessage({
+          type: "session.update",
+          session: {
+            instructions: systemInstructions,
+          },
+        })
+      }
+    }, [currentWorkspaceContent, agentId, isConnecting])
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (agentDropdownRef.current && !agentDropdownRef.current.contains(event.target as Node)) {
+          setIsAgentDropdownOpen(false)
+        }
+      }
+      if (isAgentDropdownOpen) {
+        document.addEventListener("mousedown", handleClickOutside)
+      }
+      return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [isAgentDropdownOpen])
+
+    const performAgentSwitch = async (agent: AIAgent) => {
+      console.log("[v0] Voice mode: Performing agent switch from", currentAgent.id, "to", agent.id)
+      setIsReconnecting(true)
+
+      const loadingStartTime = Date.now()
+      const minimumLoadingTime = 2000 // 2 seconds
+
+      // Disconnect current client
       if (clientRef.current) {
         clientRef.current.disconnect()
         clientRef.current = null
       }
-    }
-  }, [agentId]) // Only agentId in dependencies to prevent reconnection on workspace changes
 
-  useEffect(() => {
-    if (clientRef.current && !isConnecting) {
-      console.log("[v0] Updating workspace context without reconnecting")
-      const systemInstructions = getAgentSystemPrompt(agentId, currentWorkspaceContent)
-      clientRef.current.sendMessage({
-        type: "session.update",
-        session: {
-          instructions: systemInstructions,
+      // Reset state
+      hasRequestedIntroRef.current = false
+      isIntroducingRef.current = false
+      setCurrentTranscript("")
+      setAiResponse("")
+      transcriptBufferRef.current = ""
+      aiResponseBufferRef.current = ""
+      setIsListening(false)
+      setIsUserSpeaking(false)
+      setIsSpeaking(false)
+
+      // Update agent in parent component
+      onAgentChange(agent)
+
+      // Wait a bit for the agent change to propagate
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      const elapsedTime = Date.now() - loadingStartTime
+      const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime)
+
+      // Wait for the remaining time to ensure loading screen shows for at least 2 seconds
+      if (remainingTime > 0) {
+        console.log(`[v0] Waiting ${remainingTime}ms more to reach minimum 2-second loading time`)
+        await new Promise((resolve) => setTimeout(resolve, remainingTime))
+      }
+
+      // The useEffect will handle reconnection with the new agent
+      setIsReconnecting(false)
+    }
+
+    const handleAgentChange = async (agent: AIAgent) => {
+      if (agent.id === currentAgent.id) {
+        setIsAgentDropdownOpen(false)
+        return
+      }
+
+      console.log("[v0] Voice mode: Manual agent switch from dropdown")
+      setIsAgentDropdownOpen(false)
+      await performAgentSwitch(agent)
+    }
+
+    const handleVerbalAgentSwitch = async (agent: AIAgent) => {
+      console.log("[v0] Voice mode: Verbal agent switch requested for:", agent.firstName)
+
+      // Store the pending agent switch
+      pendingAgentSwitchRef.current = agent
+
+      // Create a confirmation message
+      const confirmationText = `Got it. I will now switch to ${agent.firstName}, our ${agent.name} AI Agent.`
+
+      // Send the confirmation as a response from the current AI
+      clientRef.current?.sendMessage({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: confirmationText,
+            },
+          ],
         },
       })
-    }
-  }, [currentWorkspaceContent, agentId, isConnecting])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (agentDropdownRef.current && !agentDropdownRef.current.contains(event.target as Node)) {
-        setIsAgentDropdownOpen(false)
+      // Trigger the AI to speak the confirmation
+      // The agent switch will happen automatically when response.done is received
+      clientRef.current?.sendMessage({
+        type: "response.create",
+      })
+
+      console.log("[v0] Waiting for AI to finish speaking confirmation before switching...")
+    }
+
+    useImperativeHandle(ref, () => ({
+      handleVerbalAgentSwitch,
+    }))
+
+    const handlePauseToggle = () => {
+      setIsPaused(!isPaused)
+    }
+
+    const handleClose = () => {
+      console.log("[v0] Voice mode close button clicked: disconnecting Realtime API")
+      if (clientRef.current) {
+        clientRef.current.disconnect()
+        clientRef.current = null
       }
-    }
-    if (isAgentDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [isAgentDropdownOpen])
-
-  const handleAgentChange = async (agent: AIAgent) => {
-    if (agent.id === currentAgent.id) {
-      setIsAgentDropdownOpen(false)
-      return
+      onClose()
     }
 
-    console.log("[v0] Voice mode: Switching agent from", currentAgent.id, "to", agent.id)
-    setIsAgentDropdownOpen(false)
-    setIsReconnecting(true)
-
-    // Disconnect current client
-    if (clientRef.current) {
-      clientRef.current.disconnect()
-      clientRef.current = null
+    if (isConnecting || isReconnecting) {
+      return (
+        <div className="relative w-full h-full bg-black flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full border-4 border-white/20 border-t-purple-500 border-r-blue-400 animate-spin" />
+            </div>
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold text-white mb-1">
+                {isReconnecting ? "Switching to" : "Connecting to"} {agentName.split(" - ")[0]}
+              </h2>
+              <p className="text-sm text-white/60">{agentName.split(" - ")[1]} AI Agent</p>
+              <p className="text-sm text-white/70 mt-2">
+                {isReconnecting ? "Reconnecting with new agent..." : "Establishing secure voice connection..."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )
     }
 
-    // Reset state
-    hasRequestedIntroRef.current = false
-    setCurrentTranscript("")
-    setAiResponse("")
-    transcriptBufferRef.current = ""
-    aiResponseBufferRef.current = ""
-    setIsListening(false)
-    setIsUserSpeaking(false)
-    setIsSpeaking(false)
-
-    // Update agent in parent component
-    onAgentChange(agent)
-
-    // Wait a bit for the agent change to propagate
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    // The useEffect will handle reconnection with the new agent
-    setIsReconnecting(false)
-  }
-
-  const handlePauseToggle = () => {
-    setIsPaused(!isPaused)
-  }
-
-  const handleClose = () => {
-    console.log("[v0] Voice mode close button clicked: disconnecting Realtime API")
-    if (clientRef.current) {
-      clientRef.current.disconnect()
-      clientRef.current = null
-    }
-    onClose()
-  }
-
-  if (isConnecting || isReconnecting) {
     return (
       <div className="relative w-full h-full bg-black flex flex-col items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center justify-center">
-            <div className="w-24 h-24 rounded-full border-4 border-white/20 border-t-purple-500 border-r-blue-400 animate-spin" />
+        {/* Header */}
+        <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-between">
+          <div className="text-white">
+            <p className="text-lg font-semibold">{agentName.split(" - ")[0]}</p>
+            <p className="text-sm opacity-60">{agentName.split(" - ")[1]} AI Agent</p>
           </div>
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-white mb-1">
-              {isReconnecting ? "Switching to" : "Connecting to"} {agentName.split(" - ")[0]}
-            </h2>
-            <p className="text-sm text-white/60">{agentName.split(" - ")[1]} AI Agent</p>
-            <p className="text-sm text-white/70 mt-2">
-              {isReconnecting ? "Reconnecting with new agent..." : "Establishing secure voice connection..."}
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="relative w-full h-full bg-black flex flex-col items-center justify-center">
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-between">
-        <div className="text-white">
-          <p className="text-lg font-semibold">{agentName.split(" - ")[0]}</p>
-          <p className="text-sm opacity-60">{agentName.split(" - ")[1]} AI Agent</p>
-        </div>
-        <div className="relative" ref={agentDropdownRef}>
-          <button
-            type="button"
-            onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
-            className="p-2 rounded-lg hover:bg-white/10 transition-all group"
-            aria-label="Select AI Agent"
-            title={currentAgent.name}
-          >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
-              style={{ backgroundColor: currentAgent.color }}
+          <div className="relative" ref={agentDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+              className="p-2 rounded-lg hover:bg-white/10 transition-all group"
+              aria-label="Select AI Agent"
+              title={currentAgent.name}
             >
-              <span className="text-xl">{currentAgent.icon}</span>
-            </div>
-          </button>
-          {isAgentDropdownOpen && (
-            <div className="absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-              <div className="p-3 border-b border-border bg-muted">
-                <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
+                style={{ backgroundColor: currentAgent.color }}
+              >
+                <span className="text-xl">{currentAgent.icon}</span>
               </div>
-              <div className="max-h-96 overflow-y-auto">
-                {allAgents.map((agent) => (
-                  <button
-                    key={agent.id}
-                    type="button"
-                    onClick={() => handleAgentChange(agent)}
-                    className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${currentAgent.id === agent.id ? "bg-accent/50" : ""}`}
-                  >
-                    <div
-                      className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-                      style={{ backgroundColor: agent.color }}
+            </button>
+            {isAgentDropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="p-3 border-b border-border bg-muted">
+                  <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                </div>
+                <div className="max-h-96 overflow-y-auto">
+                  {allAgents.map((agent) => (
+                    <button
+                      key={agent.id}
+                      type="button"
+                      onClick={() => handleAgentChange(agent)}
+                      className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${currentAgent.id === agent.id ? "bg-accent/50" : ""}`}
                     >
-                      <span className="text-xl">{agent.icon}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
-                        {currentAgent.id === agent.id && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                            Active
-                          </span>
-                        )}
+                      <div
+                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                        style={{ backgroundColor: agent.color }}
+                      >
+                        <span className="text-xl">{agent.icon}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
-                    </div>
-                  </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                          {currentAgent.id === agent.id && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Main Animation Area */}
+        <div className="flex-1 flex items-center justify-center">
+          {isSpeaking ? (
+            // Cloud Bubble Animation (AI Speaking)
+            <div className="relative">
+              <div className="w-64 h-64 relative">
+                <svg viewBox="0 0 200 200" className="w-full h-full">
+                  <path
+                    d="M 50 100 Q 50 50, 100 50 Q 150 50, 150 100 Q 180 100, 180 130 Q 180 160, 150 160 L 50 160 Q 20 160, 20 130 Q 20 100, 50 100"
+                    fill="white"
+                    style={{
+                      animation: "pulse 2s ease-in-out infinite",
+                    }}
+                  />
+                  <circle
+                    cx="30"
+                    cy="180"
+                    r="15"
+                    fill="white"
+                    style={{
+                      animation: "bounce 1s ease-in-out infinite",
+                    }}
+                  />
+                  <circle
+                    cx="50"
+                    cy="190"
+                    r="8"
+                    fill="white"
+                    style={{
+                      animation: "bounce 1.2s ease-in-out infinite",
+                    }}
+                  />
+                </svg>
+              </div>
+            </div>
+          ) : isUserSpeaking ? (
+            // 4 Circles Animation (User Actively Speaking)
+            <div className="relative">
+              <div className="flex items-center gap-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="w-16 h-16 rounded-full bg-white"
+                    style={{
+                      animation: `bounce 1s ease-in-out ${i * 0.15}s infinite`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            // Static Circles (Idle/Waiting for user to speak)
+            <div className="relative">
+              <div className="flex items-center gap-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="w-16 h-16 rounded-full bg-white opacity-50"
+                    style={{
+                      animation: `pulse 3s ease-in-out ${i * 0.2}s infinite`,
+                    }}
+                  />
                 ))}
               </div>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Main Animation Area */}
-      <div className="flex-1 flex items-center justify-center">
-        {isSpeaking ? (
-          // Cloud Bubble Animation (AI Speaking)
-          <div className="relative">
-            <div className="w-64 h-64 relative">
-              <svg viewBox="0 0 200 200" className="w-full h-full">
-                <path
-                  d="M 50 100 Q 50 50, 100 50 Q 150 50, 150 100 Q 180 100, 180 130 Q 180 160, 150 160 L 50 160 Q 20 160, 20 130 Q 20 100, 50 100"
-                  fill="white"
-                  style={{
-                    animation: "pulse 2s ease-in-out infinite",
-                  }}
-                />
-                <circle
-                  cx="30"
-                  cy="180"
-                  r="15"
-                  fill="white"
-                  style={{
-                    animation: "bounce 1s ease-in-out infinite",
-                  }}
-                />
-                <circle
-                  cx="50"
-                  cy="190"
-                  r="8"
-                  fill="white"
-                  style={{
-                    animation: "bounce 1.2s ease-in-out infinite",
-                  }}
-                />
-              </svg>
-            </div>
-          </div>
-        ) : isUserSpeaking ? (
-          // 4 Circles Animation (User Actively Speaking)
-          <div className="relative">
-            <div className="flex items-center gap-4">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="w-16 h-16 rounded-full bg-white"
-                  style={{
-                    animation: `bounce 1s ease-in-out ${i * 0.15}s infinite`,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        ) : (
-          // Static Circles (Idle/Waiting for user to speak)
-          <div className="relative">
-            <div className="flex items-center gap-4">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="w-16 h-16 rounded-full bg-white opacity-50"
-                  style={{
-                    animation: `pulse 3s ease-in-out ${i * 0.2}s infinite`,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Bottom Controls */}
+        <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 flex items-center gap-6">
+          <button
+            onClick={handlePauseToggle}
+            className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
+            aria-label={isPaused ? "Resume" : "Pause"}
+          >
+            {isPaused ? <Play className="w-6 h-6 text-white" /> : <Pause className="w-6 h-6 text-white" />}
+          </button>
+          <button
+            onClick={handleClose}
+            className="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors"
+            aria-label="Close voice mode"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+        </div>
       </div>
+    )
+  },
+)
 
-      {/* Bottom Controls */}
-      <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 flex items-center gap-6">
-        <button
-          onClick={handlePauseToggle}
-          className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
-          aria-label={isPaused ? "Resume" : "Pause"}
-        >
-          {isPaused ? <Play className="w-6 h-6 text-white" /> : <Pause className="w-6 h-6 text-white" />}
-        </button>
-        <button
-          onClick={handleClose}
-          className="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors"
-          aria-label="Close voice mode"
-        >
-          <X className="w-6 h-6 text-white" />
-        </button>
-      </div>
-    </div>
-  )
-}
+VoiceMode.displayName = "VoiceMode"
 
 function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): string {
   if (!content) {
@@ -493,11 +603,15 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
 }
 
 function getAgentSystemPrompt(agentId: string, workspaceContent?: WorkspaceContent): string {
+  const currentAgent = AI_AGENTS.find((a: any) => a.id === agentId)
+  const otherAgents = AI_AGENTS.filter((a: any) => a.id !== agentId)
+  const agentList = otherAgents.map((a: any) => `- **${a.firstName}** (${a.name}): ${a.description}`).join("\n")
+
   const systemPrompts: Record<string, string> = {
     "technical-recruiter": `You are a friendly and professional Technical Recruiter AI assistant named Danny helping candidates find their dream jobs.
 
 **IMPORTANT: When the conversation starts, immediately introduce yourself by saying:**
-"Hi! I'm Danny, your Technical Recruiter AI Agent. I specialize in conducting AI interviews, providing candidate briefs, refining job descriptions, and salary benchmarking. I can help you find job opportunities, prepare for interviews, review your resume, and guide you through the application process. What can I help you with today?"
+"Hi! I'm Danny, your Technical Recruiter AI Agent. I'm here to help you. What can I assist you with today?"
 
 Your primary responsibilities:
 - Help candidates discover job opportunities that match their skills and experience
@@ -509,19 +623,31 @@ When a candidate expresses interest in applying for a job, offer them two option
 1. AI Interview (Recommended) - Instant scheduling, personalized questions, immediate feedback, priority consideration
 2. Traditional Interview - Scheduled with hiring team, standard process
 
+**AGENT SWITCHING CAPABILITY:**
+You CAN switch users to other AI agents when they ask. Available agents:
+${agentList}
+
+When a user asks to speak with another agent, ALWAYS respond positively like: "Of course! I'll connect you with [Name] right away." NEVER apologize or say you can't help with switching.
+
 Always maintain a professional yet friendly tone, and celebrate candidates' achievements and progress in their job search journey.`,
 
     "account-manager": `You are a helpful Account Manager AI assistant named Lawrence.
 
 **IMPORTANT: When the conversation starts, immediately introduce yourself by saying:**
-"Hello! I'm Lawrence, your Account Manager AI Agent. I specialize in service overviews, quotations, job creation, candidate management, billing inquiries, and contract management. I'm here to help you navigate our services and manage your account effectively. What can I help you with today?"
+"Hello! I'm Lawrence, your Account Manager AI Agent. I'm here to help you. What can I assist you with today?"
 
-You specialize in service overviews, quotations, job creation, candidate management, billing inquiries, and contract management. You help clients navigate services and manage their accounts effectively. Be professional, efficient, and solution-oriented.`,
+You help clients navigate services and manage their accounts effectively. Be professional, efficient, and solution-oriented.
+
+**AGENT SWITCHING CAPABILITY:**
+You CAN switch users to other AI agents when they ask. Available agents:
+${agentList}
+
+When a user asks to speak with another agent, ALWAYS respond positively like: "Of course! I'll connect you with [Name] right away." NEVER apologize or say you can't help with switching.`,
 
     "sales-marketing": `You are a helpful Sales & Marketing AI assistant named Darlyn for Teamified.
 
 **IMPORTANT: When the conversation starts, immediately introduce yourself by saying:**
-"Hi there! I'm Darlyn, your Sales & Marketing AI Agent for Teamified. I specialize in lead qualification, service comparisons, case studies, testimonials, ROI calculations, and demo scheduling. I can help you understand our pricing plans, compare our services, calculate ROI, and explore how Teamified can benefit you or your organization. What would you like to learn about today?"
+"Hi there! I'm Darlyn, your Sales & Marketing AI Agent. I'm here to help you. What would you like to know?"
 
 You help both candidates and hiring managers understand the value of Teamified's offerings.
 
@@ -533,21 +659,39 @@ For hiring managers, you explain the 4 enterprise plans:
 - Enterprise Plan ($500/month) - Most popular, includes equipment and workspace
 - Premium Plan (30% + $300/month) - All-in solution with dedicated support
 
+**AGENT SWITCHING CAPABILITY:**
+You CAN switch users to other AI agents when they ask. Available agents:
+${agentList}
+
+When a user asks to speak with another agent, ALWAYS respond positively like: "Of course! I'll connect you with [Name] right away." NEVER apologize or say you can't help with switching.
+
 Be enthusiastic and focus on value and ROI.`,
 
     "hr-manager": `You are a helpful HR Manager AI assistant named Siona.
 
 **IMPORTANT: When the conversation starts, immediately introduce yourself by saying:**
-"Hello! I'm Siona, your HR Manager AI Agent. I specialize in onboarding processes, policy guidance, document management, benefits overview, compliance, and training schedules. I can help you with onboarding checklists, policy questions, document requests, benefits information, and training schedules. What HR matter can I assist you with today?"
+"Hello! I'm Siona, your HR Manager AI Agent. I'm here to help you. What can I assist you with today?"
 
-You specialize in onboarding processes, policy guidance, document management, benefits overview, compliance, and training schedules. You help with all HR-related needs in a professional and supportive manner.`,
+You help with all HR-related needs in a professional and supportive manner, including onboarding, policies, benefits, and compliance.
+
+**AGENT SWITCHING CAPABILITY:**
+You CAN switch users to other AI agents when they ask. Available agents:
+${agentList}
+
+When a user asks to speak with another agent, ALWAYS respond positively like: "Of course! I'll connect you with [Name] right away." NEVER apologize or say you can't help with switching.`,
 
     "financial-controller": `You are a helpful Financial Controller AI assistant named Dave.
 
 **IMPORTANT: When the conversation starts, immediately introduce yourself by saying:**
-"Hi! I'm Dave, your Financial Controller AI Agent. I specialize in invoice management, payment processing, billing cycles, account balances, payment plans, tax documents, and EOR fee calculations. I can help you check invoice status, process payments, review billing cycles, and provide cost breakdowns. What financial question can I help you with today?"
+"Hi! I'm Dave, your Financial Controller AI Agent. I'm here to help you. What can I assist you with today?"
 
-You specialize in invoice management, payment processing, billing cycles, account balances, payment plans, tax documents, and EOR fee calculations. You help manage financial matters efficiently and transparently.`,
+You help manage financial matters efficiently and transparently, including invoices, payments, billing, and cost breakdowns.
+
+**AGENT SWITCHING CAPABILITY:**
+You CAN switch users to other AI agents when they ask. Available agents:
+${agentList}
+
+When a user asks to speak with another agent, ALWAYS respond positively like: "Of course! I'll connect you with [Name] right away." NEVER apologize or say you can't help with switching.`,
   }
 
   let systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]

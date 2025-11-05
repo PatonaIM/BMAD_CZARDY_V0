@@ -29,7 +29,7 @@ import { MarkdownRenderer } from "./markdown-renderer"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import { getCandidateConversation, saveCandidateMessage } from "@/lib/mock-conversations"
-import { VoiceMode } from "./voice-mode"
+import { VoiceMode, type VoiceModeRef } from "./voice-mode" // Changed import to include type VoiceModeRef
 import { detectCommandIntent } from "@/app/actions/detect-command-intent"
 
 interface Message {
@@ -490,6 +490,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     const messagesContainerRef = useRef<HTMLDivElement>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const agentDropdownRef = useRef<HTMLDivElement>(null)
+    const voiceModeRef = useRef<VoiceModeRef>(null) // Ref for VoiceMode methods
 
     // State for workspace management, tied to voice mode commands
     const [isWorkspaceOpen, setWorkspaceOpen] = useState(false)
@@ -1298,14 +1299,36 @@ Looking forward to seeing this conversation develop! 🚀`,
         setLocalMessages((prev) => [...prev, aiMsg])
       },
       [activeAgent.id],
-    ) // Include activeAgent.id in dependencies if agent name is used in messages
+    )
 
-    const handleVoiceModeAgentChange = useCallback(
+    const handleVoiceModeAgentChange = useCallback((agent: AIAgent) => {
+      console.log("[v0] Voice mode agent change:", agent.id)
+      setActiveAgent(agent)
+    }, [])
+
+    const handleAgentChange = useCallback(
       (agent: AIAgent) => {
-        console.log("[v0] Voice mode agent change:", agent.id)
         setActiveAgent(agent)
+        setIsAgentDropdownOpen(false)
+
+        if (currentChatCandidate) {
+          setCurrentChatCandidate(null)
+        }
+
+        const introMessage = generateAgentIntroduction(agent)
+
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: `agent-switch-${Date.now()}`,
+            type: "ai",
+            content: introMessage,
+            agentId: agent.id,
+            isAgentSwitch: true,
+          },
+        ])
       },
-      [], // No dependencies needed here as setActiveAgent is stable
+      [currentChatCandidate, setLocalMessages, generateAgentIntroduction, AI_AGENTS], // Added AI_AGENTS to dependencies
     )
     // </CHANGE>
 
@@ -1313,7 +1336,6 @@ Looking forward to seeing this conversation develop! 🚀`,
       async (text: string): Promise<boolean> => {
         console.log("[v0] detectAndHandleCommand called with:", text)
 
-        // First, try AI-powered intent detection
         const intentResult = await detectCommandIntent(text)
 
         console.log("[v0] Intent detection result:", intentResult)
@@ -1323,6 +1345,43 @@ Looking forward to seeing this conversation develop! 🚀`,
         }
 
         const command = intentResult.command!
+
+        if (command.startsWith("switch to ")) {
+          const targetAgentName = command.replace("switch to ", "").toLowerCase()
+          const targetAgent = AI_AGENTS.find((agent) => agent.firstName.toLowerCase() === targetAgentName)
+
+          if (targetAgent && targetAgent.id !== activeAgent.id) {
+            console.log("[v0] Agent switch command detected:", targetAgent.firstName)
+
+            if (isVoiceMode && voiceModeRef.current) {
+              voiceModeRef.current.handleVerbalAgentSwitch(targetAgent)
+              return true
+            }
+
+            const userMsg = {
+              id: `cmd-user-${Date.now()}`,
+              type: "user" as const,
+              content: text,
+              timestamp: new Date().toISOString(),
+              agentId: activeAgent.id,
+            }
+
+            const aiMsg = {
+              id: `cmd-ai-${Date.now()}`,
+              type: "ai" as const,
+              content: `Switching you to ${targetAgent.firstName}, our ${targetAgent.name}. One moment please...`,
+              timestamp: new Date().toISOString(),
+              agentId: activeAgent.id,
+            }
+
+            setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+            handleAgentChange(targetAgent)
+
+            return true
+          }
+        }
+
         const userMsg = {
           id: `voice-cmd-user-${Date.now()}`,
           type: "user" as const,
@@ -1331,18 +1390,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           agentId: activeAgent.id,
         }
 
-        // Handle different commands
         if (command === "browse candidates") {
-          const aiMsg = {
-            id: `voice-cmd-ai-${Date.now()}`,
-            type: "ai" as const,
-            content:
-              "Opening the candidate browser for you. You can browse through available candidates while we continue our conversation.",
-            timestamp: new Date().toISOString(),
-            agentId: activeAgent.id,
-          }
-          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
           const workspaceData: WorkspaceContent = {
             type: "browse-candidates",
             title: "Browse Candidates",
@@ -1350,8 +1398,8 @@ Looking forward to seeing this conversation develop! 🚀`,
             ...(currentWorkspaceContent?.job && { job: currentWorkspaceContent.job }),
           }
           onOpenWorkspace(workspaceData)
-          setHasOpenedWorkspace(true) // Set flag to indicate workspace is open
-          setLastWorkspaceContent(workspaceData) // Update last opened workspace
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
 
           return true
         }
@@ -1367,7 +1415,6 @@ Looking forward to seeing this conversation develop! 🚀`,
           }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
-          // Open job board workspace
           const workspaceData: WorkspaceContent = { type: "job-board", title: "Available Positions" }
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
@@ -1387,7 +1434,6 @@ Looking forward to seeing this conversation develop! 🚀`,
           }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
-          // Open job board workspace
           const workspaceData: WorkspaceContent = { type: "job-board", title: "My Jobs" }
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
@@ -1406,7 +1452,6 @@ Looking forward to seeing this conversation develop! 🚀`,
           }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
-          // Open data analytics workspace
           const workspaceData: WorkspaceContent = { type: "analytics", title: "Recruitment Analytics" }
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
@@ -1417,8 +1462,16 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         return false
       },
-      [activeAgent.id, onOpenWorkspace, currentWorkspaceContent, setHasOpenedWorkspace, setLastWorkspaceContent],
-    ) // Include relevant dependencies for useCallback
+      [
+        activeAgent,
+        isVoiceMode,
+        onOpenWorkspace,
+        currentWorkspaceContent,
+        setHasOpenedWorkspace,
+        setLastWorkspaceContent,
+        handleAgentChange,
+      ],
+    )
 
     const handleVoiceModeToggle = () => {
       setIsVoiceMode(!isVoiceMode)
@@ -1763,29 +1816,14 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: `Perfect! I've opened the candidate browser for you. You can now swipe through our pool of talented candidates.
-
-**How it works:**
-
-- ✅ **Swipe Right (Check)** - Save candidates you're interested in
-- ❌ **Swipe Left (X)** - Pass on candidates
-
-Each candidate profile includes:
-- Name and professional title
-- Location and years of experience
-- Skills and qualifications with visual badges
-- Skill match percentage
-- AI interview video with transcript
-- Take-home challenge submission (GitHub repo, files, and AI feedback)
-- Contact information (email, phone, LinkedIn, GitHub, portfolio)
-- Professional summary and background
-- Full resume access
-
-Take your time reviewing each profile and save the ones that match your requirements!`,
-          agentId: technicalRecruiter?.id || "technical-recruiter",
+          id: `voice-cmd-ai-${Date.now()}`, // Changed ID to match voice command handling
+          type: "ai" as const,
+          content:
+            "Perfect! I've opened the candidate browser for you. You can now swipe through our pool of talented candidates.",
+          timestamp: new Date().toISOString(),
+          agentId: activeAgent.id,
         }
+        // </CHANGE>
         // </CHANGE>
 
         setLocalMessages((prev) => [...prev, userMsg, aiMsg])
@@ -2119,34 +2157,31 @@ Are you ready to begin your Take Home Challenge?`,
 
     const handlePromptSuggestionClick = (text: string) => {
       setInputMessage(text)
-      // Submit the message immediately after clicking a prompt suggestion
       handleSubmit({ preventDefault: () => {} } as React.FormEvent)
     }
 
-    const handleAgentChange = (agent: AIAgent) => {
-      setActiveAgent(agent)
-      setIsAgentDropdownOpen(false)
-
-      // If switching agent while in a candidate chat, reset candidate chat state
-      if (currentChatCandidate) {
-        setCurrentChatCandidate(null)
-        // Optionally, you might want to clear localMessages or show a warning
-        // setLocalMessages([])
-      }
-
-      const introMessage = generateAgentIntroduction(agent)
-
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: `agent-switch-${Date.now()}`,
-          type: "ai",
-          content: introMessage,
-          agentId: agent.id,
-          isAgentSwitch: true,
-        },
-      ])
-    }
+    // const handleAgentChange = (agent: AIAgent) => {
+    //   setActiveAgent(agent)
+    //   setIsAgentDropdownOpen(false)
+    //
+    //   if (currentChatCandidate) {
+    //     setCurrentChatCandidate(null)
+    //   }
+    //
+    //   const introMessage = generateAgentIntroduction(agent)
+    //
+    //   setLocalMessages((prev) => [
+    //     ...prev,
+    //     {
+    //       id: `agent-switch-${Date.now()}`,
+    //       type: "ai",
+    //       content: introMessage,
+    //       agentId: agent.id,
+    //       isAgentSwitch: true,
+    //     },
+    //   ])
+    // }
+    // </CHANGE>
 
     const scrollToBottom = () => {
       if (messagesEndRef.current) {
@@ -2221,6 +2256,7 @@ Are you ready to begin your Take Home Challenge?`,
 
         {isVoiceMode ? (
           <VoiceMode
+            ref={voiceModeRef}
             onClose={handleVoiceModeToggle}
             onTranscriptionUpdate={handleTranscriptionUpdate}
             onCommandDetected={detectAndHandleCommand}
