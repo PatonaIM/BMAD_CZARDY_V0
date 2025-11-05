@@ -37,6 +37,23 @@ const RESERVED_COMMANDS = [
     ],
   },
   {
+    command: "browse jobs",
+    description: "Browse available unapplied jobs",
+    keywords: [
+      "browse jobs",
+      "browse for jobs",
+      "browse available jobs",
+      "see available jobs",
+      "view available jobs",
+      "show available jobs",
+      "look for jobs",
+      "find jobs",
+      "search jobs",
+      "explore jobs",
+      "discover jobs",
+    ],
+  },
+  {
     command: "my jobs",
     description: "View jobs the user has applied to or saved",
     keywords: ["my jobs", "my applications", "applied jobs", "saved jobs", "my positions"],
@@ -45,6 +62,57 @@ const RESERVED_COMMANDS = [
     command: "data",
     description: "View analytics and data dashboard",
     keywords: ["data", "analytics", "dashboard", "statistics", "metrics", "insights", "reports", "show me data"],
+  },
+  {
+    command: "applied jobs",
+    description: "Show applied jobs tab in job board",
+    keywords: [
+      "applied jobs",
+      "show applied jobs",
+      "view applied jobs",
+      "see applied jobs",
+      "my applied jobs",
+      "jobs i applied to",
+      "jobs i've applied to",
+      "applications",
+      "my applications",
+      "show applications",
+      "view applications",
+    ],
+  },
+  {
+    command: "invited jobs",
+    description: "Show invited jobs tab in job board",
+    keywords: [
+      "invited jobs",
+      "show invited jobs",
+      "view invited jobs",
+      "see invited jobs",
+      "my invited jobs",
+      "jobs i'm invited to",
+      "invitations",
+      "my invitations",
+      "show invitations",
+      "view invitations",
+      "invited positions",
+    ],
+  },
+  {
+    command: "saved jobs",
+    description: "Show saved jobs tab in job board",
+    keywords: [
+      "saved jobs",
+      "show saved jobs",
+      "view saved jobs",
+      "see saved jobs",
+      "my saved jobs",
+      "jobs i saved",
+      "jobs i've saved",
+      "bookmarked jobs",
+      "my bookmarks",
+      "show saved",
+      "view saved",
+    ],
   },
   ...AI_AGENTS.map((agent) => ({
     command: `switch to ${agent.firstName.toLowerCase()}`,
@@ -274,6 +342,111 @@ function levenshteinDistance(str1: string, str2: string): number {
   return matrix[str2.length][str1.length]
 }
 
+function fuzzyMatchNavigationCommand(input: string): { command: string; confidence: number } | null {
+  const normalizedInput = input.toLowerCase().trim()
+
+  // Common speech recognition errors and variations
+  const navigationMappings = [
+    {
+      command: "job board",
+      variations: ["job board", "jump board", "job bored", "job port", "job boards", "jobs board"],
+    },
+    {
+      command: "browse candidates",
+      variations: ["browse candidates", "browse candidate", "brows candidates", "browse can dates", "candidate browse"],
+    },
+    {
+      command: "my jobs",
+      variations: ["my jobs", "my job", "my jabs", "my applications", "my apps"],
+    },
+    {
+      command: "data",
+      variations: ["data", "date a", "data dashboard", "analytics", "dashboard"],
+    },
+    {
+      command: "applied jobs",
+      variations: [
+        "applied jobs",
+        "show applied jobs",
+        "view applied jobs",
+        "see applied jobs",
+        "my applied jobs",
+        "jobs i applied to",
+        "jobs i've applied to",
+        "applications",
+        "my applications",
+        "show applications",
+        "view applications",
+      ],
+    },
+    {
+      command: "invited jobs",
+      variations: [
+        "invited jobs",
+        "show invited jobs",
+        "view invited jobs",
+        "see invited jobs",
+        "my invited jobs",
+        "jobs i'm invited to",
+        "invitations",
+        "my invitations",
+        "show invitations",
+        "view invitations",
+        "invited positions",
+      ],
+    },
+    {
+      command: "saved jobs",
+      variations: [
+        "saved jobs",
+        "show saved jobs",
+        "view saved jobs",
+        "see saved jobs",
+        "my saved jobs",
+        "jobs i saved",
+        "jobs i've saved",
+        "bookmarked jobs",
+        "my bookmarks",
+        "show saved",
+        "view saved",
+      ],
+    },
+    {
+      command: "browse jobs",
+      variations: [
+        "browse jobs",
+        "browse for jobs",
+        "browse available jobs",
+        "see available jobs",
+        "view available jobs",
+        "show available jobs",
+        "look for jobs",
+        "find jobs",
+        "search jobs",
+        "explore jobs",
+        "discover jobs",
+      ],
+    },
+  ]
+
+  for (const mapping of navigationMappings) {
+    for (const variation of mapping.variations) {
+      // Check if the variation appears in the input
+      if (normalizedInput.includes(variation)) {
+        return { command: mapping.command, confidence: 0.95 }
+      }
+
+      // Check Levenshtein distance for typos
+      const distance = levenshteinDistance(normalizedInput, variation)
+      if (distance <= 3 && normalizedInput.length > 5) {
+        return { command: mapping.command, confidence: 0.85 }
+      }
+    }
+  }
+
+  return null
+}
+
 export async function detectCommandIntent(userInput: string): Promise<{
   isCommand: boolean
   command?: string
@@ -283,8 +456,25 @@ export async function detectCommandIntent(userInput: string): Promise<{
 
   const normalizedInput = userInput.toLowerCase().trim()
 
+  if (normalizedInput.length < 3) {
+    console.log("[v0] Input too short, skipping command detection")
+    return {
+      isCommand: false,
+      confidence: 0,
+    }
+  }
+
+  const fuzzyNavMatch = fuzzyMatchNavigationCommand(normalizedInput)
+  if (fuzzyNavMatch) {
+    console.log("[v0] Fuzzy navigation match found:", fuzzyNavMatch.command)
+    return {
+      isCommand: true,
+      command: fuzzyNavMatch.command,
+      confidence: fuzzyNavMatch.confidence,
+    }
+  }
+
   for (const cmd of RESERVED_COMMANDS) {
-    // Check if any keyword is present in the input
     for (const keyword of cmd.keywords) {
       if (normalizedInput.includes(keyword)) {
         console.log("[v0] Keyword match found:", keyword, "→", cmd.command)
@@ -297,32 +487,42 @@ export async function detectCommandIntent(userInput: string): Promise<{
     }
   }
 
-  const fuzzyAgentName = fuzzyMatchAgentName(normalizedInput)
-  console.log("[v0] Fuzzy agent name result:", fuzzyAgentName)
+  const switchingKeywords = [
+    "talk to",
+    "speak to",
+    "speak with",
+    "switch to",
+    "connect",
+    "want to talk",
+    "want to speak",
+    "wanted to talk",
+    "wanted to speak",
+    "like to talk",
+    "like to speak",
+    "can i talk",
+    "can i speak",
+    "could i talk",
+    "could i speak",
+    "get me",
+  ]
 
-  if (fuzzyAgentName) {
-    const switchingPhrases = [
-      "talk to",
-      "speak to",
-      "speak with",
-      "switch to",
-      "connect",
-      "want to",
-      "wanted to",
-      "like to",
-      "can i",
-      "could i",
-      "get me",
-    ]
+  const hasSwitchingKeyword = switchingKeywords.some((keyword) => normalizedInput.includes(keyword))
 
-    if (switchingPhrases.some((phrase) => normalizedInput.includes(phrase))) {
-      console.log("[v0] Fuzzy match with switching phrase detected, returning command")
+  if (hasSwitchingKeyword) {
+    console.log("[v0] Switching keyword detected, attempting fuzzy agent name matching")
+    const fuzzyAgentName = fuzzyMatchAgentName(normalizedInput)
+    console.log("[v0] Fuzzy agent name result:", fuzzyAgentName)
+
+    if (fuzzyAgentName) {
+      console.log("[v0] Agent switch command detected:", `switch to ${fuzzyAgentName}`)
       return {
         isCommand: true,
         command: `switch to ${fuzzyAgentName}`,
         confidence: 0.9,
       }
     }
+  } else {
+    console.log("[v0] No switching keywords detected, skipping fuzzy agent name matching")
   }
 
   try {

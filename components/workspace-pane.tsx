@@ -26,8 +26,9 @@ import {
   Play,
   Mail,
   Search,
+  Star,
 } from "lucide-react"
-import { useState, useEffect, useMemo, type RefObject, useRef } from "react" // Added useRef
+import { useState, useEffect, useMemo, type RefObject, useRef } from "react" // Added useRef and useImperativeHandle
 import type { WorkspaceContent, JobListing, CandidateProfile } from "@/types/workspace"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -101,7 +102,8 @@ interface WorkspacePaneProps {
   onCloseWorkspace?: () => void
   // ADDED: onClearMessages prop
   onClearMessages?: () => void // Added onClearMessages prop
-  onOpenWorkspace?: (content: WorkspaceContent) => void
+  onJobBoardTabChange?: (tab: "applied" | "invited" | "saved") => void // ADDED: prop to allow external control of the job board tab
+  jobBoardTab?: "applied" | "invited" | "saved" | "browse" // ADDED: prop to allow external control of the job board tab
 }
 
 const mockJobListings: JobListing[] = [
@@ -1259,6 +1261,9 @@ export const WorkspacePane = ({
   onIntroduceMatchedCandidate, // Added prop
   onCloseWorkspace, // Added prop
   onClearMessages, // Added prop
+  onJobBoardTabChange, // ADDED: prop to allow external control of the job board tab
+  jobBoardTab, // ADDED: prop to allow external control of the job board tab
+  // </CHANGE>
 }: WorkspacePaneProps) => {
   console.log("[v0] WorkspacePane rendered with content.type:", content.type)
 
@@ -1348,7 +1353,22 @@ export const WorkspacePane = ({
 
   // FIX: Declare jobStatusFilter
   const [jobStatusFilter, setJobStatusFilter] = useState("open")
-  const [candidateJobFilter, setCandidateJobFilter] = useState<"applied" | "invited" | "saved">("applied")
+  const [candidateJobFilter, setCandidateJobFilter] = useState<"applied" | "invited" | "saved" | "browse">("applied")
+
+  useEffect(() => {
+    if (jobBoardTab && jobBoardTab !== candidateJobFilter) {
+      console.log("[v0] External job board tab change:", jobBoardTab)
+      setCandidateJobFilter(jobBoardTab)
+    }
+  }, [jobBoardTab, candidateJobFilter])
+  // </CHANGE>
+
+  useEffect(() => {
+    if (content.type === "job-board" && onJobBoardTabChange) {
+      onJobBoardTabChange(candidateJobFilter)
+    }
+  }, [candidateJobFilter, content.type, onJobBoardTabChange])
+  // </CHANGE>
 
   useEffect(() => {
     if (content.type === "browse-candidates") {
@@ -3101,10 +3121,11 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       </button>
                     </div>
 
+                    {/* Browse Jobs button */}
                     <button
                       onClick={() => {
                         console.log("[v0] Browse Jobs clicked")
-                        // TODO: Implement browse jobs functionality
+                        setCandidateJobFilter("browse")
                       }}
                       className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
                     >
@@ -3311,6 +3332,74 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                                 <div className="flex items-center gap-2">
                                   {job.skillMatch && (
                                     <span className="text-xs text-muted-foreground">{job.skillMatch}% match</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* </CHANGE> */}
+
+                  {/* Browse Jobs Section */}
+                  {candidateJobFilter === "browse" && (
+                    <div>
+                      {mockJobListings.filter((j) => !j.applied && !j.invited && !j.saved && j.status === "open")
+                        .length === 0 ? (
+                        <div className="text-center py-12 border border-dashed border-border rounded-lg">
+                          <Briefcase className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                          <p className="text-muted-foreground">No available jobs to browse at the moment</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {mockJobListings
+                            .filter((j) => !j.applied && !j.invited && !j.saved && j.status === "open")
+                            .map((job) => (
+                              <div
+                                key={job.id}
+                                onClick={() => onViewJob?.(job)}
+                                className="border border-border rounded-lg p-5 hover:border-[#A16AE8] transition-colors bg-card cursor-pointer"
+                              >
+                                <div className="flex items-start gap-4 mb-4">
+                                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                                    {job.logo ? (
+                                      <img
+                                        src={job.logo || "/placeholder.svg"}
+                                        alt={job.company}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <Briefcase className="w-6 h-6 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold text-base mb-1 truncate">{job.title}</h4>
+                                    <p className="text-sm text-muted-foreground mb-2">{job.company}</p>
+                                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                                      <span className="flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        {job.location}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <DollarSign className="w-3 h-3" />
+                                        {job.salary}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {job.posted}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {job.skillMatch && (
+                                    <div className="flex items-center gap-1.5">
+                                      <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                                      <span className="text-xs font-medium text-[#A16AE8]">
+                                        {job.skillMatch}% match
+                                      </span>
+                                    </div>
                                   )}
                                 </div>
                               </div>

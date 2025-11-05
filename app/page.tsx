@@ -41,6 +41,7 @@ export default function ChatPage() {
   const [workspaceContent, setWorkspaceContent] = useState<WorkspaceContent>({ type: null })
   const [initialAgent, setInitialAgent] = useState<string | null>(null)
   const [shouldShowWelcome, setShouldShowWelcome] = useState(false)
+  const [currentJobBoardTab, setCurrentJobBoardTab] = useState<"applied" | "invited" | "saved">("applied") // Added state to track current job board tab
   const chatMainRef = useRef<ChatMainRef | null>(null)
 
   useEffect(() => {
@@ -173,8 +174,6 @@ export default function ChatPage() {
   const handleMyJobs = () => {
     console.log("[v0] My Jobs clicked")
     const user = getCurrentUser()
-
-    router.push("/")
 
     if (user?.role === "hiring_manager") {
       // Switch to Account Manager AI Agent for hiring managers
@@ -319,6 +318,9 @@ export default function ChatPage() {
     }
   }
 
+  // Job board tab is now controlled directly via currentJobBoardTab state
+  // </CHANGE>
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -340,6 +342,8 @@ export default function ChatPage() {
               initialAgentId={initialAgent}
               shouldShowWelcome={shouldShowWelcome}
               currentWorkspaceContent={workspaceContent}
+              currentJobBoardTab={currentJobBoardTab}
+              onSetJobBoardTab={setCurrentJobBoardTab}
             />
           </div>
           {workspaceContent.type && (
@@ -358,11 +362,12 @@ export default function ChatPage() {
                 onSubmissionComplete={handleSubmissionComplete}
                 onSendMessage={handleSendMessage}
                 onOpenCandidateChat={handleOpenCandidateChat}
-                chatMainRef={chatMainRef} // Pass chatMainRef to WorkspacePane
-                onIntroduceMatchedCandidate={handleIntroduceMatchedCandidate} // Added onIntroduceMatchedCandidate prop
-                onSendAIMessage={handleSendAIMessage} // Added onSendAIMessage prop
-                onClearMessages={handleClearMessages} // Added onClearMessages prop
+                chatMainRef={chatMainRef}
+                onIntroduceMatchedCandidate={handleIntroduceMatchedCandidate}
+                onSendAIMessage={handleSendAIMessage}
+                onClearMessages={handleClearMessages}
                 onOpenWorkspace={setWorkspaceContent}
+                jobBoardTab={currentJobBoardTab}
               />
             </div>
           )}

@@ -57,6 +57,7 @@ export interface JobListing {
   requirements: string[]
   applied?: boolean
   saved?: boolean
+  invited?: boolean // Added invited property to track job invitations
   logo?: string
   status?: JobStatus
   responsibilities?: string[]
@@ -71,7 +72,7 @@ export interface JobListing {
   openings?: number
   aboutClient?: string
   jobSummary?: string
-  skillMatch?: number // Percentage (0-100) indicating how well candidate matches job requirements
+  skillMatch?: number
   applicationStage?: ApplicationStage
   takeHomeChallengeCompleted?: boolean
   aiInterviewCompleted?: boolean

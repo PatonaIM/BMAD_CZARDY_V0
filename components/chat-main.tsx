@@ -136,6 +136,9 @@ export interface ChatMainProps {
   initialAgentId?: string | null
   shouldShowWelcome?: boolean
   currentWorkspaceContent?: WorkspaceContent
+  currentJobBoardTab?: "applied" | "invited" | "saved" | "browse"
+  onSetJobBoardTab?: (tab: "applied" | "invited" | "saved" | "browse") => void
+  // </CHANGE>
 }
 
 const welcomeQuestions = [
@@ -466,7 +469,16 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
 
 export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
   (
-    { isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome, currentWorkspaceContent },
+    {
+      isSidebarOpen,
+      onToggleSidebar,
+      onOpenWorkspace,
+      initialAgentId,
+      shouldShowWelcome,
+      currentWorkspaceContent,
+      currentJobBoardTab,
+      onSetJobBoardTab,
+    },
     ref,
   ) => {
     const [inputMessage, setInputMessage] = useState("")
@@ -1346,6 +1358,79 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         const command = intentResult.command!
 
+        if (command === "browse jobs") {
+          console.log("[v0] Browse jobs command detected")
+
+          const workspaceData: WorkspaceContent = { type: "job-board", title: "Browse Jobs" }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+
+          // Set the tab to browse
+          if (onSetJobBoardTab) {
+            onSetJobBoardTab("browse")
+          }
+
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: `Opening the job board to browse available positions. You can continue browsing while we chat.`,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          return true
+        }
+        // </CHANGE>
+
+        if (command === "applied jobs" || command === "invited jobs" || command === "saved jobs") {
+          const tab = command.replace(" jobs", "") as "applied" | "invited" | "saved"
+
+          console.log("[v0] Job board tab navigation command detected:", tab)
+
+          // If job board is not open, open it first
+          if (currentWorkspaceContent?.type !== "job-board") {
+            const workspaceData: WorkspaceContent = { type: "job-board", title: "My Jobs" }
+            onOpenWorkspace(workspaceData)
+            setHasOpenedWorkspace(true)
+            setLastWorkspaceContent(workspaceData)
+          }
+
+          // Set the tab
+          if (onSetJobBoardTab) {
+            onSetJobBoardTab(tab)
+          }
+
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          const tabName = tab === "applied" ? "Applied Jobs" : tab === "invited" ? "Invited Jobs" : "Saved Jobs"
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: `Showing your ${tabName}. You can continue browsing while we chat.`,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          return true
+        }
+
         if (command.startsWith("switch to ")) {
           const targetAgentName = command.replace("switch to ", "").toLowerCase()
           const targetAgent = AI_AGENTS.find((agent) => agent.firstName.toLowerCase() === targetAgentName)
@@ -1382,14 +1467,6 @@ Looking forward to seeing this conversation develop! 🚀`,
           }
         }
 
-        const userMsg = {
-          id: `voice-cmd-user-${Date.now()}`,
-          type: "user" as const,
-          content: text,
-          timestamp: new Date().toISOString(),
-          agentId: activeAgent.id,
-        }
-
         if (command === "browse candidates") {
           const workspaceData: WorkspaceContent = {
             type: "browse-candidates",
@@ -1401,6 +1478,24 @@ Looking forward to seeing this conversation develop! 🚀`,
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
 
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content:
+              "Opening the candidate browser for you. You can now swipe through our pool of talented candidates.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
           return true
         }
 
@@ -1410,6 +1505,13 @@ Looking forward to seeing this conversation develop! 🚀`,
             type: "ai" as const,
             content:
               "Opening the job board for you. You can explore available positions while we continue our conversation.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -1432,6 +1534,13 @@ Looking forward to seeing this conversation develop! 🚀`,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
           const workspaceData: WorkspaceContent = { type: "job-board", title: "My Jobs" }
@@ -1450,6 +1559,13 @@ Looking forward to seeing this conversation develop! 🚀`,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
           const workspaceData: WorkspaceContent = { type: "analytics", title: "Recruitment Analytics" }
@@ -1465,11 +1581,12 @@ Looking forward to seeing this conversation develop! 🚀`,
       [
         activeAgent,
         isVoiceMode,
+        voiceModeRef, // Added voiceModeRef to dependencies
+        handleAgentChange,
         onOpenWorkspace,
         currentWorkspaceContent,
-        setHasOpenedWorkspace,
-        setLastWorkspaceContent,
-        handleAgentChange,
+        onSetJobBoardTab,
+        // </CHANGE>
       ],
     )
 
@@ -1490,8 +1607,8 @@ Looking forward to seeing this conversation develop! 🚀`,
 
     const handleCommandOrMessage = async (text: string) => {
       // Check if it's a voice command first, if so, handle it and return true
-      const isVoiceCommand = await detectAndHandleCommand(text)
-      if (isVoiceCommand) {
+      const isCommand = await detectAndHandleCommand(text)
+      if (isCommand) {
         return true
       }
 
