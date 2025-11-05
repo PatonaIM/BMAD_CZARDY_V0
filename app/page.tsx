@@ -53,7 +53,7 @@ export default function ChatPage() {
     if (user?.isNewSignup) {
       if (user.role === "candidate") {
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-        if (technicalRecruiter?.id) {
+        if (technicalRecruiter) {
           setInitialAgent(technicalRecruiter.id)
           setShouldShowWelcome(true)
           setTimeout(() => {
@@ -63,7 +63,7 @@ export default function ChatPage() {
         }
       } else if (user.role === "hiring_manager") {
         const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
-        if (salesAgent?.id) {
+        if (salesAgent) {
           setInitialAgent(salesAgent.id)
           setShouldShowWelcome(true)
           setTimeout(() => {
@@ -105,7 +105,7 @@ export default function ChatPage() {
     if (user?.role === "hiring_manager") {
       const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
       console.log("[v0] Found sales agent:", salesAgent?.name)
-      if (salesAgent?.id && chatMainRef.current) {
+      if (salesAgent && chatMainRef.current) {
         console.log("[v0] Calling switchAgent with:", salesAgent.id)
         chatMainRef.current.switchAgent(salesAgent.id)
       } else {
@@ -120,7 +120,7 @@ export default function ChatPage() {
   const handleUpgradePlan = () => {
     console.log("[v0] Upgrade plan clicked")
     const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
-    if (salesAgent?.id && chatMainRef.current) {
+    if (salesAgent && chatMainRef.current) {
       console.log("[v0] Switching to Sales & Marketing agent")
       chatMainRef.current.switchAgent(salesAgent.id)
     }
@@ -177,19 +177,22 @@ export default function ChatPage() {
     router.push("/")
 
     if (user?.role === "hiring_manager") {
+      // Switch to Account Manager AI Agent for hiring managers
       const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
-      if (accountManager?.id && chatMainRef.current) {
+      if (accountManager && chatMainRef.current) {
         console.log("[v0] Switching to Account Manager agent")
         chatMainRef.current.switchAgent(accountManager.id)
       }
     } else {
+      // Switch to Technical Recruiter AI Agent for candidates
       const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-      if (technicalRecruiter?.id && chatMainRef.current) {
+      if (technicalRecruiter && chatMainRef.current) {
         console.log("[v0] Switching to Technical Recruiter agent")
         chatMainRef.current.switchAgent(technicalRecruiter.id)
       }
     }
 
+    // Open job board in workspace
     console.log("[v0] Opening job board workspace")
     setWorkspaceContent({
       type: "job-board",
@@ -197,6 +200,7 @@ export default function ChatPage() {
     })
 
     if (user?.role === "candidate" && chatMainRef.current) {
+      // Mock data - in a real app, this would come from the database
       const appliedCount = 4 // Number of jobs the user has applied to
       const savedCount = 2 // Number of jobs the user has saved
 

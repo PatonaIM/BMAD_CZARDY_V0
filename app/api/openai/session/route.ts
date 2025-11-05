@@ -4,7 +4,7 @@ function getVoiceForAgent(agentId: string): string {
   const voiceMap: Record<string, string> = {
     "account-manager": "echo", // Lawrence - male
     "technical-recruiter": "ash", // Danny - male
-    "sales-marketing": "coral", // Darlyn - female
+    "sales-marketing": "ballad", // Darlyn - female
     "hr-manager": "shimmer", // Siona - female
     "financial-controller": "verse", // Dave - male
   }

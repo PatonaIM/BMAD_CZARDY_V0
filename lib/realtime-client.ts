@@ -130,7 +130,7 @@ export class RealtimeClient {
       "account-manager":
         "Introduce yourself as Lawrence, the Account Manager, and ask what you can help them with regarding their account or services.",
       "sales-marketing":
-        "Introduce yourself as Darlyn from Sales & Marketing, and ask if they're interested in learning about Teamified's services or pricing.",
+        "Introduce yourself as Shane from Sales & Marketing, and ask if they're interested in learning about Teamified's services or pricing.",
       "hr-manager":
         "Introduce yourself as Siona, the HR Manager, and ask what HR matter you can assist them with today.",
       "financial-controller":

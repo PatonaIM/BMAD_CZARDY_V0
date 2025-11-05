@@ -136,8 +136,6 @@ export interface ChatMainProps {
   initialAgentId?: string | null
   shouldShowWelcome?: boolean
   currentWorkspaceContent?: WorkspaceContent
-  activeAgent: AIAgent
-  onAgentChange: (agent: AIAgent) => void
 }
 
 const welcomeQuestions = [
@@ -468,21 +466,12 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
 
 export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
   (
-    {
-      isSidebarOpen,
-      onToggleSidebar,
-      onOpenWorkspace,
-      initialAgentId,
-      shouldShowWelcome,
-      currentWorkspaceContent,
-      activeAgent,
-      onAgentChange,
-    },
+    { isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome, currentWorkspaceContent },
     ref,
   ) => {
     const [inputMessage, setInputMessage] = useState("")
     const [welcomeQuestion, setWelcomeQuestion] = useState("")
-    const [activeAgentState, setActiveAgentState] = useState<AIAgent>(() => {
+    const [activeAgent, setActiveAgent] = useState<AIAgent>(() => {
       if (initialAgentId) {
         return AI_AGENTS.find((agent) => agent.id === initialAgentId) || AI_AGENTS[0]
       }
@@ -506,28 +495,17 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     const [isWorkspaceOpen, setWorkspaceOpen] = useState(false)
     const [workspaceType, setWorkspaceType] = useState<WorkspaceContent["type"] | null>(null)
 
-    const workspaceContextRef = useRef<string>("")
-
-    useEffect(() => {
-      workspaceContextRef.current = formatWorkspaceContext(currentWorkspaceContent)
-    }, [currentWorkspaceContent])
-
     const {
       messages: aiMessages,
-      append,
-      reload,
-      stop,
-      isLoading,
-      input,
-      handleInputChange,
-      handleSubmit: originalHandleSubmit,
-      sendMessage: sdkSendMessage,
+      sendMessage,
       status,
       setMessages,
     } = useChat({
       transport: new DefaultChatTransport({ api: "/api/chat" }),
       body: {
         agentId: activeAgent.id,
+        workspaceContext: formatWorkspaceContext(currentWorkspaceContent),
+        // </CHANGE>
       },
       initialMessages: [], // Start with an empty array, welcome messages are handled separately
       onError: (error) => {
@@ -540,20 +518,6 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
 
     const isCentered = localMessages.length === 0 && aiMessages.length === 0
     const isThinking = status === "in_progress"
-
-    const appendWithContext = useCallback(
-      (userMessage: { role: "user"; content: string }, options?: { body?: any }) => {
-        append(userMessage, {
-          ...options,
-          body: {
-            ...options?.body,
-            agentId: activeAgent.id,
-            workspaceContext: workspaceContextRef.current,
-          },
-        })
-      },
-      [activeAgent.id, append],
-    )
 
     useEffect(() => {
       console.log("[v0] aiMessages updated:", aiMessages.length, "messages")
@@ -660,8 +624,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
-          setActiveAgentState(technicalRecruiter)
-          onAgentChange(technicalRecruiter)
+          setActiveAgent(technicalRecruiter)
         }
 
         setMessages([])
@@ -729,8 +692,7 @@ Good luck! 🚀`,
       // Switch to Technical Recruiter if not already
       const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
       if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-        setActiveAgentState(technicalRecruiter)
-        onAgentChange(technicalRecruiter)
+        setActiveAgent(technicalRecruiter)
       }
 
       const confirmationMessage: Message = {
@@ -782,8 +744,7 @@ Are you ready to submit your Take Home Challenge? This action cannot be undone.`
       // Switch to Technical Recruiter if not already
       const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
       if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-        setActiveAgentState(technicalRecruiter)
-        onAgentChange(technicalRecruiter)
+        setActiveAgent(technicalRecruiter)
       }
 
       const followUpMessage: Message = {
@@ -1062,14 +1023,14 @@ ${loremParagraphs[1]}`
       handleSubmitChallengeRequest: handleSubmitChallengeRequest,
       handleSubmissionComplete: handleSubmissionComplete,
       // </CHANGE>
-      sendMessageFromWorkspace: useCallback(
-        async (message: string) => {
-          console.log("[v0] sendMessageFromWorkspace called with:", message)
-          appendWithContext({ role: "user", content: message })
-          // </CHANGE>
-        },
-        [activeAgent.id, appendWithContext],
-      ),
+      sendMessageFromWorkspace: (message: string) => {
+        console.log("[v0] sendMessageFromWorkspace called with:", message)
+        const isCommand = handleCommandOrMessage(message)
+        if (!isCommand) {
+          console.log("[v0] sendMessageFromWorkspace: Not a command, calling sendMessage")
+          sendMessage({ text: message })
+        }
+      },
       sendAIMessageFromWorkspace: (message: string, agentId?: string) => {
         console.log("[v0] sendAIMessageFromWorkspace called")
         console.log("[v0] Message:", message.substring(0, 50) + "...")
@@ -1160,8 +1121,7 @@ Whether you're creating a new position, updating an existing job, or need insigh
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
-          setActiveAgentState(technicalRecruiter)
-          onAgentChange(technicalRecruiter)
+          setActiveAgent(technicalRecruiter)
 
           setTimeout(() => {
             setLocalMessages([
@@ -1186,8 +1146,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-          setActiveAgentState(technicalRecruiter)
-          onAgentChange(technicalRecruiter)
+          setActiveAgent(technicalRecruiter)
         }
 
         // Generate insights message based on candidate data
@@ -1232,8 +1191,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         // Switch to Account Manager agent
         const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
         if (accountManager && activeAgent.id !== "account-manager") {
-          setActiveAgentState(accountManager)
-          onAgentChange(accountManager)
+          setActiveAgent(accountManager)
         }
 
         // Calculate insights
@@ -1345,17 +1303,15 @@ Looking forward to seeing this conversation develop! 🚀`,
     const handleVoiceModeAgentChange = useCallback(
       (agent: AIAgent) => {
         console.log("[v0] Voice mode agent change:", agent.id)
-        setActiveAgentState(agent)
-        onAgentChange(agent)
+        setActiveAgent(agent)
       },
-      [onAgentChange],
+      [], // No dependencies needed here as setActiveAgent is stable
     )
     // </CHANGE>
 
     const detectAndHandleCommand = useCallback(
-      async (text: string, workspaceContext: string): Promise<boolean> => {
+      async (text: string): Promise<boolean> => {
         console.log("[v0] detectAndHandleCommand called with:", text)
-        console.log("[v0] Workspace context:", workspaceContext)
 
         // First, try AI-powered intent detection
         const intentResult = await detectCommandIntent(text)
@@ -1367,7 +1323,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         }
 
         const command = intentResult.command!
-        const userMsg: Message = {
+        const userMsg = {
           id: `voice-cmd-user-${Date.now()}`,
           type: "user" as const,
           content: text,
@@ -1461,14 +1417,7 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         return false
       },
-      [
-        activeAgent.id,
-        onOpenWorkspace,
-        currentWorkspaceContent,
-        setHasOpenedWorkspace,
-        setLastWorkspaceContent,
-        setLocalMessages,
-      ],
+      [activeAgent.id, onOpenWorkspace, currentWorkspaceContent, setHasOpenedWorkspace, setLastWorkspaceContent],
     ) // Include relevant dependencies for useCallback
 
     const handleVoiceModeToggle = () => {
@@ -1488,7 +1437,7 @@ Looking forward to seeing this conversation develop! 🚀`,
 
     const handleCommandOrMessage = async (text: string) => {
       // Check if it's a voice command first, if so, handle it and return true
-      const isVoiceCommand = await detectAndHandleCommand(text, workspaceContextRef.current)
+      const isVoiceCommand = await detectAndHandleCommand(text)
       if (isVoiceCommand) {
         return true
       }
@@ -2019,21 +1968,6 @@ Are you ready to begin your Take Home Challenge?`,
       return false
     }
 
-    const handleSendMessage = useCallback(
-      async (message: string) => {
-        console.log("[v0] handleSendMessage called with:", message)
-
-        const wasCommand = await detectAndHandleCommand(message, workspaceContextRef.current)
-        // </CHANGE>
-
-        if (!wasCommand) {
-          appendWithContext({ role: "user", content: message })
-          // </CHANGE>
-        }
-      },
-      [activeAgent.id, appendWithContext, detectAndHandleCommand],
-    )
-
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
       if (!inputMessage.trim()) return
@@ -2170,7 +2104,7 @@ Are you ready to begin your Take Home Challenge?`,
       const isCommand = await handleCommandOrMessage(inputMessage) // Use await here
       if (!isCommand) {
         console.log("[v0] handleSubmit: Not a command, calling sendMessage")
-        sdkSendMessage({ text: inputMessage })
+        sendMessage({ text: inputMessage })
         setInputMessage("")
       } else {
         setInputMessage("")
@@ -2190,8 +2124,7 @@ Are you ready to begin your Take Home Challenge?`,
     }
 
     const handleAgentChange = (agent: AIAgent) => {
-      setActiveAgentState(agent)
-      onAgentChange(agent) // Call the prop function
+      setActiveAgent(agent)
       setIsAgentDropdownOpen(false)
 
       // If switching agent while in a candidate chat, reset candidate chat state
