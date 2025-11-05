@@ -1,0 +1,180 @@
+// Client-side WebRTC connection manager for OpenAI Realtime API
+export class RealtimeClient {
+  private peerConnection: RTCPeerConnection | null = null
+  private dataChannel: RTCDataChannel | null = null
+  private audioElement: HTMLAudioElement | null = null
+  private sessionConfig: any = null
+  private onMessageCallback: ((message: any) => void) | null = null
+  private onAudioCallback: ((isPlaying: boolean) => void) | null = null
+  private onConnectionReadyCallback: (() => void) | null = null
+
+  async connect(agentId?: string) {
+    try {
+      // Get ephemeral token from our API
+      const response = await fetch("/api/openai/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ agentId }), // Pass agentId to session API
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Failed to get session token: ${response.status} ${errorText}`)
+      }
+
+      this.sessionConfig = await response.json()
+
+      if (!this.sessionConfig?.client_secret?.value) {
+        throw new Error("Invalid session config: missing client_secret")
+      }
+
+      const ephemeralKey = this.sessionConfig.client_secret.value
+      const model = this.sessionConfig.model
+      const realtimeUrl = `https://api.openai.com/v1/realtime?model=${model}`
+
+      // Create peer connection
+      this.peerConnection = new RTCPeerConnection()
+
+      // Set up audio element for playback
+      this.audioElement = document.createElement("audio")
+      this.audioElement.autoplay = true
+
+      // Handle incoming audio tracks
+      this.peerConnection.ontrack = (event) => {
+        if (this.audioElement && event.streams[0]) {
+          this.audioElement.srcObject = event.streams[0]
+          this.onAudioCallback?.(true)
+        }
+      }
+
+      // Create data channel for messages
+      this.dataChannel = this.peerConnection.createDataChannel("oai-events")
+
+      this.dataChannel.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data)
+          this.onMessageCallback?.(message)
+
+          // Detect when audio playback ends
+          if (message.type === "response.audio.done" || message.type === "response.done") {
+            this.onAudioCallback?.(false)
+          }
+        } catch (error) {
+          console.error("Error parsing message:", error)
+        }
+      }
+
+      // Add microphone audio track
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream.getTracks().forEach((track) => {
+        this.peerConnection?.addTrack(track, stream)
+      })
+
+      // Create and set local offer
+      const offer = await this.peerConnection.createOffer()
+      await this.peerConnection.setLocalDescription(offer)
+
+      const sdpResponse = await fetch(realtimeUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+        body: offer.sdp,
+      })
+
+      if (!sdpResponse.ok) {
+        const errorText = await sdpResponse.text()
+        throw new Error(`Failed to exchange SDP: ${sdpResponse.status}`)
+      }
+
+      const answerSdp = await sdpResponse.text()
+
+      await this.peerConnection.setRemoteDescription({
+        type: "answer",
+        sdp: answerSdp,
+      })
+
+      // Trigger connection ready callback
+      this.onConnectionReadyCallback?.()
+    } catch (error) {
+      console.error("Connection error:", error)
+      throw error
+    }
+  }
+
+  sendMessage(message: any) {
+    if (this.dataChannel && this.dataChannel.readyState === "open") {
+      this.dataChannel.send(JSON.stringify(message))
+    }
+  }
+
+  onMessage(callback: (message: any) => void) {
+    this.onMessageCallback = callback
+  }
+
+  onAudioStateChange(callback: (isPlaying: boolean) => void) {
+    this.onAudioCallback = callback
+  }
+
+  onConnectionReady(callback: () => void) {
+    this.onConnectionReadyCallback = callback
+  }
+
+  requestIntroduction(agentId?: string) {
+    const introductions: Record<string, string> = {
+      "technical-recruiter":
+        "Introduce yourself as Danny, the Technical Recruiter, and ask how you can help with their job search today.",
+      "account-manager":
+        "Introduce yourself as Lawrence, the Account Manager, and ask what you can help them with regarding their account or services.",
+      "sales-marketing":
+        "Introduce yourself as Darlyn from Sales & Marketing, and ask if they're interested in learning about Teamified's services or pricing.",
+      "hr-manager":
+        "Introduce yourself as Siona, the HR Manager, and ask what HR matter you can assist them with today.",
+      "financial-controller":
+        "Introduce yourself as Dave, the Financial Controller, and ask what financial question you can help them with.",
+    }
+
+    const instruction =
+      introductions[agentId || "technical-recruiter"] ||
+      "Introduce yourself briefly as the AI assistant and ask how you can help today."
+
+    this.sendMessage({
+      type: "response.create",
+      response: {
+        modalities: ["text", "audio"],
+        instructions: instruction,
+      },
+    })
+  }
+
+  disconnect() {
+    console.log("[v0] RealtimeClient disconnect called")
+
+    if (this.dataChannel) {
+      console.log("[v0] Closing data channel")
+      this.dataChannel.close()
+      this.dataChannel = null
+    }
+
+    if (this.peerConnection) {
+      console.log("[v0] Closing peer connection")
+      this.peerConnection.close()
+      this.peerConnection = null
+    }
+
+    if (this.audioElement) {
+      console.log("[v0] Cleaning up audio element")
+      this.audioElement.srcObject = null
+      this.audioElement = null
+    }
+
+    this.onMessageCallback = null
+    this.onAudioCallback = null
+    this.onConnectionReadyCallback = null
+
+    console.log("[v0] RealtimeClient disconnected successfully")
+  }
+}

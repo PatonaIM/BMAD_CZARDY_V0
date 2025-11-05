@@ -2210,27 +2210,36 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     return (
       <div className="flex flex-col h-full border-l">
         <div className="flex items-center px-6 py-4 border-b">
-          {/* Added back button handler to navigate back to job view */}
           <button
             onClick={() => {
               console.log("[v0] Back button clicked in candidate-profile-view")
+              console.log("[v0] content.sourceView:", content.sourceView)
               console.log("[v0] content.job exists:", !!content.job)
-              console.log("[v0] content.job:", content.job)
-              console.log("[v0] onOpenWorkspace exists:", !!onOpenWorkspace)
 
-              if (content.job && onOpenWorkspace) {
+              // Return to browse-candidates if opened from there
+              if (content.sourceView === "browse-candidates" && content.job && onOpenWorkspace) {
+                console.log("[v0] Navigating back to browse-candidates for:", content.job.title)
+                onOpenWorkspace({
+                  type: "browse-candidates",
+                  job: content.job,
+                  title: `Browse Candidates for ${content.job.title}`,
+                })
+              } else if (content.job && onOpenWorkspace) {
+                // Return to job view if opened from matched candidates
                 console.log("[v0] Navigating back to job view for:", content.job.title)
                 onOpenWorkspace({ type: "job-view", job: content.job, title: content.job.title })
               } else {
-                console.log("[v0] Closing workspace - job info missing or onOpenWorkspace not available")
+                // Close workspace if no context available
+                console.log("[v0] Closing workspace - no navigation context available")
                 onClose()
               }
             }}
             className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-            aria-label="Back to job view"
+            aria-label="Back"
           >
             <span className="text-lg font-semibold">←</span>
           </button>
+          {/* </CHANGE> */}
           <h2 className="text-lg font-semibold">{content.title}</h2>
 
           <button
@@ -2507,122 +2516,126 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full border-l">
-        {content.title && content.type !== "browse-candidates" && content.type !== "job-board" && (
-          <div className="flex items-center px-6 py-4 border-b">
-            {content.type === "candidate-swipe" && (
-              <button
-                onClick={handleBackToMyJobs}
-                className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-                aria-label="Back to job view"
-              >
-                <ArrowLeft className="w-4 h-4" /> {/* Changed to ArrowLeft */}
-              </button>
-            )}
-            {content.type === "job-view" && (
-              <button
-                onClick={onBackToJobBoard}
-                className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-                aria-label="Back to job board"
-              >
-                <ArrowLeft className="w-4 h-4" /> {/* Changed to ArrowLeft */}
-              </button>
-            )}
-            <h2 className="text-lg font-semibold">{content.title}</h2>
-
-            <div className="flex items-center gap-1.5 ml-auto">
-              {content.type === "code" && (
-                <>
-                  {/* Save as Draft Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSaveAsDraft}
-                    disabled={isSavingDraft || isSubmitting || isSubmittingChallenge}
-                    className="gap-2 bg-transparent"
-                  >
-                    {isSavingDraft ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        Save as Draft
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Submit Challenge Button */}
-                  <Button
-                    size="sm"
-                    onClick={handleSubmitChallenge}
-                    disabled={isSubmitting || isSavingDraft || isSubmittingChallenge}
-                    className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        Submit Challenge
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Additional Options Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-                        <MoreVertical className="w-4 h-4" />
-                        <span className="sr-only">More options</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={handleRequestExtension}>
-                        <Clock className="w-4 h-4 mr-2" />
-                        Request Extension
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleAskQuestion}>
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Ask Question
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive" onClick={() => console.log("Withdraw submission")}>
-                        <span>Withdraw Submission</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              )}
-
-              {/* Close Button */}
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-lg hover:bg-accent transition-colors"
-                aria-label="Close workspace"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+        {content.title &&
+          content.type !== "browse-candidates" && ( // Removed job-board exclusion to show title for job board workspace
+            <div className="flex items-center px-6 py-4 border-b">
+              {content.type === "candidate-swipe" && (
+                <button
+                  onClick={handleBackToMyJobs}
+                  className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                  aria-label="Back to job view"
                 >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+                  <ArrowLeft className="w-4 h-4" /> {/* Changed to ArrowLeft */}
+                </button>
+              )}
+              {content.type === "job-view" && (
+                <button
+                  onClick={onBackToJobBoard}
+                  className="flex items-center gap-1 px-2 py-1 mr-3 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                  aria-label="Back to job board"
+                >
+                  <ArrowLeft className="w-4 h-4" /> {/* Changed to ArrowLeft */}
+                </button>
+              )}
+              <h2 className="text-lg font-semibold">{content.title}</h2>
+
+              <div className="flex items-center gap-1.5 ml-auto">
+                {content.type === "code" && (
+                  <>
+                    {/* Save as Draft Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSaveAsDraft}
+                      disabled={isSavingDraft || isSubmitting || isSubmittingChallenge}
+                      className="gap-2 bg-transparent"
+                    >
+                      {isSavingDraft ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          Save as Draft
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Submit Challenge Button */}
+                    <Button
+                      size="sm"
+                      onClick={handleSubmitChallenge}
+                      disabled={isSubmitting || isSavingDraft || isSubmittingChallenge}
+                      className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          Submit Challenge
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Additional Options Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                          <MoreVertical className="w-4 h-4" />
+                          <span className="sr-only">More options</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleRequestExtension}>
+                          <Clock className="w-4 h-4 mr-2" />
+                          Request Extension
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleAskQuestion}>
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          Ask Question
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => console.log("Withdraw submission")}
+                        >
+                          <span>Withdraw Submission</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
+
+                {/* Close Button */}
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-lg hover:bg-accent transition-colors"
+                  aria-label="Close workspace"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {content.type === "code" && (
           <div className="flex h-full gap-4 p-6">

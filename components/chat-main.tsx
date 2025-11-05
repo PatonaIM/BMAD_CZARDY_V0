@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react"
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from "react"
 import {
   Plus,
   Mic,
@@ -29,15 +29,8 @@ import { MarkdownRenderer } from "./markdown-renderer"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import { getCandidateConversation, saveCandidateMessage } from "@/lib/mock-conversations"
-
-interface ChatMainProps {
-  isSidebarOpen: boolean
-  onToggleSidebar: () => void
-  onOpenWorkspace: (content: WorkspaceContent) => void
-  initialAgentId?: string | null
-  shouldShowWelcome?: boolean
-  currentWorkspaceContent?: WorkspaceContent
-}
+import { VoiceMode } from "./voice-mode"
+import { detectCommandIntent } from "@/app/actions/detect-command-intent"
 
 interface Message {
   id: string
@@ -92,28 +85,59 @@ type CandidateProfile = {
   location?: string
   skills?: string[]
   takeHomeChallengeScore?: number
+  // </CHANGE>
+  title?: string // Added for candidate-profile-view context
+  summary?: string // Added for candidate-profile-view context
+  email?: string // Added for candidate-profile-view context
+  phone?: string // Added for candidate-profile-view context
+  linkedin?: string // Added for candidate-profile-view context
+  github?: string // Added for candidate-profile-view context
+  takeHomeChallengeStatus?: string // Added for candidate-profile-view context
+  aiInterviewStatus?: string // Added for candidate-profile-view context
+  aiInterviewScore?: number // Added for candidate-profile-view context
+  aiGeneratedInsights?: string[] // Added for candidate-profile-view context
+  // </CHANGE>
 }
 
-export interface ChatMainHandle {
-  sendMessage: (message: string) => void
-  showJobViewSummary: (job: JobListing) => void
+// Define ChatMainRef for forwardRef
+interface ChatMainRef {
+  handleProfileSaved: () => void
   switchAgent: (agentId: string) => void
+  showPricingGuidance: () => void
+  showPaymentSuccess: () => void
   showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
-  showJobBoardSummary: () => void
-  showCandidateChat: (candidate: any) => void
-  introduceMatchedCandidate: (
-    candidate: CandidateProfile,
-    hiringManagerName: string,
-    position: string,
-    company: string,
-  ) => void
-  sendCandidateInsights: (candidate: any) => void // Added sendCandidateInsights
-  showJobInsights: (job: JobListing) => void
+  showJobViewSummary: (job: JobListing) => void // Added showJobViewSummary
+  handleJobApplication: (job: JobListing) => void // Added handler for job application
+  handleStartChallenge: () => void // Added handler for challenge button click
+  handleSubmitChallengeRequest: () => void
+  handleSubmissionComplete: () => void
   // </CHANGE>
   sendMessageFromWorkspace: (message: string) => void
   sendAIMessageFromWorkspace: (message: string, agentId?: string) => void // Added method to send AI messages from workspace
   // </CHANGE>
+  showJobBoardSummary: () => void
+  showCandidateChat: (candidate: CandidateProfile) => void // Updated type to CandidateProfile
+  introduceMatchedCandidate: (
+    candidate: CandidateProfile, // Updated type to CandidateProfile
+    hiringManagerName: string,
+    position: string,
+    company: string,
+  ) => void
+  sendCandidateInsights: (candidate: CandidateProfile) => void // Added sendCandidateInsights, updated type
+  showJobInsights: (job: JobListing) => void
+  // </CHANGE>
   clearMessages: () => void // Expose clearMessages method
+}
+
+export interface ChatMainProps {
+  isSidebarOpen: boolean
+  onToggleSidebar: () => void
+  onOpenWorkspace: (content: WorkspaceContent) => void
+  initialAgentId?: string | null
+  shouldShowWelcome?: boolean
+  currentWorkspaceContent?: WorkspaceContent
+  activeAgent: AIAgent
+  onAgentChange: (agent: AIAgent) => void
 }
 
 const welcomeQuestions = [
@@ -331,44 +355,134 @@ ${loremParagraphs[0]}
 Now that I have your information, I can help you in several ways. Here are some things we can do together:`
 }
 
-export const ChatMain = forwardRef<
-  {
-    handleProfileSaved: () => void
-    switchAgent: (agentId: string) => void
-    showPricingGuidance: () => void
-    showPaymentSuccess: () => void
-    showMyJobsSummary: (appliedCount: number, savedCount: number) => void // Added showMyJobsSummary
-    showJobViewSummary: (job: JobListing) => void // Added showJobViewSummary
-    handleJobApplication: (job: JobListing) => void // Added handler for job application
-    handleStartChallenge: () => void // Added handler for challenge button click
-    handleSubmitChallengeRequest: () => void
-    handleSubmissionComplete: () => void
-    // </CHANGE>
-    sendMessageFromWorkspace: (message: string) => void
-    sendAIMessageFromWorkspace: (message: string, agentId?: string) => void // Added method to send AI messages from workspace
-    // </CHANGE>
-    showJobBoardSummary: () => void
-    showCandidateChat: (candidate: any) => void
-    introduceMatchedCandidate: (
-      candidate: CandidateProfile,
-      hiringManagerName: string,
-      position: string,
-      company: string,
-    ) => void
-    sendCandidateInsights: (candidate: any) => void // Added sendCandidateInsights
-    showJobInsights: (job: JobListing) => void
-    // </CHANGE>
-    clearMessages: () => void // Expose clearMessages method
-  },
-  ChatMainProps
->(
+const formatWorkspaceContext = (content: WorkspaceContent | undefined): string => {
+  if (!content) {
+    console.log("[v0] No workspace content available")
+    return ""
+  }
+
+  console.log("[v0] Formatting workspace context for type:", content.type)
+
+  let context = "\n\n**CURRENT WORKSPACE CONTEXT:**\n"
+
+  switch (content.type) {
+    case "candidate-profile-view":
+    case "candidate-profile":
+      if (content.candidate) {
+        const c = content.candidate
+        context += `The user is currently viewing a candidate profile:\n`
+        context += `- Name: ${c.name}\n`
+        context += `- Title: ${c.title}\n`
+        context += `- Location: ${c.location}\n`
+        context += `- Experience: ${c.experience}\n`
+        context += `- Skills: ${c.skills.join(", ")}\n`
+        context += `- Skill Match: ${c.skillMatch}%\n`
+        context += `- Summary: ${c.summary}\n`
+        if (c.email) context += `- Email: ${c.email}\n`
+        if (c.phone) context += `- Phone: ${c.phone}\n`
+        if (c.linkedin) context += `- LinkedIn: ${c.linkedin}\n`
+        if (c.github) context += `- GitHub: ${c.github}\n`
+        context += `- Take Home Challenge: ${c.takeHomeChallengeStatus}\n`
+        if (c.takeHomeChallengeScore) context += `- Challenge Score: ${c.takeHomeChallengeScore}%\n`
+        context += `- AI Interview: ${c.aiInterviewStatus}\n`
+        if (c.aiInterviewScore) context += `- Interview Score: ${c.aiInterviewScore}%\n`
+        if (c.aiGeneratedInsights.length > 0) {
+          context += `- AI Insights: ${c.aiGeneratedInsights.join("; ")}\n`
+        }
+      } else {
+        console.log("[v0] Candidate profile workspace has no candidate data")
+      }
+      break
+
+    case "browse-candidates":
+      if (content.candidates && content.candidates.length > 0) {
+        context += `The user is browsing candidates. There are ${content.candidates.length} candidates available.\n`
+        if (content.currentCandidateIndex !== undefined) {
+          const currentCandidate = content.candidates[content.currentCandidateIndex]
+          if (currentCandidate) {
+            context += `Currently viewing: ${currentCandidate.name} (${currentCandidate.title})\n`
+          }
+        }
+      } else {
+        console.log("[v0] Browse candidates workspace has no candidates")
+      }
+      break
+
+    case "job-view":
+      if (content.job) {
+        const j = content.job
+        context += `The user is currently viewing a job posting:\n`
+        context += `- Title: ${j.title}\n`
+        context += `- Company: ${j.company}\n`
+        context += `- Location: ${j.location}\n`
+        context += `- Type: ${j.type}\n`
+        context += `- Salary: ${j.salary}\n`
+        context += `- Posted: ${j.posted}\n`
+        if (j.description) context += `- Description: ${j.description}\n`
+        if (j.requirements && j.requirements.length > 0) {
+          context += `- Requirements: ${j.requirements.join("; ")}\n`
+        }
+        if (j.applied) context += `- Status: Already applied\n`
+        if (j.saved) context += `- Status: Saved\n`
+        if (j.skillMatch) context += `- Skill Match: ${j.skillMatch}%\n`
+        if (j.applicationStage) context += `- Application Stage: ${j.applicationStage}\n`
+      } else {
+        console.log("[v0] Job view workspace has no job data")
+      }
+      break
+
+    case "job-board":
+      context += `The user is viewing the job board with available positions.\n`
+      if (content.data?.jobs) {
+        const jobs = content.data.jobs
+        const appliedJobs = jobs.filter((j: JobListing) => j.applied)
+        const savedJobs = jobs.filter((j: JobListing) => j.saved)
+        context += `- Total jobs: ${jobs.length}\n`
+        context += `- Applied jobs: ${appliedJobs.length}\n`
+        context += `- Saved jobs: ${savedJobs.length}\n`
+      } else {
+        console.log("[v0] Job board workspace has no jobs data")
+      }
+      break
+
+    case "candidate-swipe":
+      if (content.candidates && content.candidates.length > 0) {
+        context += `The user is in candidate swipe mode with ${content.candidates.length} candidates.\n`
+      } else {
+        console.log("[v0] Candidate swipe workspace has no candidates")
+      }
+      break
+
+    default:
+      if (content.title) {
+        context += `The user is viewing: ${content.title}\n`
+      } else {
+        console.log("[v0] Unknown workspace type with no title:", content.type)
+      }
+  }
+
+  console.log("[v0] Workspace context formatted:", context.length, "characters")
+  return context
+}
+// </CHANGE>
+
+export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
   (
-    { isSidebarOpen, onToggleSidebar, onOpenWorkspace, initialAgentId, shouldShowWelcome, currentWorkspaceContent },
+    {
+      isSidebarOpen,
+      onToggleSidebar,
+      onOpenWorkspace,
+      initialAgentId,
+      shouldShowWelcome,
+      currentWorkspaceContent,
+      activeAgent,
+      onAgentChange,
+    },
     ref,
   ) => {
     const [inputMessage, setInputMessage] = useState("")
     const [welcomeQuestion, setWelcomeQuestion] = useState("")
-    const [activeAgent, setActiveAgent] = useState<AIAgent>(() => {
+    const [activeAgentState, setActiveAgentState] = useState<AIAgent>(() => {
       if (initialAgentId) {
         return AI_AGENTS.find((agent) => agent.id === initialAgentId) || AI_AGENTS[0]
       }
@@ -381,15 +495,33 @@ export const ChatMain = forwardRef<
     const [localMessages, setLocalMessages] = useState<Message[]>([])
     const [hasChallengeWelcomeShown, setHasChallengeWelcomeShown] = useState(false)
     const [currentChatCandidate, setCurrentChatCandidate] = useState<CandidateProfile | null>(null) // Updated to CandidateProfile
+    const [isVoiceMode, setIsVoiceMode] = useState(false)
     const lastUserMessageRef = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const agentDropdownRef = useRef<HTMLDivElement>(null)
 
+    // State for workspace management, tied to voice mode commands
+    const [isWorkspaceOpen, setWorkspaceOpen] = useState(false)
+    const [workspaceType, setWorkspaceType] = useState<WorkspaceContent["type"] | null>(null)
+
+    const workspaceContextRef = useRef<string>("")
+
+    useEffect(() => {
+      workspaceContextRef.current = formatWorkspaceContext(currentWorkspaceContent)
+    }, [currentWorkspaceContent])
+
     const {
       messages: aiMessages,
-      sendMessage,
+      append,
+      reload,
+      stop,
+      isLoading,
+      input,
+      handleInputChange,
+      handleSubmit: originalHandleSubmit,
+      sendMessage: sdkSendMessage,
       status,
       setMessages,
     } = useChat({
@@ -409,6 +541,20 @@ export const ChatMain = forwardRef<
     const isCentered = localMessages.length === 0 && aiMessages.length === 0
     const isThinking = status === "in_progress"
 
+    const appendWithContext = useCallback(
+      (userMessage: { role: "user"; content: string }, options?: { body?: any }) => {
+        append(userMessage, {
+          ...options,
+          body: {
+            ...options?.body,
+            agentId: activeAgent.id,
+            workspaceContext: workspaceContextRef.current,
+          },
+        })
+      },
+      [activeAgent.id, append],
+    )
+
     useEffect(() => {
       console.log("[v0] aiMessages updated:", aiMessages.length, "messages")
       if (aiMessages.length > 0) {
@@ -417,7 +563,9 @@ export const ChatMain = forwardRef<
     }, [aiMessages])
 
     useEffect(() => {
-      if (aiMessages.length === 0) return
+      if (!aiMessages || aiMessages.length === 0) {
+        return
+      }
 
       const convertedMessages: Message[] = aiMessages.map((msg) => {
         // Find the corresponding agent if it's an AI message. If not, use the active agent.
@@ -449,7 +597,6 @@ export const ChatMain = forwardRef<
       const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
 
       const preservedLocalMessages = localMessages.filter((m) => !aiMessageIds.has(m.id))
-      // </CHANGE>
 
       const hasWelcomeMessages = localMessages.some((m) => m.isWelcome)
       const wouldClearWelcome =
@@ -461,6 +608,22 @@ export const ChatMain = forwardRef<
 
       const newMessages = [...preservedLocalMessages, ...convertedMessages]
 
+      newMessages.sort((a, b) => {
+        // Extract timestamp from message ID (format: timestamp string or backend ID)
+        const getTimestamp = (msg: Message) => {
+          // If ID is a number string (timestamp), use it
+          const idAsNumber = Number.parseInt(msg.id)
+          if (!isNaN(idAsNumber) && idAsNumber > 1000000000000) {
+            return idAsNumber
+          }
+          // Otherwise, parse the timestamp string
+          return new Date(msg.timestamp || 0).getTime()
+        }
+
+        return getTimestamp(a) - getTimestamp(b)
+      })
+      // </CHANGE>
+
       const messagesChanged =
         newMessages.length !== localMessages.length ||
         newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content)
@@ -468,7 +631,7 @@ export const ChatMain = forwardRef<
       if (messagesChanged) {
         setLocalMessages(newMessages)
       }
-    }, [aiMessages, activeAgent, localMessages]) // Added localMessages here
+    }, [aiMessages, activeAgent]) // Fixed dependency to use activeAgent object instead of activeAgent.id
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -497,7 +660,8 @@ export const ChatMain = forwardRef<
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
-          setActiveAgent(technicalRecruiter)
+          setActiveAgentState(technicalRecruiter)
+          onAgentChange(technicalRecruiter)
         }
 
         setMessages([])
@@ -565,7 +729,8 @@ Good luck! 🚀`,
       // Switch to Technical Recruiter if not already
       const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
       if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-        setActiveAgent(technicalRecruiter)
+        setActiveAgentState(technicalRecruiter)
+        onAgentChange(technicalRecruiter)
       }
 
       const confirmationMessage: Message = {
@@ -579,7 +744,7 @@ Good luck! 🚀`,
 
 • **Current GitHub version will be submitted.** The version currently in your GitHub repository (jonesy02/coding-challenge.git) will be sent to the hiring managers.
 
-• **Make sure you've pushed your latest changes.** If you haven't pushed your most recent code to GitHub, please do so before submitting.
+• **Make sure you've pushed your most recent code to GitHub.** If you haven't pushed your most recent code to GitHub, please do so before submitting.
 
 **What happens after submission:**
 
@@ -617,7 +782,8 @@ Are you ready to submit your Take Home Challenge? This action cannot be undone.`
       // Switch to Technical Recruiter if not already
       const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
       if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-        setActiveAgent(technicalRecruiter)
+        setActiveAgentState(technicalRecruiter)
+        onAgentChange(technicalRecruiter)
       }
 
       const followUpMessage: Message = {
@@ -844,55 +1010,6 @@ ${loremParagraphs[1]}`
           },
         ])
       },
-      showJobBoardSummary: () => {
-        const summaryMessage = `Welcome to your Job Board! I'm here to help you manage your job postings and find the best candidates. 💼
-
-## Your Job Overview
-
-I can see you have several job postings across different stages:
-- **Draft Jobs:** Jobs you're still working on
-- **Open Jobs:** Active positions accepting applications
-- **Closed Jobs:** Completed or archived positions
-
-## How I Can Help You
-
-I'm your Account Manager AI, and I specialize in helping you:
-
-**Create New Jobs** 📝
-- Generate professional job descriptions
-- Set up requirements and qualifications
-- Define salary ranges and benefits
-
-**Manage Existing Jobs** 🔄
-- Update job details and requirements
-- Review and edit job descriptions
-- Close or reopen positions
-
-**Track Your Postings** 📊
-- Get updates on application counts
-- Monitor job performance
-- Review candidate matches
-
-## What Would You Like to Do?
-
-Whether you're creating a new position, updating an existing job, or need insights about your postings, I'm here to assist you every step of the way!`
-
-        setLocalMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            type: "ai",
-            content: summaryMessage,
-            agentId: activeAgent.id,
-            promptSuggestions: [
-              { text: "Create a new job posting", icon: <Plus className="w-4 h-4" /> },
-              { text: "Update an existing job", icon: <FileText className="w-4 h-4" /> },
-              { text: "Show me job performance stats", icon: <Calculator className="w-4 h-4" /> },
-              { text: "Help me write a job description", icon: <Sparkles className="w-4 h-4" /> },
-            ],
-          },
-        ])
-      },
       showJobViewSummary: (job: JobListing) => {
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
 
@@ -945,14 +1062,14 @@ ${loremParagraphs[1]}`
       handleSubmitChallengeRequest: handleSubmitChallengeRequest,
       handleSubmissionComplete: handleSubmissionComplete,
       // </CHANGE>
-      sendMessageFromWorkspace: (message: string) => {
-        console.log("[v0] sendMessageFromWorkspace called with:", message)
-        const isCommand = handleCommandOrMessage(message)
-        if (!isCommand) {
-          console.log("[v0] sendMessageFromWorkspace: Not a command, calling sendMessage")
-          sendMessage({ text: message })
-        }
-      },
+      sendMessageFromWorkspace: useCallback(
+        async (message: string) => {
+          console.log("[v0] sendMessageFromWorkspace called with:", message)
+          appendWithContext({ role: "user", content: message })
+          // </CHANGE>
+        },
+        [activeAgent.id, appendWithContext],
+      ),
       sendAIMessageFromWorkspace: (message: string, agentId?: string) => {
         console.log("[v0] sendAIMessageFromWorkspace called")
         console.log("[v0] Message:", message.substring(0, 50) + "...")
@@ -1043,14 +1160,15 @@ Whether you're creating a new position, updating an existing job, or need insigh
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter) {
-          setActiveAgent(technicalRecruiter)
+          setActiveAgentState(technicalRecruiter)
+          onAgentChange(technicalRecruiter)
 
           setTimeout(() => {
             setLocalMessages([
               {
                 id: Date.now().toString(),
                 type: "ai",
-                content: `Hi ${candidate.name}! 🎉 I'm excited to introduce you to ${hiringManagerName}, who is the ${position} at ${company}. 
+                content: `Hi ${candidate.name}! 🎉 I'm excited to introduce you to ${hiringManagerName}, who is the ${position} at ${company}.
 
 ${hiringManagerName} has been reviewing candidates for this role and was really impressed with your profile, particularly your experience with ${candidate.skills.slice(0, 2).join(" and ")}. They believe you could be a great fit for their team!
 
@@ -1064,11 +1182,12 @@ Looking forward to seeing this conversation develop! 🚀`,
           }, 100)
         }
       },
-      sendCandidateInsights: (candidate: any) => {
+      sendCandidateInsights: (candidate: CandidateProfile) => {
         // Switch to Technical Recruiter agent
         const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-          setActiveAgent(technicalRecruiter)
+          setActiveAgentState(technicalRecruiter)
+          onAgentChange(technicalRecruiter)
         }
 
         // Generate insights message based on candidate data
@@ -1107,13 +1226,14 @@ Looking forward to seeing this conversation develop! 🚀`,
               agentId: technicalRecruiter?.id || "technical-recruiter",
             },
           ])
-        }, 300) // Delay to sync with fade-in animation
+        }, 300) // Sync with fade-in animation
       },
       showJobInsights: (job: JobListing) => {
         // Switch to Account Manager agent
         const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
         if (accountManager && activeAgent.id !== "account-manager") {
-          setActiveAgent(accountManager)
+          setActiveAgentState(accountManager)
+          onAgentChange(accountManager)
         }
 
         // Calculate insights
@@ -1197,6 +1317,164 @@ Looking forward to seeing this conversation develop! 🚀`,
       clearMessages, // Added clearMessages to the exposed ref methods
     }))
 
+    // Use useCallback for voice mode callbacks
+    const handleVoiceTranscription = useCallback(
+      (userText: string, aiText: string) => {
+        const userMsg = {
+          id: `voice-user-${Date.now()}`,
+          type: "user" as const,
+          content: userText,
+          timestamp: new Date().toISOString(),
+          agentId: activeAgent.id,
+        }
+
+        const aiMsg = {
+          id: `voice-ai-${Date.now()}`,
+          type: "ai" as const,
+          content: aiText,
+          timestamp: new Date().toISOString(),
+          agentId: activeAgent.id,
+        }
+
+        setLocalMessages((prev) => [...prev, userMsg])
+        setLocalMessages((prev) => [...prev, aiMsg])
+      },
+      [activeAgent.id],
+    ) // Include activeAgent.id in dependencies if agent name is used in messages
+
+    const handleVoiceModeAgentChange = useCallback(
+      (agent: AIAgent) => {
+        console.log("[v0] Voice mode agent change:", agent.id)
+        setActiveAgentState(agent)
+        onAgentChange(agent)
+      },
+      [onAgentChange],
+    )
+    // </CHANGE>
+
+    const detectAndHandleCommand = useCallback(
+      async (text: string, workspaceContext: string): Promise<boolean> => {
+        console.log("[v0] detectAndHandleCommand called with:", text)
+        console.log("[v0] Workspace context:", workspaceContext)
+
+        // First, try AI-powered intent detection
+        const intentResult = await detectCommandIntent(text)
+
+        console.log("[v0] Intent detection result:", intentResult)
+
+        if (!intentResult.isCommand) {
+          return false
+        }
+
+        const command = intentResult.command!
+        const userMsg: Message = {
+          id: `voice-cmd-user-${Date.now()}`,
+          type: "user" as const,
+          content: text,
+          timestamp: new Date().toISOString(),
+          agentId: activeAgent.id,
+        }
+
+        // Handle different commands
+        if (command === "browse candidates") {
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content:
+              "Opening the candidate browser for you. You can browse through available candidates while we continue our conversation.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          const workspaceData: WorkspaceContent = {
+            type: "browse-candidates",
+            title: "Browse Candidates",
+            timestamp: Date.now(),
+            ...(currentWorkspaceContent?.job && { job: currentWorkspaceContent.job }),
+          }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true) // Set flag to indicate workspace is open
+          setLastWorkspaceContent(workspaceData) // Update last opened workspace
+
+          return true
+        }
+
+        if (command === "job board") {
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content:
+              "Opening the job board for you. You can explore available positions while we continue our conversation.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Open job board workspace
+          const workspaceData: WorkspaceContent = { type: "job-board", title: "Available Positions" }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        if (command === "my jobs") {
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content:
+              "Opening your saved jobs. You can review the positions you've applied to or saved while we continue our conversation.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Open job board workspace
+          const workspaceData: WorkspaceContent = { type: "job-board", title: "My Jobs" }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        if (command === "data") {
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: "Opening the data view for you. You can review the analytics while we continue our conversation.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Open data analytics workspace
+          const workspaceData: WorkspaceContent = { type: "analytics", title: "Recruitment Analytics" }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        return false
+      },
+      [
+        activeAgent.id,
+        onOpenWorkspace,
+        currentWorkspaceContent,
+        setHasOpenedWorkspace,
+        setLastWorkspaceContent,
+        setLocalMessages,
+      ],
+    ) // Include relevant dependencies for useCallback
+
+    const handleVoiceModeToggle = () => {
+      setIsVoiceMode(!isVoiceMode)
+    }
+
     const handlePreviewClick = (fileType: string) => {
       onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
     }
@@ -1204,10 +1482,17 @@ Looking forward to seeing this conversation develop! 🚀`,
     const handleReopenWorkspace = () => {
       if (lastWorkspaceContent) {
         onOpenWorkspace(lastWorkspaceContent)
+        setHasOpenedWorkspace(true) // Ensure the flag is set when reopening
       }
     }
 
-    const handleCommandOrMessage = (text: string) => {
+    const handleCommandOrMessage = async (text: string) => {
+      // Check if it's a voice command first, if so, handle it and return true
+      const isVoiceCommand = await detectAndHandleCommand(text, workspaceContextRef.current)
+      if (isVoiceCommand) {
+        return true
+      }
+
       const lowerText = text.toLowerCase().trim()
 
       // 1. Simple Text - handled at the end (default case)
@@ -1734,6 +2019,21 @@ Are you ready to begin your Take Home Challenge?`,
       return false
     }
 
+    const handleSendMessage = useCallback(
+      async (message: string) => {
+        console.log("[v0] handleSendMessage called with:", message)
+
+        const wasCommand = await detectAndHandleCommand(message, workspaceContextRef.current)
+        // </CHANGE>
+
+        if (!wasCommand) {
+          appendWithContext({ role: "user", content: message })
+          // </CHANGE>
+        }
+      },
+      [activeAgent.id, appendWithContext, detectAndHandleCommand],
+    )
+
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
       if (!inputMessage.trim()) return
@@ -1867,10 +2167,10 @@ Are you ready to begin your Take Home Challenge?`,
         return
       }
 
-      const isCommand = handleCommandOrMessage(inputMessage)
+      const isCommand = await handleCommandOrMessage(inputMessage) // Use await here
       if (!isCommand) {
         console.log("[v0] handleSubmit: Not a command, calling sendMessage")
-        sendMessage({ text: inputMessage })
+        sdkSendMessage({ text: inputMessage })
         setInputMessage("")
       } else {
         setInputMessage("")
@@ -1890,7 +2190,8 @@ Are you ready to begin your Take Home Challenge?`,
     }
 
     const handleAgentChange = (agent: AIAgent) => {
-      setActiveAgent(agent)
+      setActiveAgentState(agent)
+      onAgentChange(agent) // Call the prop function
       setIsAgentDropdownOpen(false)
 
       // If switching agent while in a candidate chat, reset candidate chat state
@@ -1956,6 +2257,13 @@ Are you ready to begin your Take Home Challenge?`,
       </>
     )
 
+    // Dummy handler for transcription update, to be replaced with actual implementation
+    const handleTranscriptionUpdate = (userText: string, aiText: string) => {
+      console.log("Transcription Update - User:", userText, "AI:", aiText)
+      // This function should handle adding transcribed messages to the chat.
+      // For now, we'll just log it.
+    }
+
     return (
       <div className="flex-1 flex flex-col overflow-hidden h-full bg-background">
         <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/95 supports-[backdrop-filter]:bg-background/60">
@@ -1978,458 +2286,491 @@ Are you ready to begin your Take Home Challenge?`,
           </div>
         </header>
 
-        <main
-          ref={messagesContainerRef}
-          className={`flex-1 min-h-0 px-6 relative bg-background ${isCentered ? "flex items-center justify-center" : "flex flex-col overflow-y-auto"}`}
-        >
-          {isCentered ? (
-            <div className="w-full max-w-3xl">
-              <div className="text-center mb-12">
-                <div
-                  className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-lg"
-                  style={{ background: `linear-gradient(135deg, ${activeAgent.color}, ${activeAgent.color}dd)` }}
-                >
-                  <span className="text-4xl">{activeAgent.icon}</span>
-                </div>
-                <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
-                  Teamified AI
-                </h1>
-                <p className="text-2xl text-muted-foreground mb-8">{welcomeQuestion}</p>
-              </div>
-
-              <div className="animate-in fade-in duration-500">
-                <form onSubmit={handleSubmit} className="relative">
-                  <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
-                    <div className="absolute left-4 flex items-center gap-1">
-                      <button
-                        type="button"
-                        className="p-2 rounded-lg hover:bg-accent transition-colors"
-                        aria-label="Add attachment"
-                      >
-                        <Plus className="w-5 h-5 text-muted-foreground" />
-                      </button>
-                      <div className="relative" ref={agentDropdownRef}>
-                        <button
-                          type="button"
-                          onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
-                          className="p-1.5 rounded-lg hover:bg-accent transition-all group"
-                          aria-label="Select AI Agent"
-                          title={activeAgent.name}
-                        >
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
-                            style={{ backgroundColor: activeAgent.color }}
-                          >
-                            <span className="text-base">{activeAgent.icon}</span>
-                          </div>
-                        </button>
-                        {isAgentDropdownOpen && (
-                          <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-                            <div className="p-3 border-b border-border bg-muted">
-                              <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
-                            </div>
-                            <div className="max-h-96 overflow-y-auto">
-                              {AI_AGENTS.map((agent) => (
-                                <button
-                                  key={agent.id}
-                                  type="button"
-                                  onClick={() => handleAgentChange(agent)}
-                                  className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${activeAgent.id === agent.id ? "bg-accent/50" : ""}`}
-                                >
-                                  <div
-                                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-                                    style={{ backgroundColor: agent.color }}
-                                  >
-                                    <span className="text-xl">{agent.icon}</span>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
-                                      {activeAgent.id === agent.id && (
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                          Active
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <input
-                      type="text"
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      placeholder="Ask anything or type *help to know what I can do!"
-                      className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-                    />
-                    <div className="flex items-center gap-2 pr-2">
-                      <button
-                        type="button"
-                        className="p-2 rounded-lg hover:bg-accent transition-colors"
-                        aria-label="Voice input"
-                      >
-                        <Mic className="w-5 h-5 text-muted-foreground" />
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={!inputMessage.trim() || isThinking}
-                        className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
-                        aria-label="Send message"
-                      >
-                        <ArrowUp
-                          className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </form>
-
-                <div className="mt-6">{renderSuggestions()}</div>
-
-                <footer className="mt-4 text-center">
-                  <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
-                </footer>
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-3xl mx-auto pt-8 pb-8 space-y-6">
-              {localMessages.map((msg, index) => {
-                const isLastUserMessage =
-                  msg.type === "user" && index === localMessages.map((m) => m.type).lastIndexOf("user")
-                const isLastMessage = index === localMessages.length - 1
-                const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
-                return (
-                  <div
-                    key={msg.id}
-                    ref={isLastUserMessage ? lastUserMessageRef : isLastMessage ? lastMessageRef : null}
-                    className="message-enter"
-                  >
-                    {msg.isAgentSwitch && (
-                      <div className="flex items-center gap-4 mb-8 mt-8">
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border">
-                          <div
-                            className="w-5 h-5 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: messageAgent?.color }}
-                          >
-                            <span className="text-xs">{messageAgent?.icon}</span>
-                          </div>
-                          <span className="text-xs font-medium text-muted-foreground">
-                            Switched to {messageAgent?.name}
-                          </span>
-                        </div>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                      </div>
-                    )}
-
-                    {msg.type === "user" ? (
-                      <div className="flex justify-end mb-6">
-                        <div className="max-w-[80%] px-5 py-3 rounded-3xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg">
-                          <p className="text-sm leading-relaxed" title={msg.timestamp}>
-                            {msg.content}
-                          </p>
-                          {/* </CHANGE> */}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mb-6">
-                        <div className="flex items-center gap-2 mb-3">
-                          {msg.avatar ? (
-                            <img
-                              src={msg.avatar || "/placeholder.svg"}
-                              alt={msg.senderName || "Candidate"}
-                              className="w-8 h-8 rounded-full object-cover shadow-sm"
-                            />
-                          ) : (
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
-                              style={{ backgroundColor: messageAgent?.color }}
-                            >
-                              <span className="text-lg">{messageAgent?.icon}</span>
-                            </div>
-                          )}
-                          <span className="text-sm font-medium text-foreground">
-                            {msg.senderName || messageAgent?.name}
-                          </span>
-                          {/* </CHANGE> */}
-                        </div>
-                        {msg.thinkingTime && (
-                          <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-                            <span className="font-medium">Thought for {msg.thinkingTime}s</span>
-                            <ChevronDown className="w-4 h-4" />
-                          </div>
-                        )}
-                        <div className="space-y-4" title={msg.timestamp}>
-                          {/* </CHANGE> */}
-                          <MarkdownRenderer content={msg.content} />
-
-                          {msg.promptSuggestions && msg.promptSuggestions.length > 0 && (
-                            <div className="grid grid-cols-2 gap-3 mt-4">
-                              {msg.promptSuggestions.map((suggestion, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => handlePromptSuggestionClick(suggestion.text)}
-                                  className="flex items-center gap-3 px-4 py-3 text-sm text-left rounded-xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all group"
-                                >
-                                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 flex items-center justify-center group-hover:from-[#A16AE8]/20 group-hover:to-[#8096FD]/20 transition-all">
-                                    {suggestion.icon}
-                                  </div>
-                                  <span className="flex-1">{suggestion.text}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          {msg.responseType === "code" && (
-                            <div className="rounded-2xl overflow-hidden border border-border bg-card">
-                              <div className="flex items-center justify-between px-4 py-2 bg-muted border-b border-border">
-                                <span className="text-xs font-mono text-muted-foreground">code.js</span>
-                                <button
-                                  onClick={() => navigator.clipboard.writeText(msg.content)}
-                                  className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg hover:bg-accent transition-colors"
-                                >
-                                  <Copy className="w-3.5 h-3.5" />
-                                  Copy code
-                                </button>
-                              </div>
-                              <div className="p-4 overflow-x-auto">
-                                <pre className="text-xs font-mono leading-relaxed">
-                                  <code className="text-foreground">{msg.content}</code>
-                                </pre>
-                              </div>
-                            </div>
-                          )}
-
-                          {msg.responseType === "table" && (
-                            <div className="rounded-2xl overflow-hidden border border-border bg-card">
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="border-b border-border bg-muted">
-                                      {tableData.headers.map((header) => (
-                                        <th key={header} className="px-4 py-3 text-left font-medium text-foreground">
-                                          {header}
-                                        </th>
-                                      ))}
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {tableData.rows.map((row, idx) => (
-                                      <tr key={idx} className="border-b border-border last:border-0 hover:bg-accent/50">
-                                        {row.map((cell, cellIdx) => (
-                                          <td key={cellIdx} className="px-4 py-3 text-foreground">
-                                            {cell}
-                                          </td>
-                                        ))}
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          )}
-
-                          {msg.responseType === "file" && (
-                            <div className="rounded-2xl border border-border bg-card p-4">
-                              <div className="flex items-start gap-4">
-                                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center">
-                                  <FileText className="w-6 h-6 text-white" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-foreground mb-1">candidate-resume.pdf</h4>
-                                  <p className="text-xs text-muted-foreground mb-3">2.4 MB • PDF Document</p>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handlePreviewClick("pdf")}
-                                      className="px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white hover:shadow-lg transition-all"
-                                    >
-                                      Preview
-                                    </button>
-                                    <button className="px-4 py-2 text-sm font-medium rounded-xl border border-border hover:bg-accent transition-colors flex items-center gap-2">
-                                      <Download className="w-4 h-4" />
-                                      Download
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {msg.responseType === "image" && (
-                            <div className="rounded-2xl border border-border bg-card p-4">
-                              <img
-                                src="/dashboard-analytics-interface.png"
-                                alt="Dashboard preview"
-                                className="w-full rounded-xl"
-                              />
-                            </div>
-                          )}
-
-                          {msg.responseType === "challenge-button" && (
-                            <div className="mt-4">
-                              <button
-                                onClick={() => handleStartChallenge()}
-                                className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all"
-                              >
-                                Start Take Home Challenge
-                              </button>
-                            </div>
-                          )}
-
-                          {msg.hasActionButton && msg.actionButtonText && msg.actionButtonHandler && (
-                            <div className="mt-4 flex justify-center">
-                              <button
-                                onClick={() => {
-                                  if (msg.actionButtonHandler === "startChallenge") {
-                                    handleStartChallenge()
-                                  } else if (msg.actionButtonHandler === "confirmSubmitChallenge") {
-                                    handleConfirmSubmitChallenge()
-                                  }
-                                }}
-                                className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
-                              >
-                                {msg.actionButtonText}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-              {/* Add ref to the last message for auto-scroll */}
-              <div ref={messagesEndRef} />
-
-              {isThinking && (
-                <div className="mb-6 message-enter">
-                  <div className="flex items-center gap-2 mb-3">
+        {isVoiceMode ? (
+          <VoiceMode
+            onClose={handleVoiceModeToggle}
+            onTranscriptionUpdate={handleTranscriptionUpdate}
+            onCommandDetected={detectAndHandleCommand}
+            agentName={`${activeAgent.firstName} - ${activeAgent.name}`}
+            agentId={activeAgent.id}
+            currentWorkspaceContent={currentWorkspaceContent}
+            allAgents={AI_AGENTS}
+            currentAgent={activeAgent}
+            onAgentChange={handleVoiceModeAgentChange}
+            // </CHANGE>
+          />
+        ) : (
+          <>
+            <main
+              ref={messagesContainerRef}
+              className={`flex-1 min-h-0 px-6 relative bg-background ${isCentered ? "flex items-center justify-center" : "flex flex-col overflow-y-auto"}`}
+            >
+              {isCentered ? (
+                <div className="w-full max-w-[820px] mx-auto px-6">
+                  <div className="text-center mb-12">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
-                      style={{ backgroundColor: activeAgent.color }}
+                      className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-lg"
+                      style={{ background: `linear-gradient(135deg, ${activeAgent.color}, ${activeAgent.color}dd)` }}
                     >
-                      <span className="text-lg">{activeAgent.icon}</span>
+                      <span className="text-4xl">{activeAgent.icon}</span>
                     </div>
-                    <span className="text-sm font-medium text-foreground">{activeAgent.name}</span>
+                    <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-[#A16AE8] to-[#8096FD] bg-clip-text text-transparent">
+                      Teamified AI
+                    </h1>
+                    <p className="text-2xl text-muted-foreground mb-8">{welcomeQuestion}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
-                      <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
-                      <div className="w-2 h-2 rounded-full bg-current animate-bounce" />
-                    </div>
-                    <span className="text-sm">Thinking...</span>
+
+                  <div className="animate-in fade-in duration-500">
+                    <form onSubmit={handleSubmit} className="relative">
+                      <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+                        <div className="absolute left-4 flex items-center gap-1">
+                          <button
+                            type="button"
+                            className="p-2 rounded-lg hover:bg-accent transition-colors"
+                            aria-label="Add attachment"
+                          >
+                            <Plus className="w-5 h-5 text-muted-foreground" />
+                          </button>
+                          <div className="relative" ref={agentDropdownRef}>
+                            <button
+                              type="button"
+                              onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+                              className="p-1.5 rounded-lg hover:bg-accent transition-all group"
+                              aria-label="Select AI Agent"
+                              title={activeAgent.name}
+                            >
+                              <div
+                                className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
+                                style={{ backgroundColor: activeAgent.color }}
+                              >
+                                <span className="text-base">{activeAgent.icon}</span>
+                              </div>
+                            </button>
+                            {isAgentDropdownOpen && (
+                              <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+                                <div className="p-3 border-b border-border bg-muted">
+                                  <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                                </div>
+                                <div className="max-h-96 overflow-y-auto">
+                                  {AI_AGENTS.map((agent) => (
+                                    <button
+                                      key={agent.id}
+                                      type="button"
+                                      onClick={() => handleAgentChange(agent)}
+                                      className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${activeAgent.id === agent.id ? "bg-accent/50" : ""}`}
+                                    >
+                                      <div
+                                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                                        style={{ backgroundColor: agent.color }}
+                                      >
+                                        <span className="text-xl">{agent.icon}</span>
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                                          {activeAgent.id === agent.id && (
+                                            <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                              Active
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                          {agent.description}
+                                        </p>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={inputMessage}
+                          onChange={(e) => setInputMessage(e.target.value)}
+                          placeholder="Ask anything or type *help to know what I can do!"
+                          className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                        />
+                        <div className="flex items-center gap-2 pr-2">
+                          <button
+                            type="button"
+                            onClick={handleVoiceModeToggle}
+                            className="p-2 rounded-lg hover:bg-accent transition-colors"
+                            aria-label="Voice input"
+                          >
+                            <Mic className="w-5 h-5 text-muted-foreground" />
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={!inputMessage.trim() || isThinking}
+                            className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
+                            aria-label="Send message"
+                          >
+                            <ArrowUp
+                              className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+
+                    <div className="mt-6">{renderSuggestions()}</div>
+
+                    <footer className="mt-4 text-center">
+                      <p className="text-xs text-muted-foreground">
+                        Teamified AI can make mistakes. Check important info.
+                      </p>
+                    </footer>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-        </main>
-
-        {!isCentered && (
-          <div className="px-6 pb-6">
-            <div className="max-w-3xl mx-auto">
-              <form onSubmit={handleSubmit} className="relative">
-                <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
-                  <div className="absolute left-4 flex items-center gap-1">
-                    <button
-                      type="button"
-                      className="p-2 rounded-lg hover:bg-accent transition-colors"
-                      aria-label="Add attachment"
-                    >
-                      <Plus className="w-5 h-5 text-muted-foreground" />
-                    </button>
-                    <div className="relative" ref={agentDropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
-                        className="p-1.5 rounded-lg hover:bg-accent transition-all group"
-                        aria-label="Select AI Agent"
-                        title={activeAgent.name}
+              ) : (
+                <div className="w-full max-w-[820px] mx-auto py-6 space-y-4">
+                  {localMessages.map((msg, index) => {
+                    const isLastUserMessage =
+                      msg.type === "user" && index === localMessages.map((m) => m.type).lastIndexOf("user")
+                    const isLastMessage = index === localMessages.length - 1
+                    const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
+                    return (
+                      <div
+                        key={msg.id}
+                        ref={isLastUserMessage ? lastUserMessageRef : isLastMessage ? lastMessageRef : null}
+                        className="message-enter"
                       >
+                        {msg.isAgentSwitch && (
+                          <div className="flex items-center gap-4 mb-8 mt-8">
+                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border">
+                              <div
+                                className="w-5 h-5 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: messageAgent?.color }}
+                              >
+                                <span className="text-xs">{messageAgent?.icon}</span>
+                              </div>
+                              <span className="text-xs font-medium text-muted-foreground">
+                                Switched to {messageAgent?.name}
+                              </span>
+                            </div>
+                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                          </div>
+                        )}
+
+                        {msg.type === "user" ? (
+                          <div className="flex justify-end mb-6">
+                            <div className="max-w-[70%] px-5 py-3 rounded-3xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white shadow-lg">
+                              <p className="text-sm leading-relaxed" title={msg.timestamp}>
+                                {msg.content}
+                              </p>
+                              {/* </CHANGE> */}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mb-6 max-w-[85%]">
+                            <div className="flex items-center gap-2 mb-3">
+                              {msg.avatar ? (
+                                <img
+                                  src={msg.avatar || "/placeholder.svg"}
+                                  alt={msg.senderName || "Candidate"}
+                                  className="w-8 h-8 rounded-full object-cover shadow-sm"
+                                />
+                              ) : (
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                                  style={{ backgroundColor: messageAgent?.color }}
+                                >
+                                  <span className="text-lg">{messageAgent?.icon}</span>
+                                </div>
+                              )}
+                              <span className="text-sm font-medium text-foreground">
+                                {msg.senderName || messageAgent?.name}
+                              </span>
+                              {/* </CHANGE> */}
+                            </div>
+                            {msg.thinkingTime && (
+                              <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                                <span className="font-medium">Thought for {msg.thinkingTime}s</span>
+                                <ChevronDown className="w-4 h-4" />
+                              </div>
+                            )}
+                            <div className="space-y-4" title={msg.timestamp}>
+                              {/* </CHANGE> */}
+                              <MarkdownRenderer content={msg.content} />
+
+                              {msg.promptSuggestions && msg.promptSuggestions.length > 0 && (
+                                <div className="grid grid-cols-2 gap-3 mt-4">
+                                  {msg.promptSuggestions.map((suggestion, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => handlePromptSuggestionClick(suggestion.text)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm text-left rounded-xl border border-border hover:bg-accent hover:border-[#A16AE8] transition-all group"
+                                    >
+                                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#A16AE8]/10 to-[#8096FD]/10 flex items-center justify-center group-hover:from-[#A16AE8]/20 group-hover:to-[#8096FD]/20 transition-all">
+                                        {suggestion.icon}
+                                      </div>
+                                      <span className="flex-1">{suggestion.text}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {msg.responseType === "code" && (
+                                <div className="rounded-2xl overflow-hidden border border-border bg-card">
+                                  <div className="flex items-center justify-between px-4 py-2 bg-muted border-b border-border">
+                                    <span className="text-xs font-mono text-muted-foreground">code.js</span>
+                                    <button
+                                      onClick={() => navigator.clipboard.writeText(msg.content)}
+                                      className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg hover:bg-accent transition-colors"
+                                    >
+                                      <Copy className="w-3.5 h-3.5" />
+                                      Copy code
+                                    </button>
+                                  </div>
+                                  <div className="p-4 overflow-x-auto">
+                                    <pre className="text-xs font-mono leading-relaxed">
+                                      <code className="text-foreground">{msg.content}</code>
+                                    </pre>
+                                  </div>
+                                </div>
+                              )}
+
+                              {msg.responseType === "table" && (
+                                <div className="rounded-2xl overflow-hidden border border-border bg-card">
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                      <thead>
+                                        <tr className="border-b border-border bg-muted">
+                                          {tableData.headers.map((header) => (
+                                            <th
+                                              key={header}
+                                              className="px-4 py-3 text-left font-medium text-foreground"
+                                            >
+                                              {header}
+                                            </th>
+                                          ))}
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {tableData.rows.map((row, idx) => (
+                                          <tr
+                                            key={idx}
+                                            className="border-b border-border last:border-0 hover:bg-accent/50"
+                                          >
+                                            {row.map((cell, cellIdx) => (
+                                              <td key={cellIdx} className="px-4 py-3 text-foreground">
+                                                {cell}
+                                              </td>
+                                            ))}
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+
+                              {msg.responseType === "file" && (
+                                <div className="rounded-2xl border border-border bg-card p-4">
+                                  <div className="flex items-start gap-4">
+                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center">
+                                      <FileText className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-medium text-foreground mb-1">candidate-resume.pdf</h4>
+                                      <p className="text-xs text-muted-foreground mb-3">2.4 MB • PDF Document</p>
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => handlePreviewClick("pdf")}
+                                          className="px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white hover:shadow-lg transition-all"
+                                        >
+                                          Preview
+                                        </button>
+                                        <button className="px-4 py-2 text-sm font-medium rounded-xl border border-border hover:bg-accent transition-colors flex items-center gap-2">
+                                          <Download className="w-4 h-4" />
+                                          Download
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {msg.responseType === "image" && (
+                                <div className="rounded-2xl border border-border bg-card p-4">
+                                  <img
+                                    src="/dashboard-analytics-interface.png"
+                                    alt="Dashboard preview"
+                                    className="w-full rounded-xl"
+                                  />
+                                </div>
+                              )}
+
+                              {msg.responseType === "challenge-button" && (
+                                <div className="mt-4">
+                                  <button
+                                    onClick={() => handleStartChallenge()}
+                                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all"
+                                  >
+                                    Start Take Home Challenge
+                                  </button>
+                                </div>
+                              )}
+
+                              {msg.hasActionButton && msg.actionButtonText && msg.actionButtonHandler && (
+                                <div className="mt-4 flex justify-center">
+                                  <button
+                                    onClick={() => {
+                                      if (msg.actionButtonHandler === "startChallenge") {
+                                        handleStartChallenge()
+                                      } else if (msg.actionButtonHandler === "confirmSubmitChallenge") {
+                                        handleConfirmSubmitChallenge()
+                                      }
+                                    }}
+                                    className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
+                                  >
+                                    {msg.actionButtonText}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {/* Add ref to the last message for auto-scroll */}
+                  <div ref={messagesEndRef} />
+
+                  {isThinking && (
+                    <div className="mb-6 message-enter">
+                      <div className="flex items-center gap-2 mb-3">
                         <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
+                          className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
                           style={{ backgroundColor: activeAgent.color }}
                         >
-                          <span className="text-base">{activeAgent.icon}</span>
+                          <span className="text-lg">{activeAgent.icon}</span>
                         </div>
-                      </button>
-                      {isAgentDropdownOpen && (
-                        <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-                          <div className="p-3 border-b border-border bg-muted">
-                            <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
-                          </div>
-                          <div className="max-h-96 overflow-y-auto">
-                            {AI_AGENTS.map((agent) => (
-                              <button
-                                key={agent.id}
-                                type="button"
-                                onClick={() => handleAgentChange(agent)}
-                                className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${activeAgent.id === agent.id ? "bg-accent/50" : ""}`}
-                              >
-                                <div
-                                  className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-                                  style={{ backgroundColor: agent.color }}
-                                >
-                                  <span className="text-xl">{agent.icon}</span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
-                                    {activeAgent.id === agent.id && (
-                                      <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                                        Active
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
+                        <span className="text-sm font-medium text-foreground">{activeAgent.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
+                          <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
+                          <div className="w-2 h-2 rounded-full bg-current animate-bounce" />
                         </div>
-                      )}
+                        <span className="text-sm">Thinking...</span>
+                      </div>
                     </div>
-                  </div>
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Ask anything or type *help to know what I can do!"
-                    className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-                  />
-                  <div className="flex items-center gap-2 pr-2">
-                    <button
-                      type="button"
-                      className="p-2 rounded-lg hover:bg-accent transition-colors"
-                      aria-label="Voice input"
-                    >
-                      <Mic className="w-5 h-5 text-muted-foreground" />
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!inputMessage.trim() || isThinking}
-                      className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
-                      aria-label="Send message"
-                    >
-                      <ArrowUp
-                        className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
-                      />
-                    </button>
-                  </div>
+                  )}
                 </div>
-              </form>
+              )}
+            </main>
 
-              <footer className="mt-4 text-center">
-                <p className="text-xs text-muted-foreground">Teamified AI can make mistakes. Check important info.</p>
-              </footer>
-            </div>
-          </div>
+            {!isCentered && (
+              <div className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="w-full max-w-[900px] mx-auto px-6 py-4">
+                  <form onSubmit={handleSubmit} className="relative">
+                    <div className="relative flex items-center bg-card border border-border rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+                      <div className="absolute left-4 flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="p-2 rounded-lg hover:bg-accent transition-colors"
+                          aria-label="Add attachment"
+                        >
+                          <Plus className="w-5 h-5 text-muted-foreground" />
+                        </button>
+                        <div className="relative" ref={agentDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+                            className="p-1.5 rounded-lg hover:bg-accent transition-all group"
+                            aria-label="Select AI Agent"
+                            title={activeAgent.name}
+                          >
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
+                              style={{ backgroundColor: activeAgent.color }}
+                            >
+                              <span className="text-base">{activeAgent.icon}</span>
+                            </div>
+                          </button>
+                          {isAgentDropdownOpen && (
+                            <div className="absolute bottom-full left-0 mb-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+                              <div className="p-3 border-b border-border bg-muted">
+                                <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                              </div>
+                              <div className="max-h-96 overflow-y-auto">
+                                {AI_AGENTS.map((agent) => (
+                                  <button
+                                    key={agent.id}
+                                    type="button"
+                                    onClick={() => handleAgentChange(agent)}
+                                    className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${activeAgent.id === agent.id ? "bg-accent/50" : ""}`}
+                                  >
+                                    <div
+                                      className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                                      style={{ backgroundColor: agent.color }}
+                                    >
+                                      <span className="text-xl">{agent.icon}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                                        {activeAgent.id === agent.id && (
+                                          <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                            Active
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-muted-foreground leading-relaxed">
+                                        {agent.description}
+                                      </p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        placeholder="Ask anything or type *help to know what I can do!"
+                        className="flex-1 pl-28 pr-24 py-4 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                      />
+                      <div className="flex items-center gap-2 pr-2">
+                        <button
+                          type="button"
+                          onClick={handleVoiceModeToggle}
+                          className="p-2 rounded-lg hover:bg-accent transition-colors"
+                          aria-label="Voice input"
+                        >
+                          <Mic className="w-5 h-5 text-muted-foreground" />
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={!inputMessage.trim() || isThinking}
+                          className={`p-2.5 rounded-full transition-all ${inputMessage.trim() && !isThinking ? "bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:shadow-lg hover:scale-105" : "bg-muted"}`}
+                          aria-label="Send message"
+                        >
+                          <ArrowUp
+                            className={`w-5 h-5 ${inputMessage.trim() && !isThinking ? "text-white" : "text-muted-foreground"}`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+
+                  <footer className="mt-4 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      Teamified AI can make mistakes. Check important info.
+                    </p>
+                  </footer>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     )

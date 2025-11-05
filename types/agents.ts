@@ -64,7 +64,7 @@ export const AI_AGENTS: AIAgent[] = [
   {
     id: "sales-marketing",
     name: "Sales & Marketing",
-    firstName: "Shane",
+    firstName: "Darlyn",
     description: "Lead qualification, case studies, ROI calculator & demos",
     icon: "📊",
     color: "#6366F1",

@@ -4,7 +4,12 @@ export const maxDuration = 30
 
 export async function POST(req: Request) {
   try {
-    const { messages, agentId }: { messages: UIMessage[]; agentId: string } = await req.json()
+    const {
+      messages,
+      agentId,
+      workspaceContext,
+    }: { messages: UIMessage[]; agentId: string; workspaceContext?: string } = await req.json()
+    // </CHANGE>
 
     const systemPrompts: Record<string, string> = {
       "technical-recruiter": `You are a friendly and professional Technical Recruiter AI assistant helping candidates find their dream jobs.
@@ -157,7 +162,24 @@ Be enthusiastic, helpful, and focus on the value and ROI of each plan. Answer qu
       "company-info": `You are a helpful Company Information AI assistant. You provide information about Teamified's mission, values, services, and team. Be informative and enthusiastic about the company.`,
     }
 
-    const systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
+    let systemMessage = systemPrompts[agentId] || systemPrompts["technical-recruiter"]
+
+    if (workspaceContext && workspaceContext.trim().length > 0) {
+      systemMessage += workspaceContext
+      systemMessage +=
+        "\n\n**IMPORTANT INSTRUCTIONS:**\n" +
+        "- When the user asks questions about the workspace content (e.g., 'What's their experience?', 'Tell me about this candidate', 'How many applied jobs?'), use the workspace context above to provide accurate, specific answers.\n" +
+        "- Reference the actual data shown in the workspace.\n" +
+        "- If the user asks about something not in the workspace context, use your general knowledge to provide helpful information."
+    } else {
+      systemMessage +=
+        "\n\n**IMPORTANT INSTRUCTIONS:**\n" +
+        "- The user currently has no workspace open or the workspace is empty.\n" +
+        "- Use your general knowledge and expertise to answer their questions.\n" +
+        "- If they ask about specific data that would normally be in a workspace (like candidate details or job information), politely let them know they need to open the relevant workspace first.\n" +
+        "- For general questions about recruitment, job searching, career advice, or Teamified services, provide helpful and informative responses based on your knowledge."
+    }
+    // </CHANGE>
 
     const prompt = convertToModelMessages(messages)
 

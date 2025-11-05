@@ -107,7 +107,7 @@ export function ChatSidebar({
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-sidebar-border">
           {isOpen && (
             <div className="flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-[#A16AE8]" />
