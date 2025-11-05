@@ -52,6 +52,12 @@ export class RealtimeClient {
       // Create data channel for messages
       this.dataChannel = this.peerConnection.createDataChannel("oai-events")
 
+      this.dataChannel.onopen = () => {
+        console.log("[v0] Data channel is now open")
+        // Trigger connection ready callback only when data channel is actually open
+        this.onConnectionReadyCallback?.()
+      }
+
       this.dataChannel.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data)
@@ -96,9 +102,6 @@ export class RealtimeClient {
         type: "answer",
         sdp: answerSdp,
       })
-
-      // Trigger connection ready callback
-      this.onConnectionReadyCallback?.()
     } catch (error) {
       console.error("Connection error:", error)
       throw error
@@ -123,30 +126,10 @@ export class RealtimeClient {
     this.onConnectionReadyCallback = callback
   }
 
-  requestIntroduction(agentId?: string) {
-    const introductions: Record<string, string> = {
-      "technical-recruiter":
-        "Introduce yourself as Danny, the Technical Recruiter, and ask how you can help with their job search today.",
-      "account-manager":
-        "Introduce yourself as Lawrence, the Account Manager, and ask what you can help them with regarding their account or services.",
-      "sales-marketing":
-        "Introduce yourself as Shane from Sales & Marketing, and ask if they're interested in learning about Teamified's services or pricing.",
-      "hr-manager":
-        "Introduce yourself as Siona, the HR Manager, and ask what HR matter you can assist them with today.",
-      "financial-controller":
-        "Introduce yourself as Dave, the Financial Controller, and ask what financial question you can help them with.",
-    }
-
-    const instruction =
-      introductions[agentId || "technical-recruiter"] ||
-      "Introduce yourself briefly as the AI assistant and ask how you can help today."
-
+  requestIntroduction() {
+    // Simply trigger a response - the system instructions already tell the AI to introduce itself
     this.sendMessage({
       type: "response.create",
-      response: {
-        modalities: ["text", "audio"],
-        instructions: instruction,
-      },
     })
   }
 
