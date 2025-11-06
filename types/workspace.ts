@@ -31,6 +31,9 @@ export interface WorkspaceContent {
   planName?: string
   amount?: string
   job?: JobListing
+  jobs?: JobListing[] // Added jobs array for job-board context
+  jobBoardTab?: "applied" | "invited" | "saved" | "browse"
+  jobStatusFilter?: "draft" | "open" | "closed" // Added jobStatusFilter for hiring manager job navigation
   candidate?: CandidateProfile
   candidates?: CandidateProfile[] // Full list of candidates for swiping through
   currentCandidateIndex?: number // Current index in the candidates array

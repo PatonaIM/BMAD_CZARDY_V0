@@ -175,7 +175,12 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
             if (message.type === "response.done") {
               console.log("[v0] AI response fully completed (including audio)")
-              setIsListening(true)
+
+              setTimeout(() => {
+                console.log("[v0] Setting isSpeaking to false after response completion")
+                setIsSpeaking(false)
+                setIsListening(true)
+              }, 1500) // 1.5 second delay to ensure audio finishes playing
 
               // If there's a pending agent switch, wait a bit for audio to finish playing, then perform the switch
               if (pendingAgentSwitchRef.current) {
@@ -437,11 +442,12 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           <div className="relative w-64 h-64 flex items-center justify-center">
             {/* Outer sphere with conditional glow */}
             <div
-              className={`absolute w-64 h-64 rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30 overflow-hidden transition-all duration-500 ${
-                isSpeaking
-                  ? "shadow-[0_0_100px_40px_rgba(255,255,255,0.8),0_0_60px_20px_rgba(255,255,255,0.9),0_0_30px_10px_rgba(255,255,255,1)]"
-                  : ""
-              }`}
+              className={`absolute w-64 h-64 rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30 overflow-hidden transition-all duration-300`}
+              style={{
+                boxShadow: isSpeaking
+                  ? "0 0 80px 30px rgba(255, 255, 255, 0.6), 0 0 50px 15px rgba(255, 255, 255, 0.7), 0 0 25px 8px rgba(255, 255, 255, 0.8)"
+                  : "none",
+              }}
             >
               {/* Smoke particles inside sphere */}
               <div className="absolute inset-0">
@@ -533,6 +539,39 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
         }
       } else {
         console.log("[v0] Voice mode: Browse candidates workspace has no candidates")
+      }
+      break
+
+    case "job-board":
+      if (content.jobs && content.jobs.length > 0) {
+        const tabName =
+          content.jobBoardTab === "browse"
+            ? "browsing available jobs"
+            : content.jobBoardTab === "applied"
+              ? "viewing applied jobs"
+              : content.jobBoardTab === "invited"
+                ? "viewing invited jobs"
+                : content.jobBoardTab === "saved"
+                  ? "viewing saved jobs"
+                  : "viewing jobs"
+
+        context += `The user is ${tabName}. Here are the ${content.jobs.length} jobs currently displayed:\n\n`
+
+        content.jobs.forEach((job, index) => {
+          context += `${index + 1}. ${job.title} at ${job.company}\n`
+          context += `   - Location: ${job.location}\n`
+          context += `   - Salary: ${job.salary}\n`
+          if (job.skillMatch) context += `   - Skill Match: ${job.skillMatch}%\n`
+          if (job.applied) context += `   - Status: Applied\n`
+          if (job.invited) context += `   - Status: Invited\n`
+          if (job.saved) context += `   - Status: Saved\n`
+          context += `\n`
+        })
+
+        context += `You can answer questions about these jobs, such as which has the highest skill match, salary comparisons, or details about specific positions.\n`
+      } else {
+        context += `The user is viewing the job board, but there are no jobs currently displayed.\n`
+        console.log("[v0] Voice mode: Job board workspace has no jobs data")
       }
       break
 

@@ -1,4 +1,7 @@
 import type { JobListing } from "@/types/workspace"
+import { mockHiringManagerJobs, type HiringManagerJob } from "./mock-hiring-manager-jobs"
+
+export { mockHiringManagerJobs, type HiringManagerJob }
 
 export const mockJobListings: JobListing[] = [
   // APPLIED JOBS (applied: true)
@@ -170,6 +173,14 @@ export const mockJobListings: JobListing[] = [
       "• Design and implement scalable backend services and APIs\n• Optimize database performance and query efficiency\n• Collaborate with frontend teams to deliver seamless integrations\n• Implement security best practices and data protection measures\n• Participate in system architecture decisions",
     aboutClient:
       "Volaro Group is a leading B2B SaaS company providing enterprise solutions to businesses worldwide, with a strong presence across Australia, New Zealand, and Southeast Asia.",
+    benefits: [
+      "Excellent salary package with performance bonuses",
+      "Premium health insurance for you and family",
+      "Generous parental leave policy",
+      "Stock options and equity participation",
+      "Professional development and training",
+      "Modern Melbourne office with amenities",
+    ],
   },
 
   // INVITED JOBS (invited: true, applied: false)
@@ -585,7 +596,7 @@ export const mockJobListings: JobListing[] = [
     status: "open",
     skillMatch: 75,
     benefits: [
-      "Competitive compensation with equity",
+      "Competitive salary with equity options",
       "Comprehensive health insurance",
       "Flexible work arrangements",
       "Research and conference support",

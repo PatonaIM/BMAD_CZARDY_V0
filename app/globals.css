@@ -239,4 +239,6 @@
       opacity: 0.4;
     }
   }
+
+  /* Removed speakingGlow animation - using static glow instead */
 }

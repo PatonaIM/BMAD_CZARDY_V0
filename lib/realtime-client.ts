@@ -41,11 +41,32 @@ export class RealtimeClient {
       this.audioElement = document.createElement("audio")
       this.audioElement.autoplay = true
 
+      this.audioElement.addEventListener("play", () => {
+        console.log("[v0] Audio element started playing")
+        if (this.onAudioCallback) {
+          this.onAudioCallback(true)
+        }
+      })
+
+      this.audioElement.addEventListener("ended", () => {
+        console.log("[v0] Audio element finished playing (ended event)")
+        if (this.onAudioCallback) {
+          this.onAudioCallback(false)
+        }
+      })
+
+      this.audioElement.addEventListener("pause", () => {
+        console.log("[v0] Audio element paused, ended:", this.audioElement?.ended)
+        // Only set to false if the audio has actually ended, not just paused
+        if (this.audioElement && this.audioElement.ended && this.onAudioCallback) {
+          this.onAudioCallback(false)
+        }
+      })
+
       // Handle incoming audio tracks
       this.peerConnection.ontrack = (event) => {
         if (this.audioElement && event.streams[0]) {
           this.audioElement.srcObject = event.streams[0]
-          this.onAudioCallback?.(true)
         }
       }
 
@@ -62,11 +83,6 @@ export class RealtimeClient {
         try {
           const message = JSON.parse(event.data)
           this.onMessageCallback?.(message)
-
-          // Detect when audio playback ends
-          if (message.type === "response.audio.done" || message.type === "response.done") {
-            this.onAudioCallback?.(false)
-          }
         } catch (error) {
           console.error("Error parsing message:", error)
         }
@@ -150,6 +166,7 @@ export class RealtimeClient {
 
     if (this.audioElement) {
       console.log("[v0] Cleaning up audio element")
+      this.audioElement.pause()
       this.audioElement.srcObject = null
       this.audioElement = null
     }

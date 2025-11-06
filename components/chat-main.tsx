@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from "react"
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback, useMemo } from "react"
 import {
   Plus,
   Mic,
@@ -32,6 +32,9 @@ import { getCandidateConversation, saveCandidateMessage } from "@/lib/mock-conve
 import { VoiceMode, type VoiceModeRef } from "./voice-mode" // Changed import to include type VoiceModeRef
 import { detectCommandIntent } from "@/app/actions/detect-command-intent"
 
+// Import mock data
+import { mockJobListings, mockHiringManagerJobs } from "@/lib/mock-data"
+
 interface Message {
   id: string
   type: "user" | "ai"
@@ -55,6 +58,7 @@ interface Message {
 
 // Define JobListing type for clarity in handleJobApplication
 type JobListing = {
+  id: string
   title: string
   company: string
   location: string
@@ -63,6 +67,10 @@ type JobListing = {
   jobSummary?: string
   description: string
   skillMatch: number
+  applied?: boolean // Added for job board filtering
+  invited?: boolean // Added for job board filtering
+  saved?: boolean // Added for job board filtering
+  status?: string // Added for job board filtering
   matchedCandidates?: Array<{
     id: string
     name: string
@@ -135,10 +143,11 @@ export interface ChatMainProps {
   onOpenWorkspace: (content: WorkspaceContent) => void
   initialAgentId?: string | null
   shouldShowWelcome?: boolean
-  currentWorkspaceContent?: WorkspaceContent
+  // currentWorkspaceContent?: WorkspaceContent // Removed as it's now managed internally
   currentJobBoardTab?: "applied" | "invited" | "saved" | "browse"
   onSetJobBoardTab?: (tab: "applied" | "invited" | "saved" | "browse") => void
   // </CHANGE>
+  userType?: "candidate" | "hiring_manager" // Added userType
 }
 
 const welcomeQuestions = [
@@ -434,11 +443,11 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
 
     case "job-board":
       context += `The user is viewing the job board with available positions.\n`
-      if (content.data?.jobs) {
-        const jobs = content.data.jobs
+      if (content.jobs) {
+        const jobs = content.jobs
         const appliedJobs = jobs.filter((j: JobListing) => j.applied)
         const savedJobs = jobs.filter((j: JobListing) => j.saved)
-        context += `- Total jobs: ${jobs.length}\n`
+        context += `- Total jobs displayed: ${jobs.length}\n`
         context += `- Applied jobs: ${appliedJobs.length}\n`
         context += `- Saved jobs: ${savedJobs.length}\n`
       } else {
@@ -475,9 +484,10 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       onOpenWorkspace,
       initialAgentId,
       shouldShowWelcome,
-      currentWorkspaceContent,
+      // currentWorkspaceContent, // Removed as it's now managed internally
       currentJobBoardTab,
       onSetJobBoardTab,
+      userType, // Added userType
     },
     ref,
   ) => {
@@ -507,6 +517,21 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     // State for workspace management, tied to voice mode commands
     const [isWorkspaceOpen, setWorkspaceOpen] = useState(false)
     const [workspaceType, setWorkspaceType] = useState<WorkspaceContent["type"] | null>(null)
+    const [currentWorkspaceContent, setCurrentWorkspaceContent] = useState<WorkspaceContent | null>(null) // Added internal state for workspace content
+
+    const workspaceContext = useMemo(() => {
+      return formatWorkspaceContext(currentWorkspaceContent)
+    }, [currentWorkspaceContent])
+    // </CHANGE>
+
+    const chatBody = useMemo(
+      () => ({
+        agentId: activeAgent.id,
+        workspaceContext,
+      }),
+      [activeAgent.id, workspaceContext],
+    )
+    // </CHANGE>
 
     const {
       messages: aiMessages,
@@ -515,11 +540,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       setMessages,
     } = useChat({
       transport: new DefaultChatTransport({ api: "/api/chat" }),
-      body: {
-        agentId: activeAgent.id,
-        workspaceContext: formatWorkspaceContext(currentWorkspaceContent),
-        // </CHANGE>
-      },
+      body: chatBody, // Use memoized body object
       initialMessages: [], // Start with an empty array, welcome messages are handled separately
       onError: (error) => {
         console.error("[v0] useChat error:", error)
@@ -545,13 +566,23 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       }
 
       const convertedMessages: Message[] = aiMessages.map((msg) => {
-        // Find the corresponding agent if it's an AI message. If not, use the active agent.
+        // Find the corresponding agent if it's an AI message
         const messageAgent = AI_AGENTS.find((a) => a.id === msg.extra?.agentId) || activeAgent
 
         let content = ""
+        // Handle AI SDK v5 parts array format
         if (msg.parts && msg.parts.length > 0) {
-          content = msg.parts.map((part) => (part.type === "text" ? part.text : "")).join("")
+          content = msg.parts
+            .map((part) => {
+              // Only extract text from text parts, ignore tool parts
+              if (part.type === "text") {
+                return part.text || ""
+              }
+              return ""
+            })
+            .join("")
         } else if (msg.content) {
+          // Fallback for older message format
           content = typeof msg.content === "string" ? msg.content : ""
         }
 
@@ -559,7 +590,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
 
         return {
           id: msg.id,
-          type: msg.role === "user" ? "user" : "ai", // Corrected: user role should map to "user" type
+          type: msg.role === "user" ? "user" : "ai",
           content,
           agentId: messageAgent.id,
           responseType,
@@ -573,8 +604,10 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
 
       const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
 
+      // Preserve local messages that aren't in aiMessages
       const preservedLocalMessages = localMessages.filter((m) => !aiMessageIds.has(m.id))
 
+      // Don't clear welcome messages if there are no other messages
       const hasWelcomeMessages = localMessages.some((m) => m.isWelcome)
       const wouldClearWelcome =
         hasWelcomeMessages && preservedLocalMessages.length === 0 && convertedMessages.length === 0
@@ -585,22 +618,22 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
 
       const newMessages = [...preservedLocalMessages, ...convertedMessages]
 
-      newMessages.sort((a, b) => {
-        // Extract timestamp from message ID (format: timestamp string or backend ID)
-        const getTimestamp = (msg: Message) => {
-          // If ID is a number string (timestamp), use it
-          const idAsNumber = Number.parseInt(msg.id)
-          if (!isNaN(idAsNumber) && idAsNumber > 1000000000000) {
-            return idAsNumber
+      // Messages from the API are already in the correct order
+      // Only sort if we have mixed local and AI messages
+      if (preservedLocalMessages.length > 0 && convertedMessages.length > 0) {
+        newMessages.sort((a, b) => {
+          const getTimestamp = (msg: Message) => {
+            const idAsNumber = Number.parseInt(msg.id)
+            if (!isNaN(idAsNumber) && idAsNumber > 1000000000000) {
+              return idAsNumber
+            }
+            return new Date(msg.timestamp || 0).getTime()
           }
-          // Otherwise, parse the timestamp string
-          return new Date(msg.timestamp || 0).getTime()
-        }
+          return getTimestamp(a) - getTimestamp(b)
+        })
+      }
 
-        return getTimestamp(a) - getTimestamp(b)
-      })
-      // </CHANGE>
-
+      // Only update if messages actually changed
       const messagesChanged =
         newMessages.length !== localMessages.length ||
         newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content)
@@ -608,7 +641,8 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       if (messagesChanged) {
         setLocalMessages(newMessages)
       }
-    }, [aiMessages, activeAgent]) // Fixed dependency to use activeAgent object instead of activeAgent.id
+    }, [aiMessages, activeAgent, localMessages])
+    // </CHANGE>
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -688,6 +722,7 @@ Good luck! 🚀`,
       onOpenWorkspace({ type: "challenge-loading", title: "Take Home Challenge" })
       setHasOpenedWorkspace(true)
       setLastWorkspaceContent({ type: "challenge-loading", title: "Take Home Challenge" })
+      setCurrentWorkspaceContent({ type: "challenge-loading", title: "Take Home Challenge" }) // Update internal state
 
       // AFTER 3 SECONDS, SHOW THE CODE PREVIEW WORKSPACE (SAME AS "CODE PREVIEW" COMMAND)
       setTimeout(() => {
@@ -698,6 +733,7 @@ Good luck! 🚀`,
         })
         // Update lastWorkspaceContent to trigger the useEffect that resets conversation
         setLastWorkspaceContent({ type: "code", title: "Take Home Challenge" })
+        setCurrentWorkspaceContent({ type: "code", title: "Take Home Challenge", data: codeSnippet }) // Update internal state
       }, 3000)
     }
 
@@ -1361,9 +1397,6 @@ Looking forward to seeing this conversation develop! 🚀`,
         if (command === "view job" && intentResult.jobTitle) {
           console.log("[v0] Job view command detected for:", intentResult.jobTitle)
 
-          // Import mock jobs data
-          const { mockJobListings } = await import("@/lib/mock-data")
-
           // Find matching job using fuzzy matching
           const normalizedSearchTitle = intentResult.jobTitle.toLowerCase().trim()
           const matchedJob = mockJobListings.find((job) => {
@@ -1392,6 +1425,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             onOpenWorkspace(workspaceData)
             setHasOpenedWorkspace(true)
             setLastWorkspaceContent(workspaceData)
+            setCurrentWorkspaceContent(workspaceData) // Update internal state
 
             const userMsg = {
               id: `voice-cmd-user-${Date.now()}`,
@@ -1422,19 +1456,26 @@ Looking forward to seeing this conversation develop! 🚀`,
         if (command === "browse jobs") {
           console.log("[v0] Browse jobs command detected")
 
+          const browseJobs = mockJobListings.filter((j) => !j.applied && !j.invited && !j.saved && j.status === "open")
+
           // If job board is not open, open it first
           if (currentWorkspaceContent?.type !== "job-board") {
-            const workspaceData: WorkspaceContent = { type: "job-board", title: "Browse Jobs" }
+            const workspaceData: WorkspaceContent = {
+              type: "job-board",
+              title: "Browse Jobs",
+              jobs: browseJobs,
+              jobBoardTab: "browse",
+            }
             onOpenWorkspace(workspaceData)
             setHasOpenedWorkspace(true)
             setLastWorkspaceContent(workspaceData)
+            setCurrentWorkspaceContent(workspaceData) // Update internal state
           }
 
           // Set the tab to "browse"
           if (onSetJobBoardTab) {
             onSetJobBoardTab("browse")
           }
-          // </CHANGE>
 
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -1462,12 +1503,25 @@ Looking forward to seeing this conversation develop! 🚀`,
 
           console.log("[v0] Job board tab navigation command detected:", tab)
 
+          const filteredJobs = mockJobListings.filter((j) => {
+            if (tab === "applied") return j.applied === true
+            if (tab === "invited") return j.invited === true
+            if (tab === "saved") return j.saved === true
+            return false
+          })
+
           // If job board is not open, open it first
           if (currentWorkspaceContent?.type !== "job-board") {
-            const workspaceData: WorkspaceContent = { type: "job-board", title: "My Jobs" }
+            const workspaceData: WorkspaceContent = {
+              type: "job-board",
+              title: "My Jobs",
+              jobs: filteredJobs,
+              jobBoardTab: tab,
+            }
             onOpenWorkspace(workspaceData)
             setHasOpenedWorkspace(true)
             setLastWorkspaceContent(workspaceData)
+            setCurrentWorkspaceContent(workspaceData) // Update internal state
           }
 
           // Set the tab
@@ -1493,6 +1547,54 @@ Looking forward to seeing this conversation develop! 🚀`,
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
           return true
         }
+
+        if (command === "draft jobs" || command === "open jobs" || command === "closed jobs") {
+          const status = command.replace(" jobs", "") as "draft" | "open" | "closed"
+
+          console.log("[v0] Hiring manager job status command detected:", status)
+
+          const filteredJobs = mockHiringManagerJobs.filter((j) => j.status === status)
+
+          // Create updated workspace data
+          const workspaceData: WorkspaceContent = {
+            type: "job-board",
+            title: "Job Board",
+            jobs: filteredJobs,
+            jobStatusFilter: status,
+          }
+
+          // Update workspace immediately
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData)
+
+          // Format the updated context immediately (don't wait for memo)
+          const updatedContext = formatWorkspaceContext(workspaceData)
+
+          // Add user message
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg])
+
+          // Send to AI with updated context so it can provide a proper response
+          sendMessage({
+            role: "user",
+            content: text,
+            extra: {
+              agentId: activeAgent.id,
+              workspaceContext: updatedContext, // Use the freshly formatted context
+            },
+          })
+
+          return true
+        }
+        // </CHANGE>
 
         if (command.startsWith("switch to ")) {
           const targetAgentName = command.replace("switch to ", "").toLowerCase()
@@ -1540,6 +1642,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData) // Update internal state
 
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -1584,6 +1687,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData) // Update internal state
 
           return true
         }
@@ -1610,6 +1714,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData) // Update internal state
 
           return true
         }
@@ -1635,6 +1740,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData) // Update internal state
 
           return true
         }
@@ -1659,12 +1765,14 @@ Looking forward to seeing this conversation develop! 🚀`,
 
     const handlePreviewClick = (fileType: string) => {
       onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
+      setCurrentWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" }) // Update internal state
     }
 
     const handleReopenWorkspace = () => {
       if (lastWorkspaceContent) {
         onOpenWorkspace(lastWorkspaceContent)
         setHasOpenedWorkspace(true) // Ensure the flag is set when reopening
+        setCurrentWorkspaceContent(lastWorkspaceContent) // Update internal state
       }
     }
 
@@ -1762,6 +1870,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" })
+        setCurrentWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" }) // Update internal state
 
         return true
       }
@@ -1809,6 +1918,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace({ type: "table", title: "Candidate Table" })
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent({ type: "table", title: "Candidate Table" })
+        setCurrentWorkspaceContent({ type: "table", title: "Candidate Table" }) // Update internal state
 
         return true
       }
@@ -1856,6 +1966,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace({ type: "image", title: "Image Gallery" })
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent({ type: "image", title: "Image Gallery" })
+        setCurrentWorkspaceContent({ type: "image", title: "Image Gallery" }) // Update internal state
 
         return true
       }
@@ -1882,6 +1993,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace({ type: "video", title: "Video Player" })
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent({ type: "video", title: "Video Player" })
+        setCurrentWorkspaceContent({ type: "video", title: "Video Player" }) // Update internal state
 
         return true
       }
@@ -1929,6 +2041,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace({ type: "code", title: "server.js", data: codeSnippet })
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent({ type: "code", title: "server.js", data: codeSnippet })
+        setCurrentWorkspaceContent({ type: "code", title: "server.js", data: codeSnippet }) // Update internal state
 
         return true
       }
@@ -1955,6 +2068,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace({ type: "job-board", title: "Available Positions" })
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent({ type: "job-board", title: "Available Positions" })
+        setCurrentWorkspaceContent({ type: "job-board", title: "Available Positions" }) // Update internal state
 
         return true
       }
@@ -1981,6 +2095,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace({ type: "analytics", title: "Recruitment Analytics" })
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" })
+        setCurrentWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" }) // Update internal state
 
         return true
       }
@@ -2019,6 +2134,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace(workspaceData)
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent(workspaceData)
+        setCurrentWorkspaceContent(workspaceData) // Update internal state
 
         return true
       }
@@ -2178,6 +2294,7 @@ Are you ready to begin your Take Home Challenge?`,
         onOpenWorkspace({ type: "compare-candidates", title: "Compare Candidates" })
         setHasOpenedWorkspace(true)
         setLastWorkspaceContent({ type: "compare-candidates", title: "Compare Candidates" })
+        setCurrentWorkspaceContent({ type: "compare-candidates", title: "Compare Candidates" }) // Update internal state
 
         return true
       }
@@ -2446,6 +2563,7 @@ Are you ready to begin your Take Home Challenge?`,
             allAgents={AI_AGENTS}
             currentAgent={activeAgent}
             onAgentChange={handleVoiceModeAgentChange}
+            userType={userType} // Pass userType to VoiceMode
             // </CHANGE>
           />
         ) : (

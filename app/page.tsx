@@ -204,12 +204,6 @@ export default function ChatPage() {
           chatMainRef.current.showJobInsights(job)
         }
       }, 500)
-    } else if (chatMainRef.current && user?.role !== "hiring_manager") {
-      setTimeout(() => {
-        if (chatMainRef.current) {
-          chatMainRef.current.showJobViewSummary(job)
-        }
-      }, 1000)
     }
   }
 

@@ -114,6 +114,60 @@ const RESERVED_COMMANDS = [
       "view saved",
     ],
   },
+  {
+    command: "draft jobs",
+    description: "Show draft jobs for hiring manager",
+    keywords: [
+      "draft jobs",
+      "drafted jobs", // Added "drafted jobs" as alternative term
+      "show draft jobs",
+      "show drafted jobs", // Added variation with "drafted"
+      "view draft jobs",
+      "view drafted jobs", // Added variation with "drafted"
+      "see draft jobs",
+      "see drafted jobs", // Added variation with "drafted"
+      "my draft jobs",
+      "my drafted jobs", // Added variation with "drafted"
+      "jobs in draft",
+      "draft positions",
+      "drafted positions", // Added variation with "drafted"
+      "show drafts",
+      "view drafts",
+      "see drafts",
+    ],
+  },
+  {
+    command: "open jobs",
+    description: "Show open jobs for hiring manager",
+    keywords: [
+      "open jobs",
+      "show open jobs",
+      "view open jobs",
+      "see open jobs",
+      "my open jobs",
+      "active jobs",
+      "live jobs",
+      "jobs accepting applications",
+      "show active jobs",
+      "view active jobs",
+    ],
+  },
+  {
+    command: "closed jobs",
+    description: "Show closed jobs for hiring manager",
+    keywords: [
+      "closed jobs",
+      "show closed jobs",
+      "view closed jobs",
+      "see closed jobs",
+      "my closed jobs",
+      "completed jobs",
+      "archived jobs",
+      "filled positions",
+      "show archived jobs",
+      "view archived jobs",
+    ],
+  },
   ...AI_AGENTS.map((agent) => ({
     command: `switch to ${agent.firstName.toLowerCase()}`,
     description: `Switch to ${agent.firstName} - ${agent.name}`,
@@ -427,6 +481,57 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "discover jobs",
       ],
     },
+    {
+      command: "draft jobs",
+      variations: [
+        "draft jobs",
+        "drafted jobs", // Added "drafted jobs" to fuzzy matching variations
+        "show draft jobs",
+        "show drafted jobs", // Added variation with "drafted"
+        "view draft jobs",
+        "view drafted jobs", // Added variation with "drafted"
+        "see draft jobs",
+        "see drafted jobs", // Added variation with "drafted"
+        "my draft jobs",
+        "my drafted jobs", // Added variation with "drafted"
+        "jobs in draft",
+        "draft positions",
+        "drafted positions", // Added variation with "drafted"
+        "show drafts",
+        "view drafts",
+        "see drafts",
+      ],
+    },
+    {
+      command: "open jobs",
+      variations: [
+        "open jobs",
+        "show open jobs",
+        "view open jobs",
+        "see open jobs",
+        "my open jobs",
+        "active jobs",
+        "live jobs",
+        "jobs accepting applications",
+        "show active jobs",
+        "view active jobs",
+      ],
+    },
+    {
+      command: "closed jobs",
+      variations: [
+        "closed jobs",
+        "show closed jobs",
+        "view closed jobs",
+        "see closed jobs",
+        "my closed jobs",
+        "completed jobs",
+        "archived jobs",
+        "filled positions",
+        "show archived jobs",
+        "view archived jobs",
+      ],
+    },
   ]
 
   for (const mapping of navigationMappings) {
@@ -511,6 +616,9 @@ export async function detectCommandIntent(userInput: string): Promise<{
     "browse jobs",
     "available jobs",
     "open positions",
+    "draft jobs",
+    "open jobs",
+    "closed jobs",
   ]
 
   for (const pattern of jobRequestPatterns) {
