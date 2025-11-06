@@ -10,6 +10,7 @@ import type { WorkspaceContent } from "@/types/workspace"
 import { getCurrentUser, clearNewSignupFlag, clearUserOnInitialLoad } from "@/lib/auth"
 import { AI_AGENTS } from "@/types/agents"
 import type { JobListing, CandidateProfile } from "@/types/job"
+import { mockJobListings } from "@/lib/mock-data"
 
 export interface ChatMainRef {
   handleProfileSaved: () => void
@@ -41,7 +42,7 @@ export default function ChatPage() {
   const [workspaceContent, setWorkspaceContent] = useState<WorkspaceContent>({ type: null })
   const [initialAgent, setInitialAgent] = useState<string | null>(null)
   const [shouldShowWelcome, setShouldShowWelcome] = useState(false)
-  const [currentJobBoardTab, setCurrentJobBoardTab] = useState<"applied" | "invited" | "saved">("applied") // Added state to track current job board tab
+  const [currentJobBoardTab, setCurrentJobBoardTab] = useState<"applied" | "invited" | "saved" | "browse">("applied")
   const chatMainRef = useRef<ChatMainRef | null>(null)
 
   useEffect(() => {
@@ -75,6 +76,47 @@ export default function ChatPage() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    // Only update if the current workspace is job-board
+    if (workspaceContent.type === "job-board") {
+      const user = getCurrentUser()
+
+      // Filter jobs based on current tab
+      let filteredJobs: JobListing[] = []
+      switch (currentJobBoardTab) {
+        case "applied":
+          filteredJobs = mockJobListings.filter((j) => j.applied)
+          break
+        case "invited":
+          filteredJobs = mockJobListings.filter((j) => j.invited && !j.applied)
+          break
+        case "saved":
+          filteredJobs = mockJobListings.filter((j) => j.saved && !j.applied)
+          break
+        case "browse":
+          filteredJobs = mockJobListings.filter((j) => !j.applied && !j.invited)
+          break
+      }
+
+      console.log(
+        "[v0] Updating workspace content with job board tab:",
+        currentJobBoardTab,
+        "Jobs:",
+        filteredJobs.length,
+      )
+
+      setWorkspaceContent({
+        type: "job-board",
+        title: user?.role === "candidate" ? "My Jobs" : "Job Board",
+        data: {
+          currentTab: currentJobBoardTab,
+          jobs: filteredJobs,
+          allJobs: mockJobListings,
+        },
+      })
+    }
+  }, [currentJobBoardTab, workspaceContent.type])
 
   const handleProfileSave = () => {
     const user = getCurrentUser()
@@ -303,11 +345,9 @@ export default function ChatPage() {
       "[v0] chatMainRef.current.sendAIMessageFromWorkspace exists:",
       !!chatMainRef.current?.sendAIMessageFromWorkspace,
     )
-    // </CHANGE>
     if (chatMainRef.current) {
       chatMainRef.current.sendAIMessageFromWorkspace(message, agentId)
       console.log("[v0] sendAIMessageFromWorkspace called successfully")
-      // </CHANGE>
     }
   }
 
@@ -317,9 +357,6 @@ export default function ChatPage() {
       chatMainRef.current.clearMessages()
     }
   }
-
-  // Job board tab is now controlled directly via currentJobBoardTab state
-  // </CHANGE>
 
   return (
     <ThemeProvider>
@@ -368,6 +405,7 @@ export default function ChatPage() {
                 onClearMessages={handleClearMessages}
                 onOpenWorkspace={setWorkspaceContent}
                 jobBoardTab={currentJobBoardTab}
+                onJobBoardTabChange={setCurrentJobBoardTab}
               />
             </div>
           )}

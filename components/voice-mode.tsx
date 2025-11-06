@@ -143,6 +143,11 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
             }
 
             if (message.type === "response.audio_transcript.delta") {
+              if (!isSpeaking) {
+                console.log("[v0] AI started speaking")
+                setIsSpeaking(true)
+                setIsListening(false)
+              }
               aiResponseBufferRef.current += message.delta
               setAiResponse(aiResponseBufferRef.current)
             }
@@ -166,11 +171,12 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               aiResponseBufferRef.current = ""
               setCurrentTranscript("")
               setAiResponse("")
-              setIsListening(true)
             }
 
             if (message.type === "response.done") {
               console.log("[v0] AI response fully completed (including audio)")
+              setIsSpeaking(false)
+              setIsListening(true)
 
               // If there's a pending agent switch, wait a bit for audio to finish playing, then perform the switch
               if (pendingAgentSwitchRef.current) {
@@ -189,6 +195,7 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           })
 
           client.onAudioStateChange((isPlaying) => {
+            console.log("[v0] Audio state changed - isPlaying:", isPlaying)
             setIsSpeaking(isPlaying)
             if (!isPlaying) {
               setIsListening(true)
@@ -426,70 +433,37 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
         {/* Main Animation Area */}
         <div className="flex-1 flex items-center justify-center">
-          {isSpeaking ? (
-            // Cloud Bubble Animation (AI Speaking)
-            <div className="relative">
-              <div className="w-64 h-64 relative">
-                <svg viewBox="0 0 200 200" className="w-full h-full">
-                  <path
-                    d="M 50 100 Q 50 50, 100 50 Q 150 50, 150 100 Q 180 100, 180 130 Q 180 160, 150 160 L 50 160 Q 20 160, 20 130 Q 20 100, 50 100"
-                    fill="white"
-                    style={{
-                      animation: "pulse 2s ease-in-out infinite",
-                    }}
-                  />
-                  <circle
-                    cx="30"
-                    cy="180"
-                    r="15"
-                    fill="white"
-                    style={{
-                      animation: "bounce 1s ease-in-out infinite",
-                    }}
-                  />
-                  <circle
-                    cx="50"
-                    cy="190"
-                    r="8"
-                    fill="white"
-                    style={{
-                      animation: "bounce 1.2s ease-in-out infinite",
-                    }}
-                  />
-                </svg>
-              </div>
-            </div>
-          ) : isUserSpeaking ? (
-            // 4 Circles Animation (User Actively Speaking)
-            <div className="relative">
-              <div className="flex items-center gap-4">
-                {[0, 1, 2, 3].map((i) => (
+          {console.log("[v0] isSpeaking:", isSpeaking, "isUserSpeaking:", isUserSpeaking)}
+          {/* Outer sphere with conditional glow */}
+          <div className="relative w-64 h-64 flex items-center justify-center">
+            {/* Outer sphere with conditional glow */}
+            <div
+              className={`absolute w-64 h-64 rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30 overflow-hidden transition-all duration-500 ${
+                isSpeaking ? "shadow-[0_0_60px_20px_rgba(255,255,255,0.6)]" : ""
+              }`}
+            >
+              {/* Smoke particles inside sphere */}
+              <div className="absolute inset-0">
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
                   <div
                     key={i}
-                    className="w-16 h-16 rounded-full bg-white"
+                    className="absolute rounded-full bg-white/20 smoke-particle"
+                    data-pattern={(i % 4) + 1}
                     style={{
-                      animation: `bounce 1s ease-in-out ${i * 0.15}s infinite`,
+                      width: `${40 + (i % 6) * 12}px`,
+                      height: `${40 + (i % 6) * 12}px`,
+                      left: `${15 + (i % 4) * 20}%`,
+                      top: `${20 + (i % 3) * 25}%`,
+                      animationDelay: `${i * 0.2}s`,
                     }}
                   />
                 ))}
               </div>
             </div>
-          ) : (
-            // Static Circles (Idle/Waiting for user to speak)
-            <div className="relative">
-              <div className="flex items-center gap-4">
-                {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="w-16 h-16 rounded-full bg-white opacity-50"
-                    style={{
-                      animation: `pulse 3s ease-in-out ${i * 0.2}s infinite`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+
+            {/* Center indicator */}
+            <div className="relative z-10 w-4 h-4 rounded-full bg-white/80" />
+          </div>
         </div>
 
         {/* Bottom Controls */}
@@ -577,17 +551,68 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
       break
 
     case "job-board":
-      context += `The user is viewing the job board.\n`
-      if (content.data?.jobs) {
-        const jobs = content.data.jobs
-        const appliedJobs = jobs.filter((j: any) => j.applied)
-        const savedJobs = jobs.filter((j: any) => j.saved)
-        context += `- Total jobs: ${jobs.length}\n`
+      if (content.data?.currentTab) {
+        const currentTab = content.data.currentTab
+        const jobs = content.data.jobs || []
+        const allJobs = content.data.allJobs || []
+
+        context += `The user is viewing the job board on the "${currentTab}" tab.\n`
+        context += `\n**Current View (${currentTab} jobs):**\n`
+
+        if (jobs.length === 0) {
+          context += `- No jobs in this category yet\n`
+        } else {
+          context += `- Total jobs displayed: ${jobs.length}\n`
+
+          // Calculate statistics
+          const avgSkillMatch = jobs.reduce((sum: number, j: any) => sum + (j.skillMatch || 0), 0) / jobs.length
+          const locations = [...new Set(jobs.map((j: any) => j.location))]
+          const companies = [...new Set(jobs.map((j: any) => j.company))]
+
+          context += `- Average skill match: ${avgSkillMatch.toFixed(0)}%\n`
+          context += `- Locations: ${locations.join(", ")}\n`
+          context += `- Companies: ${companies.join(", ")}\n`
+
+          // List each job with details
+          context += `\n**Job Details:**\n`
+          jobs.forEach((job: any, index: number) => {
+            context += `\n${index + 1}. ${job.title} at ${job.company}\n`
+            context += `   - Location: ${job.location}\n`
+            context += `   - Salary: ${job.salary}\n`
+            context += `   - Skill Match: ${job.skillMatch}%\n`
+            context += `   - Posted: ${job.posted}\n`
+            if (job.status === "closed") {
+              context += `   - Status: CLOSED\n`
+            }
+          })
+        }
+
+        // Add overall statistics
+        const appliedJobs = allJobs.filter((j: any) => j.applied)
+        const invitedJobs = allJobs.filter((j: any) => j.invited && !j.applied)
+        const savedJobs = allJobs.filter((j: any) => j.saved && !j.applied)
+        const browseJobs = allJobs.filter((j: any) => !j.applied && !j.invited)
+
+        context += `\n**Overall Statistics:**\n`
         context += `- Applied jobs: ${appliedJobs.length}\n`
+        context += `- Invited jobs: ${invitedJobs.length}\n`
         context += `- Saved jobs: ${savedJobs.length}\n`
+        context += `- Available to browse: ${browseJobs.length}\n`
       } else {
-        console.log("[v0] Voice mode: Job board workspace has no jobs data")
+        // Fallback to old behavior if data structure is not available
+        context += `The user is viewing the job board.\n`
+        if (content.data?.jobs) {
+          const jobs = content.data.jobs
+          const appliedJobs = jobs.filter((j: any) => j.applied)
+          const savedJobs = jobs.filter((j: any) => j.saved)
+          context += `- Total jobs: ${jobs.length}\n`
+          context += `- Applied jobs: ${appliedJobs.length}\n`
+          context += `- Saved jobs: ${savedJobs.length}\n`
+        } else {
+          console.log("[v0] Voice mode: Job board workspace has no jobs data")
+        }
       }
+      // </CHANGE>
       break
 
     default:

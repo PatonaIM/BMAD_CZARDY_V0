@@ -111,6 +111,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --animate-audioWave1: audioWave1 0.6s ease-in-out infinite;
+  --animate-audioWave2: audioWave2 0.7s ease-in-out infinite;
+  --animate-audioWave3: audioWave3 0.8s ease-in-out infinite;
+  --animate-audioWave4: audioWave4 0.9s ease-in-out infinite;
 }
 
 @layer base {
@@ -119,5 +124,119 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Added smoke particle base styles and speed variants */
+  /* Base smoke particle styles */
+  .smoke-particle {
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+  }
+
+  /* Removed speed variants, keeping only constant speed animations */
+  /* Pattern 1 particles */
+  .smoke-particle[data-pattern="1"] {
+    animation-name: smokeBounce1;
+    animation-duration: 6s;
+  }
+
+  /* Pattern 2 particles */
+  .smoke-particle[data-pattern="2"] {
+    animation-name: smokeBounce2;
+    animation-duration: 7s;
+  }
+
+  /* Pattern 3 particles */
+  .smoke-particle[data-pattern="3"] {
+    animation-name: smokeBounce3;
+    animation-duration: 8s;
+  }
+
+  /* Pattern 4 particles */
+  .smoke-particle[data-pattern="4"] {
+    animation-name: smokeBounce4;
+    animation-duration: 7s;
+  }
+
+  /* Renamed animations to remove Fast/Slow suffixes, keeping smooth constant speed */
+  @keyframes smokeBounce1 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.3;
+    }
+    25% {
+      transform: translate(-60px, -60px) scale(1.2);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translate(60px, -60px) scale(0.9);
+      opacity: 0.5;
+    }
+    75% {
+      transform: translate(-40px, 40px) scale(1.1);
+      opacity: 0.4;
+    }
+  }
+
+  @keyframes smokeBounce2 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+      opacity: 0.25;
+    }
+    33% {
+      transform: translate(70px, 50px) scale(1.15) rotate(90deg);
+      opacity: 0.55;
+    }
+    66% {
+      transform: translate(-50px, -70px) scale(0.95) rotate(-90deg);
+      opacity: 0.45;
+    }
+  }
+
+  @keyframes smokeBounce3 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.2;
+    }
+    20% {
+      transform: translate(-70px, 40px) scale(1.25);
+      opacity: 0.5;
+    }
+    40% {
+      transform: translate(50px, -50px) scale(0.85);
+      opacity: 0.6;
+    }
+    60% {
+      transform: translate(-40px, -40px) scale(1.15);
+      opacity: 0.4;
+    }
+    80% {
+      transform: translate(60px, 60px) scale(0.95);
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes smokeBounce4 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+      opacity: 0.3;
+    }
+    25% {
+      transform: translate(65px, -45px) scale(1.1) rotate(45deg);
+      opacity: 0.5;
+    }
+    50% {
+      transform: translate(-65px, 45px) scale(0.9) rotate(-45deg);
+      opacity: 0.6;
+    }
+    75% {
+      transform: translate(45px, 65px) scale(1.05) rotate(90deg);
+      opacity: 0.4;
+    }
   }
 }
