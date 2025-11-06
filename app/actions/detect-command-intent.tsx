@@ -451,6 +451,7 @@ export async function detectCommandIntent(userInput: string): Promise<{
   isCommand: boolean
   command?: string
   confidence: number
+  jobTitle?: string // Added jobTitle for job-specific commands
 }> {
   console.log("[v0] detectCommandIntent called with:", userInput)
 
@@ -464,6 +465,7 @@ export async function detectCommandIntent(userInput: string): Promise<{
     }
   }
 
+  // Check fuzzy navigation match first
   const fuzzyNavMatch = fuzzyMatchNavigationCommand(normalizedInput)
   if (fuzzyNavMatch) {
     console.log("[v0] Fuzzy navigation match found:", fuzzyNavMatch.command)
@@ -474,6 +476,7 @@ export async function detectCommandIntent(userInput: string): Promise<{
     }
   }
 
+  // Check keyword matches for navigation commands
   for (const cmd of RESERVED_COMMANDS) {
     for (const keyword of cmd.keywords) {
       if (normalizedInput.includes(keyword)) {
@@ -482,6 +485,58 @@ export async function detectCommandIntent(userInput: string): Promise<{
           isCommand: true,
           command: cmd.command,
           confidence: 0.95,
+        }
+      }
+    }
+  }
+
+  // Check for job-specific patterns AFTER ruling out navigation commands
+  const jobRequestPatterns = [
+    /tell me (?:more )?about (?:the )?(.+?)(?:\s+(?:position|role|job))?$/i,
+    /(?:details|info|information) (?:on|about|for) (?:the )?(.+?)(?:\s+(?:position|role|job))?$/i,
+    /(?:i want to|i'd like to|can you) (?:see|view|know about|learn about) (?:the )?(.+?)(?:\s+(?:position|role|job))?$/i,
+  ]
+
+  const navigationExclusions = [
+    "job board",
+    "jump board",
+    "candidates",
+    "data",
+    "dashboard",
+    "analytics",
+    "my jobs",
+    "applied jobs",
+    "saved jobs",
+    "invited jobs",
+    "browse jobs",
+    "available jobs",
+    "open positions",
+  ]
+
+  for (const pattern of jobRequestPatterns) {
+    const match = normalizedInput.match(pattern)
+    if (match && match[1]) {
+      const potentialJobTitle = match[1].trim()
+
+      // Check if it's a navigation command in disguise
+      const isNavigationCommand = navigationExclusions.some((exclusion) => potentialJobTitle.includes(exclusion))
+
+      // Only consider it a job request if:
+      // 1. It's not a navigation command
+      // 2. It's longer than 3 characters
+      // 3. It contains typical job title words (engineer, developer, manager, etc.)
+      const hasJobTitleWords =
+        /engineer|developer|manager|designer|analyst|specialist|coordinator|director|lead|senior|junior|intern/i.test(
+          potentialJobTitle,
+        )
+
+      if (!isNavigationCommand && potentialJobTitle.length > 3 && hasJobTitleWords) {
+        console.log("[v0] Job-specific request detected:", potentialJobTitle)
+        return {
+          isCommand: true,
+          command: "view job",
+          confidence: 0.9,
+          jobTitle: potentialJobTitle,
         }
       }
     }

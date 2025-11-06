@@ -1285,7 +1285,7 @@ Looking forward to seeing this conversation develop! 🚀`,
       },
       // </CHANGE>
       // </CHANGE>
-      clearMessages, // Added clearMessages to the exposed ref methods
+      clearMessages, // Added clearMessages to the ref methods
     }))
 
     // Use useCallback for voice mode callbacks
@@ -1358,18 +1358,83 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         const command = intentResult.command!
 
+        if (command === "view job" && intentResult.jobTitle) {
+          console.log("[v0] Job view command detected for:", intentResult.jobTitle)
+
+          // Import mock jobs data
+          const { mockJobListings } = await import("@/lib/mock-data")
+
+          // Find matching job using fuzzy matching
+          const normalizedSearchTitle = intentResult.jobTitle.toLowerCase().trim()
+          const matchedJob = mockJobListings.find((job) => {
+            const normalizedJobTitle = job.title.toLowerCase()
+            // Check if the job title contains the search term or vice versa
+            return (
+              normalizedJobTitle.includes(normalizedSearchTitle) ||
+              normalizedSearchTitle.includes(normalizedJobTitle) ||
+              // Also check for partial word matches
+              normalizedJobTitle
+                .split(" ")
+                .some((word) => normalizedSearchTitle.includes(word)) ||
+              normalizedSearchTitle.split(" ").some((word) => normalizedJobTitle.includes(word))
+            )
+          })
+
+          if (matchedJob) {
+            console.log("[v0] Matched job found:", matchedJob.title)
+
+            // Open the job view
+            const workspaceData: WorkspaceContent = {
+              type: "job-view",
+              job: matchedJob,
+              title: matchedJob.title,
+            }
+            onOpenWorkspace(workspaceData)
+            setHasOpenedWorkspace(true)
+            setLastWorkspaceContent(workspaceData)
+
+            const userMsg = {
+              id: `voice-cmd-user-${Date.now()}`,
+              type: "user" as const,
+              content: text,
+              timestamp: new Date().toISOString(),
+              agentId: activeAgent.id,
+            }
+
+            const aiMsg = {
+              id: `voice-cmd-ai-${Date.now()}`,
+              type: "ai" as const,
+              content: `Opening the ${matchedJob.title} position at ${matchedJob.company}. You can review the details while we chat.`,
+              timestamp: new Date().toISOString(),
+              agentId: activeAgent.id,
+            }
+            setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+            return true
+          } else {
+            console.log("[v0] No matching job found for:", intentResult.jobTitle)
+            // Let the AI handle the response naturally if no job is found
+            return false
+          }
+        }
+        // </CHANGE>
+
         if (command === "browse jobs") {
           console.log("[v0] Browse jobs command detected")
 
-          const workspaceData: WorkspaceContent = { type: "job-board", title: "Browse Jobs" }
-          onOpenWorkspace(workspaceData)
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
+          // If job board is not open, open it first
+          if (currentWorkspaceContent?.type !== "job-board") {
+            const workspaceData: WorkspaceContent = { type: "job-board", title: "Browse Jobs" }
+            onOpenWorkspace(workspaceData)
+            setHasOpenedWorkspace(true)
+            setLastWorkspaceContent(workspaceData)
+          }
 
-          // Set the tab to browse
+          // Set the tab to "browse"
           if (onSetJobBoardTab) {
             onSetJobBoardTab("browse")
           }
+          // </CHANGE>
 
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -1386,15 +1451,14 @@ Looking forward to seeing this conversation develop! 🚀`,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
-
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
           return true
         }
-        // </CHANGE>
 
         if (command === "applied jobs" || command === "invited jobs" || command === "saved jobs") {
           const tab = command.replace(" jobs", "") as "applied" | "invited" | "saved"
+          const tabName = tab === "applied" ? "applied jobs" : tab === "invited" ? "invited jobs" : "saved jobs" // Declare tabName here
 
           console.log("[v0] Job board tab navigation command detected:", tab)
 
@@ -1419,7 +1483,6 @@ Looking forward to seeing this conversation develop! 🚀`,
             agentId: activeAgent.id,
           }
 
-          const tabName = tab === "applied" ? "Applied Jobs" : tab === "invited" ? "Invited Jobs" : "Saved Jobs"
           const aiMsg = {
             id: `voice-cmd-ai-${Date.now()}`,
             type: "ai" as const,

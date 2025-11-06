@@ -175,7 +175,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
             if (message.type === "response.done") {
               console.log("[v0] AI response fully completed (including audio)")
-              setIsSpeaking(false)
               setIsListening(true)
 
               // If there's a pending agent switch, wait a bit for audio to finish playing, then perform the switch
@@ -439,7 +438,9 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
             {/* Outer sphere with conditional glow */}
             <div
               className={`absolute w-64 h-64 rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30 overflow-hidden transition-all duration-500 ${
-                isSpeaking ? "shadow-[0_0_60px_20px_rgba(255,255,255,0.6)]" : ""
+                isSpeaking
+                  ? "shadow-[0_0_100px_40px_rgba(255,255,255,0.8),0_0_60px_20px_rgba(255,255,255,0.9),0_0_30px_10px_rgba(255,255,255,1)]"
+                  : ""
               }`}
             >
               {/* Smoke particles inside sphere */}
@@ -542,77 +543,52 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
         context += `- Title: ${j.title}\n`
         context += `- Company: ${j.company}\n`
         context += `- Location: ${j.location}\n`
+        context += `- Type: ${j.type}\n`
         context += `- Salary: ${j.salary}\n`
+        context += `- Posted: ${j.posted}\n`
         if (j.skillMatch) context += `- Skill Match: ${j.skillMatch}%\n`
         if (j.applied) context += `- Status: Already applied\n`
-      } else {
-        console.log("[v0] Voice mode: Job view workspace has no job data")
-      }
-      break
+        if (j.saved) context += `- Status: Saved\n`
 
-    case "job-board":
-      if (content.data?.currentTab) {
-        const currentTab = content.data.currentTab
-        const jobs = content.data.jobs || []
-        const allJobs = content.data.allJobs || []
+        // Add detailed job information for follow-up questions
+        if (j.aboutClient) {
+          context += `\n**About the Client:**\n${j.aboutClient}\n`
+        }
 
-        context += `The user is viewing the job board on the "${currentTab}" tab.\n`
-        context += `\n**Current View (${currentTab} jobs):**\n`
+        if (j.jobSummary) {
+          context += `\n**Job Summary:**\n${j.jobSummary}\n`
+        }
 
-        if (jobs.length === 0) {
-          context += `- No jobs in this category yet\n`
-        } else {
-          context += `- Total jobs displayed: ${jobs.length}\n`
-
-          // Calculate statistics
-          const avgSkillMatch = jobs.reduce((sum: number, j: any) => sum + (j.skillMatch || 0), 0) / jobs.length
-          const locations = [...new Set(jobs.map((j: any) => j.location))]
-          const companies = [...new Set(jobs.map((j: any) => j.company))]
-
-          context += `- Average skill match: ${avgSkillMatch.toFixed(0)}%\n`
-          context += `- Locations: ${locations.join(", ")}\n`
-          context += `- Companies: ${companies.join(", ")}\n`
-
-          // List each job with details
-          context += `\n**Job Details:**\n`
-          jobs.forEach((job: any, index: number) => {
-            context += `\n${index + 1}. ${job.title} at ${job.company}\n`
-            context += `   - Location: ${job.location}\n`
-            context += `   - Salary: ${job.salary}\n`
-            context += `   - Skill Match: ${job.skillMatch}%\n`
-            context += `   - Posted: ${job.posted}\n`
-            if (job.status === "closed") {
-              context += `   - Status: CLOSED\n`
-            }
+        if (j.requirements && j.requirements.length > 0) {
+          context += `\n**Required Skills:**\n`
+          j.requirements.forEach((req, index) => {
+            context += `${index + 1}. ${req}\n`
           })
         }
 
-        // Add overall statistics
-        const appliedJobs = allJobs.filter((j: any) => j.applied)
-        const invitedJobs = allJobs.filter((j: any) => j.invited && !j.applied)
-        const savedJobs = allJobs.filter((j: any) => j.saved && !j.applied)
-        const browseJobs = allJobs.filter((j: any) => !j.applied && !j.invited)
-
-        context += `\n**Overall Statistics:**\n`
-        context += `- Applied jobs: ${appliedJobs.length}\n`
-        context += `- Invited jobs: ${invitedJobs.length}\n`
-        context += `- Saved jobs: ${savedJobs.length}\n`
-        context += `- Available to browse: ${browseJobs.length}\n`
-      } else {
-        // Fallback to old behavior if data structure is not available
-        context += `The user is viewing the job board.\n`
-        if (content.data?.jobs) {
-          const jobs = content.data.jobs
-          const appliedJobs = jobs.filter((j: any) => j.applied)
-          const savedJobs = jobs.filter((j: any) => j.saved)
-          context += `- Total jobs: ${jobs.length}\n`
-          context += `- Applied jobs: ${appliedJobs.length}\n`
-          context += `- Saved jobs: ${savedJobs.length}\n`
-        } else {
-          console.log("[v0] Voice mode: Job board workspace has no jobs data")
+        if (j.benefits && j.benefits.length > 0) {
+          context += `\n**Benefits:**\n`
+          j.benefits.forEach((benefit, index) => {
+            context += `${index + 1}. ${benefit}\n`
+          })
         }
+
+        if (j.responsibilities && j.responsibilities.length > 0) {
+          context += `\n**Responsibilities:**\n`
+          j.responsibilities.forEach((resp, index) => {
+            context += `${index + 1}. ${resp}\n`
+          })
+        }
+
+        if (j.qualifications && j.qualifications.length > 0) {
+          context += `\n**Qualifications:**\n`
+          j.qualifications.forEach((qual, index) => {
+            context += `${index + 1}. ${qual}\n`
+          })
+        }
+      } else {
+        console.log("[v0] Voice mode: Job view workspace has no job data")
       }
-      // </CHANGE>
       break
 
     default:
@@ -663,6 +639,23 @@ IMPORTANT:
 - Do NOT mention or offer navigation options unless the user asks
 - NEVER spontaneously open views without being asked
 - Wait for the user to request what they want to see
+
+**JOB DETAILS CONTEXT:**
+When a job view is open, you have access to detailed information including:
+- About the Client
+- Job Summary
+- Required Skills
+- Benefits
+- Responsibilities
+- Qualifications
+
+You can answer follow-up questions about these details naturally. For example:
+- "What are the benefits?" → Provide the benefits list
+- "What skills are required?" → List the required skills
+- "Tell me about the company" → Share the About the Client information
+- "What would I be doing?" → Describe the responsibilities
+
+Always provide concise, helpful answers based on the job details available in the context.
 
 **AGENT SWITCHING CAPABILITY (ONLY WHEN USER ASKS):**
 You CAN switch users to other AI agents, but ONLY when they explicitly ask. Available agents:
