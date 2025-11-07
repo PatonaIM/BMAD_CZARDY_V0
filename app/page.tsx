@@ -53,26 +53,22 @@ export default function ChatPage() {
     const user = getCurrentUser()
 
     if (user?.isNewSignup) {
-      if (user.role === "candidate") {
-        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-        if (technicalRecruiter) {
-          setInitialAgent(technicalRecruiter.id)
-          setShouldShowWelcome(true)
+      const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
+      if (accountManager) {
+        setInitialAgent(accountManager.id)
+        setShouldShowWelcome(true)
+
+        if (user.role === "candidate") {
           setTimeout(() => {
             setWorkspaceContent({ type: "candidate-profile", title: "Candidate Profile" })
           }, 1000)
-          clearNewSignupFlag()
-        }
-      } else if (user.role === "hiring_manager") {
-        const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
-        if (accountManager) {
-          setInitialAgent(accountManager.id)
-          setShouldShowWelcome(true)
+        } else if (user.role === "hiring_manager") {
           setTimeout(() => {
             setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
           }, 1000)
-          clearNewSignupFlag()
         }
+
+        clearNewSignupFlag()
       }
     }
   }, [])

@@ -23,6 +23,7 @@ export type WorkspaceContentType =
   | "browse-candidates"
   | "candidate-chat"
   | "hiring-manager-chat" // Added hiring-manager-chat workspace type for candidate-hiring manager conversations
+  | "pricing-plans" // Added new pricing-plans workspace type for centralized pricing information
   | null
 
 export interface WorkspaceContent {

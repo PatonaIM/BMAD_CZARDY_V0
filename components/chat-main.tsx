@@ -182,7 +182,7 @@ const loremParagraphs = [
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
   "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
-  "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+  "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt moll anim id est laborum.",
   "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
   "Totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
   "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores.",
@@ -618,6 +618,18 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     const [workspaceType, setWorkspaceType] = useState<WorkspaceContent["type"] | null>(null)
     const [currentWorkspaceContent, setCurrentWorkspaceContent] = useState<WorkspaceContent | null>(null) // Added internal state for workspace content
 
+    const getCommandsContext = useCallback((agent: AIAgent): string => {
+      const commandsList = agent.actions.map((action) => `- *${action} - ${formatCommandName(action)}`).join("\n")
+
+      return `\n\n## Available Commands for ${agent.name} ${agent.icon}
+
+- *help - Show this command list
+${commandsList}
+
+Simply type any command or ask your questions naturally!`
+    }, [])
+    // </CHANGE>
+
     const workspaceContext = useMemo(() => {
       return formatWorkspaceContext(currentWorkspaceContent)
     }, [currentWorkspaceContent])
@@ -635,8 +647,10 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       () => ({
         agentId: activeAgent.id,
         workspaceContext,
+        commandsContext: getCommandsContext(activeAgent),
+        // </CHANGE>
       }),
-      [activeAgent.id, workspaceContext],
+      [activeAgent.id, workspaceContext, getCommandsContext, activeAgent],
     )
     // </CHANGE>
 
@@ -2643,6 +2657,9 @@ Are you ready to begin your Take Home Challenge?`,
 
       console.log("[v0] handleSubmit: Sending message:", inputMessage)
 
+      const userMessage = inputMessage
+      setInputMessage("")
+
       if (currentChatCandidate) {
         console.log("[v0] In candidate chat, sending message to candidate:", currentChatCandidate.name)
 
@@ -2650,7 +2667,7 @@ Are you ready to begin your Take Home Challenge?`,
         const hiringManagerMessage: Message = {
           id: `${Date.now()}-hm`,
           type: "user",
-          content: inputMessage,
+          content: userMessage,
           agentId: activeAgent.id,
           timestamp: new Date().toLocaleString("en-US", {
             month: "long",
@@ -2663,10 +2680,9 @@ Are you ready to begin your Take Home Challenge?`,
         }
 
         setLocalMessages((prev) => [...prev, hiringManagerMessage])
-        setInputMessage("")
 
         // Save hiring manager's message to conversation
-        saveCandidateMessage(currentChatCandidate.id, currentChatCandidate.name, "hiring_manager", inputMessage)
+        saveCandidateMessage(currentChatCandidate.id, currentChatCandidate.name, "hiring_manager", userMessage)
 
         // Get conversation history for context
         const conversationHistory = getCandidateConversation(currentChatCandidate.id, currentChatCandidate.name)
@@ -2682,7 +2698,7 @@ Are you ready to begin your Take Home Challenge?`,
               candidateId: currentChatCandidate.id,
               candidateName: currentChatCandidate.name,
               conversationHistory,
-              newMessage: inputMessage,
+              newMessage: userMessage,
             }),
           })
 
@@ -2770,14 +2786,9 @@ Are you ready to begin your Take Home Challenge?`,
         return
       }
 
-      const isCommand = await handleCommandOrMessage(inputMessage) // Use await here
-      if (!isCommand) {
-        console.log("[v0] handleSubmit: Not a command, calling sendMessage")
-        sendMessage({ text: inputMessage })
-        setInputMessage("")
-      } else {
-        setInputMessage("")
-      }
+      sendMessage({ text: userMessage })
+
+      handleCommandOrMessage(userMessage)
     }
 
     const handleSuggestionClick = (text: string) => {
