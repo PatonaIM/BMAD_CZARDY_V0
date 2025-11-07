@@ -22,6 +22,10 @@ export const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/teamified-logo-100x100-NwpwYu9vSkuPkpVvtw9Esz8i2xD0Q4.png",
     status: "open",
     skillMatch: 88,
+    takeHomeChallengeStatus: "completed",
+    aiSkillAssessmentStatus: "pending",
+    hiringManagerMatchStatus: "waiting",
+    jobOfferStatus: "pending",
     jobSummary:
       "• Lead the development of scalable web applications using modern technologies\n• Collaborate with product and design teams to deliver exceptional user experiences\n• Mentor junior developers and contribute to technical decision-making\n• Optimize application performance and ensure code quality through best practices\n• Participate in agile ceremonies and contribute to sprint planning",
     aboutClient:
@@ -75,10 +79,11 @@ export const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/archa%20logo-8NVeEWIzgR0Y8aHBeqraSQWXy0mM3f.png",
     status: "open",
     skillMatch: 75,
+    takeHomeChallengeStatus: "not_started",
+    aiSkillAssessmentStatus: "completed",
+    hiringManagerMatchStatus: "waiting",
+    jobOfferStatus: "pending",
     applicationStage: "applied",
-    takeHomeChallengeCompleted: false,
-    aiInterviewCompleted: false,
-    finalReviewCompleted: false,
     jobSummary:
       "• Design and implement machine learning models for production systems\n• Work with large datasets to train and optimize AI algorithms\n• Collaborate with engineering teams to integrate ML solutions into products\n• Research and evaluate new AI technologies and methodologies\n• Monitor model performance and implement improvements",
     aboutClient:
@@ -109,6 +114,11 @@ export const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "open",
     skillMatch: 82,
+    takeHomeChallengeStatus: "completed",
+    aiSkillAssessmentStatus: "completed",
+    hiringManagerMatchStatus: "matched",
+    jobOfferStatus: "pending",
+    hiringManager: "Michael Thompson",
     jobSummary:
       "• Define and execute product roadmap aligned with business objectives\n• Conduct market research and competitive analysis to identify opportunities\n• Work closely with engineering, design, and sales teams to deliver features\n• Analyze product metrics and user feedback to drive continuous improvement\n• Present product vision and strategy to stakeholders and leadership",
     aboutClient:
@@ -139,6 +149,10 @@ export const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
     status: "open",
     skillMatch: 70,
+    takeHomeChallengeStatus: "completed",
+    aiSkillAssessmentStatus: "completed",
+    hiringManagerMatchStatus: "waiting",
+    jobOfferStatus: "pending",
     jobSummary:
       "• Design and maintain scalable cloud infrastructure on AWS/GCP\n• Implement and optimize CI/CD pipelines for automated deployments\n• Monitor system performance and ensure high availability\n• Automate infrastructure provisioning using Infrastructure as Code\n• Collaborate with development teams to improve deployment processes",
     aboutClient:
@@ -169,6 +183,11 @@ export const mockJobListings: JobListing[] = [
     logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/volaro_group_logo-2prnJRSB6Fg6rRS6ksnWN8hBwzIJFJ.jpeg",
     status: "open",
     skillMatch: 85,
+    takeHomeChallengeStatus: "completed",
+    aiSkillAssessmentStatus: "completed",
+    hiringManagerMatchStatus: "matched",
+    jobOfferStatus: "sent",
+    hiringManager: "Emma Wilson",
     jobSummary:
       "• Design and implement scalable backend services and APIs\n• Optimize database performance and query efficiency\n• Collaborate with frontend teams to deliver seamless integrations\n• Implement security best practices and data protection measures\n• Participate in system architecture decisions",
     aboutClient:
@@ -774,7 +793,7 @@ export const mockJobListings: JobListing[] = [
     applied: false,
     invited: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUxx52Q.png",
     status: "open",
     skillMatch: 74,
     benefits: [

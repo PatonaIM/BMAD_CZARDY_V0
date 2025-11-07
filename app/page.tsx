@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import type { WorkspaceContent } from "@/types/workspace"
 import { getCurrentUser, clearNewSignupFlag, clearUserOnInitialLoad } from "@/lib/auth"
 import { AI_AGENTS } from "@/types/agents"
-import type { JobListing, CandidateProfile } from "@/types/job"
+import type { JobListing, CandidateProfile, HiringManagerJob } from "@/types/job"
 import { mockJobListings } from "@/lib/mock-data"
 
 export interface ChatMainRef {
@@ -64,9 +64,9 @@ export default function ChatPage() {
           clearNewSignupFlag()
         }
       } else if (user.role === "hiring_manager") {
-        const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
-        if (salesAgent) {
-          setInitialAgent(salesAgent.id)
+        const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
+        if (accountManager) {
+          setInitialAgent(accountManager.id)
           setShouldShowWelcome(true)
           setTimeout(() => {
             setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
@@ -78,11 +78,15 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => {
-    // Only update if the current workspace is job-board
     if (workspaceContent.type === "job-board") {
       const user = getCurrentUser()
 
-      // Filter jobs based on current tab
+      // Skip this effect for hiring managers - they use draft/open/closed status system
+      if (user?.role === "hiring_manager") {
+        return
+      }
+
+      // Filter jobs based on current tab (for candidates only)
       let filteredJobs: JobListing[] = []
       switch (currentJobBoardTab) {
         case "applied":
@@ -146,13 +150,13 @@ export default function ChatPage() {
     console.log("[v0] handleEditProfile called, user role:", user?.role)
 
     if (user?.role === "hiring_manager") {
-      const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
-      console.log("[v0] Found sales agent:", salesAgent?.name)
-      if (salesAgent && chatMainRef.current) {
-        console.log("[v0] Calling switchAgent with:", salesAgent.id)
-        chatMainRef.current.switchAgent(salesAgent.id)
+      const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
+      console.log("[v0] Found account manager:", accountManager?.name)
+      if (accountManager && chatMainRef.current) {
+        console.log("[v0] Calling switchAgent with:", accountManager.id)
+        chatMainRef.current.switchAgent(accountManager.id)
       } else {
-        console.log("[v0] ERROR: chatMainRef.current is null or salesAgent not found")
+        console.log("[v0] ERROR: chatMainRef.current is null or account manager not found")
       }
       setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
     } else {
@@ -162,10 +166,10 @@ export default function ChatPage() {
 
   const handleUpgradePlan = () => {
     console.log("[v0] Upgrade plan clicked")
-    const salesAgent = AI_AGENTS.find((agent) => agent.id === "sales-marketing")
-    if (salesAgent && chatMainRef.current) {
-      console.log("[v0] Switching to Sales & Marketing agent")
-      chatMainRef.current.switchAgent(salesAgent.id)
+    const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
+    if (accountManager && chatMainRef.current) {
+      console.log("[v0] Switching to Account Manager agent")
+      chatMainRef.current.switchAgent(accountManager.id)
     }
     console.log("[v0] Opening candidate pricing workspace")
     setWorkspaceContent({ type: "candidate-pricing", title: "Upgrade to Premium" })
@@ -175,36 +179,22 @@ export default function ChatPage() {
     console.log("[v0] Hiring manager step changed to:", step)
 
     if (step === 2 && chatMainRef.current) {
-      console.log("[v0] Triggering pricing guidance from Sales Agent")
+      console.log("[v0] Triggering pricing guidance from Account Manager")
       chatMainRef.current.showPricingGuidance()
     }
   }
 
-  const handleViewJob = (job: JobListing) => {
-    console.log("[v0] Opening job view for:", job.title)
-
+  const handleViewJob = (job: JobListing | HiringManagerJob) => {
+    console.log("[v0] View job clicked:", job.title)
     const user = getCurrentUser()
-    if (user?.role === "hiring_manager" && job.type === "candidate-swipe") {
-      setWorkspaceContent({
-        type: "candidate-swipe",
-        title: `Candidates for ${job.title}`,
-        job: job,
-      })
-    } else {
-      setWorkspaceContent({
-        type: "job-view",
-        title: job.title,
-        job: job,
-      })
-    }
 
-    if (chatMainRef.current && user?.role === "hiring_manager" && job.type !== "candidate-swipe") {
-      setTimeout(() => {
-        if (chatMainRef.current) {
-          chatMainRef.current.showJobInsights(job)
-        }
-      }, 500)
-    }
+    setWorkspaceContent({
+      type: "job-view",
+      job,
+      title: job.title,
+    })
+
+    // The job view will open without an automatic AI message
   }
 
   const handleMyJobs = () => {

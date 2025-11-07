@@ -149,6 +149,21 @@ export class RealtimeClient {
     })
   }
 
+  cancelResponse() {
+    this.sendMessage({
+      type: "response.cancel",
+    })
+  }
+
+  updateSessionInstructions(instructions: string) {
+    this.sendMessage({
+      type: "session.update",
+      session: {
+        instructions: instructions,
+      },
+    })
+  }
+
   disconnect() {
     console.log("[v0] RealtimeClient disconnect called")
 

@@ -22,6 +22,7 @@ export type WorkspaceContentType =
   | "match-success"
   | "browse-candidates"
   | "candidate-chat"
+  | "hiring-manager-chat" // Added hiring-manager-chat workspace type for candidate-hiring manager conversations
   | null
 
 export interface WorkspaceContent {
@@ -46,6 +47,10 @@ export interface WorkspaceContent {
 export type JobStatus = "draft" | "open" | "closed" | "cancelled"
 
 export type ApplicationStage = "applied" | "take-home-challenge" | "ai-interview" | "final-review" | "offer"
+
+export type AssessmentStatus = "completed" | "pending" | "not_started"
+export type MatchStatus = "waiting" | "matched"
+export type OfferStatus = "pending" | "sent" | "accepted"
 
 export interface JobListing {
   id: string
@@ -77,6 +82,11 @@ export interface JobListing {
   jobSummary?: string
   skillMatch?: number
   applicationStage?: ApplicationStage
+  takeHomeChallengeStatus?: AssessmentStatus
+  aiSkillAssessmentStatus?: AssessmentStatus
+  hiringManagerMatchStatus?: MatchStatus
+  jobOfferStatus?: OfferStatus
+  // Legacy fields for backward compatibility
   takeHomeChallengeCompleted?: boolean
   aiInterviewCompleted?: boolean
   finalReviewCompleted?: boolean

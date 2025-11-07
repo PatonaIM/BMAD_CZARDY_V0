@@ -42,6 +42,8 @@ interface JobViewProps {
   matchedCandidates?: CandidateProfile[]
   onBrowseMoreCandidates?: () => void
   onOpenCandidateChat?: (candidate: CandidateProfile, job?: JobListing) => void
+  onSendAIMessage?: (message: string, agentId?: string) => void
+  chatMainRef?: React.RefObject<any>
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -121,6 +123,8 @@ export default function JobView({
   matchedCandidates,
   onBrowseMoreCandidates,
   onOpenCandidateChat,
+  onSendAIMessage,
+  chatMainRef, // Added chatMainRef parameter
 }: JobViewProps) {
   const [isEditingSummary, setIsEditingSummary] = useState(false)
   const [isEditingSkills, setIsEditingSkills] = useState(false)
@@ -363,6 +367,41 @@ export default function JobView({
   const endIndex = startIndex + candidatesPerPage
   const paginatedCandidates = job.matchedCandidates?.slice(startIndex, endIndex) || []
 
+  // Added handleHiringManagerChatClick function
+  const handleHiringManagerChatClick = () => {
+    console.log("[v0] Hiring manager chat button clicked")
+
+    if (!job.hiringManager || !chatMainRef?.current?.introduceHiringManager) {
+      console.error("[v0] Missing hiring manager or introduceHiringManager method")
+      return
+    }
+
+    // Determine the hiring manager agent ID based on the hiring manager name
+    let hiringManagerAgentId = "hiring-manager"
+
+    if (job.hiringManager === "Sarah Chen") {
+      hiringManagerAgentId = "hiring-manager-sarah-chen"
+    } else if (job.hiringManager === "Michael Thompson") {
+      hiringManagerAgentId = "hiring-manager-michael-thompson"
+    } else if (job.hiringManager === "Emma Wilson") {
+      hiringManagerAgentId = "hiring-manager-emma-wilson"
+    } else if (job.hiringManager === "David Kim") {
+      hiringManagerAgentId = "hiring-manager-david-kim"
+    } else if (job.hiringManager === "Lisa Rodriguez") {
+      hiringManagerAgentId = "hiring-manager-lisa-rodriguez"
+    }
+
+    console.log("[v0] Calling introduceHiringManager with:", {
+      hiringManager: job.hiringManager,
+      position: job.title,
+      company: job.company,
+      agentId: hiringManagerAgentId,
+    })
+
+    // Call the introduceHiringManager method to reset chat and introduce the hiring manager
+    chatMainRef.current.introduceHiringManager(job.hiringManager, job.title, job.company, hiringManagerAgentId)
+  }
+
   return (
     <div className="h-full overflow-auto relative">
       <div className="max-w-4xl mx-auto space-y-6 p-6">
@@ -589,12 +628,19 @@ export default function JobView({
           <div className="bg-card rounded-2xl border border-border p-6">
             <h2 className="text-lg font-semibold mb-6">Application Status</h2>
 
-            {/* Stage 1: Take Home Challenge */}
             <div
               onClick={() => handleStageClick("Take Home Challenge")}
-              className="flex items-start gap-4 p-4 rounded-xl bg-accent/50 border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+              className="flex items-start gap-4 p-4 rounded-xl bg-accent/50 border border-border cursor-pointer hover:bg-accent/70 transition-colors mb-4"
             >
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#A16AE8] text-white flex items-center justify-center font-semibold">
+              <div
+                className={`flex-shrink-0 w-8 h-8 rounded-full ${
+                  job.takeHomeChallengeStatus === "completed"
+                    ? "bg-green-500"
+                    : job.takeHomeChallengeStatus === "pending"
+                      ? "bg-yellow-500"
+                      : "bg-muted"
+                } text-white flex items-center justify-center font-semibold`}
+              >
                 1
               </div>
               <div className="flex-1">
@@ -604,71 +650,193 @@ export default function JobView({
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
-                  Pending
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    job.takeHomeChallengeStatus === "completed"
+                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                      : job.takeHomeChallengeStatus === "pending"
+                        ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {job.takeHomeChallengeStatus === "completed"
+                    ? "Completed"
+                    : job.takeHomeChallengeStatus === "pending"
+                      ? "Pending"
+                      : "Not Started"}
                 </span>
               </div>
             </div>
 
-            {/* Stage 2: Teamified AI Interviews */}
             <div
-              onClick={() => handleStageClick("Teamified AI Interviews")}
-              className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+              onClick={() => handleStageClick("AI Skill Assessment")}
+              className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors mb-4"
             >
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
+              <div
+                className={`flex-shrink-0 w-8 h-8 rounded-full ${
+                  job.aiSkillAssessmentStatus === "completed"
+                    ? "bg-green-500"
+                    : job.aiSkillAssessmentStatus === "pending"
+                      ? "bg-yellow-500"
+                      : "bg-muted"
+                } text-white flex items-center justify-center font-semibold`}
+              >
                 2
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground mb-1">Teamified AI Interviews</h3>
+                <h3 className="font-semibold text-foreground mb-1">AI Skill Assessment</h3>
                 <p className="text-sm text-muted-foreground">
-                  AI-powered interview to assess your skills and cultural fit
+                  Objective AI-powered assessment to evaluate your technical skills and job fit
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                  Not Started
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    job.aiSkillAssessmentStatus === "completed"
+                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                      : job.aiSkillAssessmentStatus === "pending"
+                        ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {job.aiSkillAssessmentStatus === "completed"
+                    ? "Completed"
+                    : job.aiSkillAssessmentStatus === "pending"
+                      ? "Pending"
+                      : "Not Started"}
                 </span>
               </div>
             </div>
 
-            {/* Stage 3: Meet the hiring manager */}
             <div
-              onClick={() => handleStageClick("Meet the hiring manager")}
-              className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+              onClick={() => {
+                if (job.hiringManagerMatchStatus === "matched") {
+                  handleHiringManagerChatClick()
+                } else if (job.takeHomeChallengeStatus === "completed" && job.aiSkillAssessmentStatus === "completed") {
+                  handleStageClick("Meet the hiring manager")
+                }
+              }}
+              className={`flex flex-col p-4 rounded-xl border border-border transition-colors mb-4 ${
+                job.hiringManagerMatchStatus === "matched" ||
+                (job.takeHomeChallengeStatus === "completed" && job.aiSkillAssessmentStatus === "completed")
+                  ? "cursor-pointer hover:bg-accent/70"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
             >
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
-                3
+              <div className="flex items-start gap-4">
+                <div
+                  className={`flex-shrink-0 w-8 h-8 rounded-full ${
+                    job.hiringManagerMatchStatus === "matched"
+                      ? "bg-green-500"
+                      : job.takeHomeChallengeStatus === "completed" && job.aiSkillAssessmentStatus === "completed"
+                        ? "bg-yellow-500"
+                        : "bg-muted"
+                  } text-white flex items-center justify-center font-semibold`}
+                >
+                  3
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground mb-1">Meet the hiring manager!</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {job.hiringManagerMatchStatus === "matched"
+                      ? `Chat with ${job.hiringManager || "the hiring manager"} about the role and team`
+                      : job.takeHomeChallengeStatus === "completed" && job.aiSkillAssessmentStatus === "completed"
+                        ? "Waiting for hiring manager to review your application"
+                        : "Complete both assessments to proceed to this stage"}
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      job.hiringManagerMatchStatus === "matched"
+                        ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                        : job.takeHomeChallengeStatus === "completed" && job.aiSkillAssessmentStatus === "completed"
+                          ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {job.hiringManagerMatchStatus === "matched"
+                      ? "Matched"
+                      : job.takeHomeChallengeStatus === "completed" && job.aiSkillAssessmentStatus === "completed"
+                        ? "Waiting"
+                        : "Locked"}
+                  </span>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground mb-1">Meet the hiring manager!</h3>
-                <p className="text-sm text-muted-foreground">
-                  Final interview with the hiring manager to discuss the role and team
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                  Not Started
-                </span>
-              </div>
+
+              {job.hiringManagerMatchStatus === "matched" && job.hiringManager && (
+                <>
+                  <div className="w-full border-t border-border my-4" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#A16AE8] to-[#8096FD] flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                      {job.hiringManager.charAt(0)}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground">{job.hiringManager}</h4>
+                      <p className="text-xs text-muted-foreground">Hiring Manager at {job.company}</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Stage 4: Job Offer */}
             <div
-              onClick={() => handleStageClick("Job Offer")}
-              className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors"
+              onClick={() => {
+                // Only allow click if matched with hiring manager
+                if (job.hiringManagerMatchStatus === "matched") {
+                  handleStageClick("Job Offer")
+                }
+              }}
+              className={`flex items-start gap-4 p-4 rounded-xl border border-border transition-colors ${
+                job.hiringManagerMatchStatus === "matched"
+                  ? "cursor-pointer hover:bg-accent/70"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
             >
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-semibold">
+              <div
+                className={`flex-shrink-0 w-8 h-8 rounded-full ${
+                  job.jobOfferStatus === "accepted"
+                    ? "bg-green-500"
+                    : job.jobOfferStatus === "sent"
+                      ? "bg-blue-500"
+                      : job.hiringManagerMatchStatus === "matched"
+                        ? "bg-yellow-500"
+                        : "bg-muted"
+                } text-white flex items-center justify-center font-semibold`}
+              >
                 4
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-foreground mb-1">Job Offer</h3>
                 <p className="text-sm text-muted-foreground">
-                  Review and accept your job offer with compensation details and benefits
+                  {job.jobOfferStatus === "accepted"
+                    ? "Congratulations! You've accepted the offer"
+                    : job.jobOfferStatus === "sent"
+                      ? "Review and respond to your job offer"
+                      : job.hiringManagerMatchStatus === "matched"
+                        ? "Offer pending - continue your conversation with the hiring manager"
+                        : "Complete previous stages to receive an offer"}
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                  Not Started
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    job.jobOfferStatus === "accepted"
+                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                      : job.jobOfferStatus === "sent"
+                        ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                        : job.hiringManagerMatchStatus === "matched"
+                          ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                          : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {job.jobOfferStatus === "accepted"
+                    ? "Accepted"
+                    : job.jobOfferStatus === "sent"
+                      ? "Sent"
+                      : job.hiringManagerMatchStatus === "matched"
+                        ? "Pending"
+                        : "Locked"}
                 </span>
               </div>
             </div>

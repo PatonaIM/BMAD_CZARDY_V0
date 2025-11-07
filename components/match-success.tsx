@@ -11,6 +11,19 @@ interface MatchSuccessProps {
 }
 
 export function MatchSuccess({ candidateName, jobTitle, onOpenChat, onContinueSwiping }: MatchSuccessProps) {
+  const handleOpenChatClick = () => {
+    console.log("[v0] MatchSuccess: Start Conversation clicked for:", candidateName)
+    console.log("[v0] MatchSuccess: onOpenChat function exists:", !!onOpenChat)
+    onOpenChat()
+  }
+
+  const handleContinueSwipingClick = () => {
+    console.log("[v0] MatchSuccess: Continue Reviewing Candidates clicked")
+    console.log("[v0] MatchSuccess: onContinueSwiping function exists:", !!onContinueSwiping)
+    onContinueSwiping()
+  }
+  // </CHANGE>
+
   return (
     <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5">
       <div className="animate-in zoom-in duration-500">
@@ -35,7 +48,7 @@ export function MatchSuccess({ candidateName, jobTitle, onOpenChat, onContinueSw
 
         <div className="space-y-3 w-full max-w-sm">
           <Button
-            onClick={onOpenChat}
+            onClick={handleOpenChatClick}
             size="lg"
             className="w-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] hover:from-[#8f5cd4] hover:to-[#6b7ee6] text-white gap-2"
           >
@@ -43,7 +56,7 @@ export function MatchSuccess({ candidateName, jobTitle, onOpenChat, onContinueSw
             Start Conversation
           </Button>
 
-          <Button onClick={onContinueSwiping} size="lg" variant="outline" className="w-full bg-transparent">
+          <Button onClick={handleContinueSwipingClick} size="lg" variant="outline" className="w-full bg-transparent">
             Continue Reviewing Candidates
           </Button>
         </div>

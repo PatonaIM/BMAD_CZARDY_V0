@@ -35,6 +35,13 @@ import { detectCommandIntent } from "@/app/actions/detect-command-intent"
 // Import mock data
 import { mockJobListings, mockHiringManagerJobs } from "@/lib/mock-data"
 
+// Placeholder for getCurrentUser function
+const getCurrentUser = () => {
+  // In a real application, this would fetch the current user's session or context
+  // For now, we'll assume a default user role for demonstration
+  return { role: "candidate" as const, name: "Candidate" } // Default to candidate role and name
+}
+
 interface Message {
   id: string
   type: "user" | "ai"
@@ -135,6 +142,13 @@ interface ChatMainRef {
   showJobInsights: (job: JobListing) => void
   // </CHANGE>
   clearMessages: () => void // Expose clearMessages method
+  // </CHANGE>
+  introduceHiringManager: (
+    hiringManagerName: string,
+    position: string,
+    company: string,
+    hiringManagerAgentId: string,
+  ) => void // Added introduceHiringManager
 }
 
 export interface ChatMainProps {
@@ -148,6 +162,7 @@ export interface ChatMainProps {
   onSetJobBoardTab?: (tab: "applied" | "invited" | "saved" | "browse") => void
   // </CHANGE>
   userType?: "candidate" | "hiring_manager" // Added userType
+  onWorkspaceUpdate?: (content: WorkspaceContent) => void // Added for voice mode integration
 }
 
 const welcomeQuestions = [
@@ -442,18 +457,47 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
       break
 
     case "job-board":
-      context += `The user is viewing the job board with available positions.\n`
       if (content.jobs) {
-        const jobs = content.jobs
-        const appliedJobs = jobs.filter((j: JobListing) => j.applied)
-        const savedJobs = jobs.filter((j: JobListing) => j.saved)
-        context += `- Total jobs displayed: ${jobs.length}\n`
-        context += `- Applied jobs: ${appliedJobs.length}\n`
-        context += `- Saved jobs: ${savedJobs.length}\n`
+        const jobs = Array.isArray(content.jobs) ? content.jobs : []
+
+        // Check if these are hiring manager jobs (have matchedCandidates property)
+        const isHiringManagerView = jobs.length > 0 && "matchedCandidates" in jobs[0]
+
+        if (isHiringManagerView) {
+          // Hiring manager view - show detailed job information
+          const statusFilter = content.jobStatusFilter
+          const statusLabel = statusFilter ? statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) : "All"
+
+          context += `The hiring manager is viewing their job board${statusFilter ? ` (${statusLabel} Jobs)` : ""}.\n`
+          context += `- Total jobs displayed: ${jobs.length}\n\n`
+
+          if (jobs.length > 0) {
+            context += `**Job Details:**\n`
+            jobs.forEach((job: any, index: number) => {
+              const matchedCount = job.matchedCandidates?.length || 0
+              context += `${index + 1}. ${job.title}\n`
+              context += `   - Company: ${job.company}\n`
+              context += `   - Location: ${job.location}\n`
+              context += `   - Salary: ${job.salary}\n`
+              context += `   - Status: ${job.status || "unknown"}\n`
+              context += `   - Matched Candidates: ${matchedCount}\n`
+              if (index < jobs.length - 1) context += `\n`
+            })
+          }
+        } else {
+          // Candidate view - show applied/saved counts
+          context += `The user is viewing the job board with available positions.\n`
+          const appliedJobs = jobs.filter((j: JobListing) => j.applied)
+          const savedJobs = jobs.filter((j: JobListing) => j.saved)
+          context += `- Total jobs displayed: ${jobs.length}\n`
+          context += `- Applied jobs: ${appliedJobs.length}\n`
+          context += `- Saved jobs: ${savedJobs.length}\n`
+        }
       } else {
         console.log("[v0] Job board workspace has no jobs data")
       }
       break
+    // </CHANGE>
 
     case "candidate-swipe":
       if (content.candidates && content.candidates.length > 0) {
@@ -488,6 +532,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       currentJobBoardTab,
       onSetJobBoardTab,
       userType, // Added userType
+      onWorkspaceUpdate, // Added for voice mode integration
     },
     ref,
   ) => {
@@ -507,6 +552,10 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     const [hasChallengeWelcomeShown, setHasChallengeWelcomeShown] = useState(false)
     const [currentChatCandidate, setCurrentChatCandidate] = useState<CandidateProfile | null>(null) // Updated to CandidateProfile
     const [isVoiceMode, setIsVoiceMode] = useState(false)
+    const [hiringManagerAgentId, setHiringManagerAgentId] = useState<string | null>(null)
+    const [isHiringManagerIntroduction, setIsHiringManagerIntroduction] = useState(false)
+    // </CHANGE>
+
     const lastUserMessageRef = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -521,6 +570,14 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
 
     const workspaceContext = useMemo(() => {
       return formatWorkspaceContext(currentWorkspaceContent)
+    }, [currentWorkspaceContent])
+    // </CHANGE>
+
+    useEffect(() => {
+      console.log("[v0] currentWorkspaceContent updated:", currentWorkspaceContent?.type)
+      if (currentWorkspaceContent) {
+        setCurrentWorkspaceContent(currentWorkspaceContent)
+      }
     }, [currentWorkspaceContent])
     // </CHANGE>
 
@@ -602,10 +659,23 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
         }
       })
 
-      const aiMessageIds = new Set(convertedMessages.map((m) => m.id))
+      if (isHiringManagerIntroduction) {
+        const aiMessageSet = new Set(localMessages.map((m) => m.id))
+        const newAiMessages = convertedMessages.filter((m) => !aiMessageSet.has(m.id))
+
+        if (newAiMessages.length > 0) {
+          setLocalMessages((prev) => [...prev, ...newAiMessages])
+          // Clear the flag after the first AI response
+          setIsHiringManagerIntroduction(false)
+        }
+        return
+      }
+      // </CHANGE>
+
+      const aiMessageSet = new Set(convertedMessages.map((m) => m.id))
 
       // Preserve local messages that aren't in aiMessages
-      const preservedLocalMessages = localMessages.filter((m) => !aiMessageIds.has(m.id))
+      const preservedLocalMessages = localMessages.filter((m) => !aiMessageSet.has(m.id))
 
       // Don't clear welcome messages if there are no other messages
       const hasWelcomeMessages = localMessages.some((m) => m.isWelcome)
@@ -623,13 +693,40 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       if (preservedLocalMessages.length > 0 && convertedMessages.length > 0) {
         newMessages.sort((a, b) => {
           const getTimestamp = (msg: Message) => {
+            // Try to extract timestamp from message ID
+            // Handles formats like: "123456789", "voice-user-123456789", "cmd-ai-123456789"
+            const timestampMatch = msg.id.match(/(\d{13,})/)
+            if (timestampMatch) {
+              const timestamp = Number.parseInt(timestampMatch[1])
+              if (!isNaN(timestamp) && timestamp > 1000000000000) {
+                return timestamp
+              }
+            }
+
+            // Try parsing the entire ID as a number
             const idAsNumber = Number.parseInt(msg.id)
             if (!isNaN(idAsNumber) && idAsNumber > 1000000000000) {
               return idAsNumber
             }
-            return new Date(msg.timestamp || 0).getTime()
+
+            // Fallback to timestamp property if available
+            if (msg.timestamp) {
+              return new Date(msg.timestamp).getTime()
+            }
+
+            // Last resort: return 0 (will maintain insertion order)
+            return 0
           }
-          return getTimestamp(a) - getTimestamp(b)
+
+          const timestampA = getTimestamp(a)
+          const timestampB = getTimestamp(b)
+
+          // If timestamps are the same, maintain insertion order
+          if (timestampA === timestampB) {
+            return 0
+          }
+
+          return timestampA - timestampB
         })
       }
 
@@ -641,8 +738,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       if (messagesChanged) {
         setLocalMessages(newMessages)
       }
-    }, [aiMessages, activeAgent, localMessages])
-    // </CHANGE>
+    }, [aiMessages, activeAgent, localMessages, isHiringManagerIntroduction])
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -1147,7 +1243,7 @@ Whether you're creating a new position, updating an existing job, or need insigh
             content: summaryMessage,
             agentId: activeAgent.id,
             promptSuggestions: [
-              { text: "Create a new job posting", icon: <Plus className="w-4 h-4" /> },
+              { text: "Create a new job opening", icon: <Plus className="w-4 h-4" /> },
               { text: "Update an existing job", icon: <FileText className="w-4 h-4" /> },
               { text: "Show me job performance stats", icon: <Calculator className="w-4 h-4" /> },
               { text: "Help me write a job description", icon: <Sparkles className="w-4 h-4" /> },
@@ -1322,6 +1418,70 @@ Looking forward to seeing this conversation develop! 🚀`,
       // </CHANGE>
       // </CHANGE>
       clearMessages, // Added clearMessages to the ref methods
+      introduceHiringManager: (
+        hiringManagerName: string,
+        position: string,
+        company: string,
+        hiringManagerAgentId: string,
+      ) => {
+        console.log("[v0] introduceHiringManager called")
+        // Clear messages and reset chat
+        console.log("[v0] Messages before clear:", localMessages.length)
+        setLocalMessages([])
+        setCurrentChatCandidate(null)
+
+        setIsHiringManagerIntroduction(true)
+        // </CHANGE>
+
+        // Switch to Technical Recruiter agent
+        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
+        if (technicalRecruiter) {
+          setActiveAgent(technicalRecruiter)
+
+          const currentUser = getCurrentUser()
+          const candidateName = currentUser?.name || "there"
+
+          const introductionTimestamp = Date.now()
+
+          // Add introduction message immediately without setTimeout to prevent timing issues
+          setLocalMessages([
+            {
+              id: introductionTimestamp.toString(),
+              type: "ai",
+              content: `Hi ${candidateName}! 🎉 I'm excited to introduce you to ${hiringManagerName}, who is the ${position} at ${company}.
+
+${hiringManagerName} has been reviewing candidates for this role and was really impressed with your profile, particularly your experience and skills. They believe you could be a great fit for their team!
+
+I've created this group chat so you two can connect directly. ${hiringManagerName}, feel free to share more about the role and what you're looking for. ${candidateName}, this is a great opportunity to ask questions and learn more about the position and the team.
+
+Looking forward to seeing this conversation develop! 🚀`,
+              agentId: technicalRecruiter.id,
+              isAgentSwitch: true,
+              timestamp: new Date(introductionTimestamp).toLocaleString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              }),
+              promptSuggestions: [
+                {
+                  text: "Hi! I'm excited to learn more about this role",
+                  icon: <MessageSquare className="w-4 h-4" />,
+                },
+                { text: "Can you tell me more about the team?", icon: <Users className="w-4 h-4" /> },
+                { text: "What does a typical day look like in this role?", icon: <Briefcase className="w-4 h-4" /> },
+              ],
+            },
+          ])
+
+          // Store the hiring manager agent ID for when the user sends their first message
+          setHiringManagerAgentId(hiringManagerAgentId)
+        }
+      },
+      // </CHANGE>
+      // </CHANGE>
     }))
 
     // Use useCallback for voice mode callbacks
@@ -1397,9 +1557,12 @@ Looking forward to seeing this conversation develop! 🚀`,
         if (command === "view job" && intentResult.jobTitle) {
           console.log("[v0] Job view command detected for:", intentResult.jobTitle)
 
+          const user = getCurrentUser()
+          const jobList = user?.role === "hiring_manager" ? mockHiringManagerJobs : mockJobListings
+
           // Find matching job using fuzzy matching
           const normalizedSearchTitle = intentResult.jobTitle.toLowerCase().trim()
-          const matchedJob = mockJobListings.find((job) => {
+          const matchedJob = jobList.find((job) => {
             const normalizedJobTitle = job.title.toLowerCase()
             // Check if the job title contains the search term or vice versa
             return (
@@ -1408,8 +1571,8 @@ Looking forward to seeing this conversation develop! 🚀`,
               // Also check for partial word matches
               normalizedJobTitle
                 .split(" ")
-                .some((word) => normalizedSearchTitle.includes(word)) ||
-              normalizedSearchTitle.split(" ").some((word) => normalizedJobTitle.includes(word))
+                .some((word) => normalizedSearchTitle.includes(word) && word.length > 3) ||
+              normalizedSearchTitle.split(" ").some((word) => normalizedJobTitle.includes(word) && word.length > 3)
             )
           })
 
@@ -1425,8 +1588,10 @@ Looking forward to seeing this conversation develop! 🚀`,
             onOpenWorkspace(workspaceData)
             setHasOpenedWorkspace(true)
             setLastWorkspaceContent(workspaceData)
-            setCurrentWorkspaceContent(workspaceData) // Update internal state
+            setCurrentWorkspaceContent(workspaceData)
 
+            // The job view opens without an automatic message
+            // Only add user message to show what they asked for
             const userMsg = {
               id: `voice-cmd-user-${Date.now()}`,
               type: "user" as const,
@@ -1435,14 +1600,7 @@ Looking forward to seeing this conversation develop! 🚀`,
               agentId: activeAgent.id,
             }
 
-            const aiMsg = {
-              id: `voice-cmd-ai-${Date.now()}`,
-              type: "ai" as const,
-              content: `Opening the ${matchedJob.title} position at ${matchedJob.company}. You can review the details while we chat.`,
-              timestamp: new Date().toISOString(),
-              agentId: activeAgent.id,
-            }
-            setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+            setLocalMessages((prev) => [...prev, userMsg])
 
             return true
           } else {
@@ -1451,6 +1609,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             return false
           }
         }
+
         // </CHANGE>
 
         if (command === "browse jobs") {
@@ -1499,7 +1658,7 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         if (command === "applied jobs" || command === "invited jobs" || command === "saved jobs") {
           const tab = command.replace(" jobs", "") as "applied" | "invited" | "saved"
-          const tabName = tab === "applied" ? "applied jobs" : tab === "invited" ? "invited jobs" : "saved jobs" // Declare tabName here
+          const tabName = tab === "applied" ? "applied jobs" : tab === "invited" ? "invited jobs" : "saved jobs"
 
           console.log("[v0] Job board tab navigation command detected:", tab)
 
@@ -1550,6 +1709,7 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         if (command === "draft jobs" || command === "open jobs" || command === "closed jobs") {
           const status = command.replace(" jobs", "") as "draft" | "open" | "closed"
+          const statusLabel = status === "draft" ? "draft jobs" : status === "open" ? "open jobs" : "closed jobs"
 
           console.log("[v0] Hiring manager job status command detected:", status)
 
@@ -1563,11 +1723,14 @@ Looking forward to seeing this conversation develop! 🚀`,
             jobStatusFilter: status,
           }
 
-          // Update workspace immediately
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
           setCurrentWorkspaceContent(workspaceData)
+
+          if (onWorkspaceUpdate) {
+            onWorkspaceUpdate(workspaceData)
+          }
 
           // Format the updated context immediately (don't wait for memo)
           const updatedContext = formatWorkspaceContext(workspaceData)
@@ -1580,18 +1743,16 @@ Looking forward to seeing this conversation develop! 🚀`,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
-          setLocalMessages((prev) => [...prev, userMsg])
 
-          // Send to AI with updated context so it can provide a proper response
-          sendMessage({
-            role: "user",
-            content: text,
-            extra: {
-              agentId: activeAgent.id,
-              workspaceContext: updatedContext, // Use the freshly formatted context
-            },
-          })
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: `Showing your ${statusLabel}. You can continue browsing while we chat.`,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
 
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
           return true
         }
         // </CHANGE>
@@ -1666,6 +1827,17 @@ Looking forward to seeing this conversation develop! 🚀`,
         }
 
         if (command === "job board") {
+          const user = getCurrentUser()
+          let jobs: any[] = []
+
+          if (user?.role === "hiring_manager") {
+            // For hiring managers, show open jobs by default
+            jobs = mockHiringManagerJobs.filter((j) => j.status === "open")
+          } else {
+            // For candidates, show all available jobs
+            jobs = mockJobListings.filter((j) => j.status === "open")
+          }
+
           const aiMsg = {
             id: `voice-cmd-ai-${Date.now()}`,
             type: "ai" as const,
@@ -1683,16 +1855,31 @@ Looking forward to seeing this conversation develop! 🚀`,
           }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
-          const workspaceData: WorkspaceContent = { type: "job-board", title: "Available Positions" }
+          const workspaceData: WorkspaceContent = {
+            type: "job-board",
+            title: "Available Positions",
+            jobs: jobs, // Include jobs data
+          }
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData) // Update internal state
+          setCurrentWorkspaceContent(workspaceData)
 
           return true
         }
 
         if (command === "my jobs") {
+          const user = getCurrentUser()
+          let jobs: any[] = []
+
+          if (user?.role === "hiring_manager") {
+            // For hiring managers, show all their jobs
+            jobs = mockHiringManagerJobs
+          } else {
+            // For candidates, show applied and saved jobs
+            jobs = mockJobListings.filter((j) => j.applied || j.saved)
+          }
+
           const aiMsg = {
             id: `voice-cmd-ai-${Date.now()}`,
             type: "ai" as const,
@@ -1710,11 +1897,15 @@ Looking forward to seeing this conversation develop! 🚀`,
           }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
-          const workspaceData: WorkspaceContent = { type: "job-board", title: "My Jobs" }
+          const workspaceData: WorkspaceContent = {
+            type: "job-board",
+            title: "My Jobs",
+            jobs: jobs, // Include jobs data
+          }
           onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData) // Update internal state
+          setCurrentWorkspaceContent(workspaceData)
 
           return true
         }
@@ -1755,6 +1946,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         onOpenWorkspace,
         currentWorkspaceContent,
         onSetJobBoardTab,
+        onWorkspaceUpdate, // Added onWorkspaceUpdate to dependencies
         // </CHANGE>
       ],
     )
@@ -1971,7 +2163,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         return true
       }
 
-      // 10. Video Preview (opens video player with transcriptions)
+      // Video Preview (opens video player with transcriptions)
       if (lowerText === "video preview") {
         const userMsg: Message = {
           id: Date.now().toString(),
@@ -2301,6 +2493,43 @@ Are you ready to begin your Take Home Challenge?`,
 
       // Not a command, return false to send to OpenAI
       return false
+    }
+
+    const handleSendMessage = async (content: string) => {
+      let targetAgentId = activeAgent.id
+
+      if (hiringManagerAgentId) {
+        const hiringManagerAgent = AI_AGENTS.find((agent) => agent.id === hiringManagerAgentId)
+        if (hiringManagerAgent) {
+          setActiveAgent(hiringManagerAgent)
+          targetAgentId = hiringManagerAgent.id
+          setHiringManagerAgentId(null) // Clear it so we don't switch again
+        }
+      }
+      // </CHANGE>
+
+      const userMessageTimestamp = Date.now()
+
+      const userMsg: Message = {
+        id: userMessageTimestamp.toString(),
+        type: "user",
+        content,
+        agentId: targetAgentId, // Use the target agent ID instead of activeAgent.id
+        timestamp: new Date(userMessageTimestamp).toLocaleString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }),
+      }
+      setLocalMessages((prev) => [...prev, userMsg])
+      // </CHANGE>
+
+      // Send message to AI SDK
+      sendMessage({ text: content })
+      setInputMessage("") // Clear input field
     }
 
     const handleSubmit = async (e: React.FormEvent) => {

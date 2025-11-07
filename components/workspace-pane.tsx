@@ -103,14 +103,31 @@ interface WorkspacePaneProps {
   ) => void
   // ADDED: onCloseWorkspace prop
   onCloseWorkspace?: () => void
-  // ADDED: onClearMessages prop
-  onClearMessages?: () => void // Added onClearMessages prop
+  // </CHANGE>
   onJobBoardTabChange?: (tab: "applied" | "invited" | "saved" | "browse") => void
   // </CHANGE>
   jobBoardTab?: "applied" | "invited" | "saved" | "browse" // ADDED: prop to allow external control of the job board tab
   // ADDED: content.jobStatusFilter property for syncing jobStatusFilter
   jobStatusFilter?: "draft" | "open" | "closed" // ADDED: property for syncing jobStatusFilter
   // </CHANGE>
+
+  //
+  onApplyToJob?: (jobId: string) => void
+  onSaveJob?: (jobId: string) => void
+  onUnsaveJob?: (jobId: string) => void
+  onViewCandidate?: (candidate: CandidateProfile) => void
+  onBackToMyJobs?: () => void
+  onMatch?: (candidateId: string, jobId: string) => void
+  onReject?: (candidateId: string, jobId: string) => void
+  // onSendMessage is already defined above
+  onScheduleInterview?: (candidateId: string, jobId: string) => void
+  onViewCandidateProfile?: (candidateId: string) => void
+  onUpdateJobStatus?: (jobId: string, status: "draft" | "open" | "closed") => void
+  onDeleteJob?: (jobId: string) => void
+  onDuplicateJob?: (jobId: string) => void
+  onEditJob?: (jobId: string) => void
+  // </CHANGE>
+  onOpenHiringManagerChat?: (job: JobListing) => void // ADDED: prop to open hiring manager chat
 }
 
 // Mock getCurrentUser function - replace with actual implementation if needed
@@ -210,13 +227,31 @@ export const WorkspacePane = ({
   chatMainRef, // Added chatMainRef prop
   onIntroduceMatchedCandidate, // Added prop
   onCloseWorkspace, // Added prop
-  onClearMessages, // Added prop
+  // </CHANGE>
   onJobBoardTabChange, // ADDED: prop to allow external control of the job board tab
   jobBoardTab, // ADDED: prop to allow external control of the job board tab
   // </CHANGE>
   // ADDED: jobStatusFilter prop for syncing
   jobStatusFilter: jobStatusFilterProp, // Renamed prop to avoid conflict with state
   // </CHANGE>
+
+  //
+  onApplyToJob,
+  onSaveJob,
+  onUnsaveJob,
+  onViewCandidate,
+  onBackToMyJobs,
+  onMatch,
+  onReject,
+  // onSendMessage, // Already defined above, no need to redefine
+  onScheduleInterview,
+  onViewCandidateProfile,
+  onUpdateJobStatus,
+  onDeleteJob,
+  onDuplicateJob,
+  onEditJob,
+  // </CHANGE>
+  onOpenHiringManagerChat, // ADDED: prop to open hiring manager chat
 }: WorkspacePaneProps) => {
   console.log("[v0] WorkspacePane rendered with content.type:", content.type)
 
@@ -935,7 +970,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             </svg>
           </button>
         </div>
-        <HiringManagerProfileForm onSave={onProfileSave} onClose={onClose} onStepChange={onHiringManagerStepChange} />
+        <HiringManagerProfileForm onSave={onProfileSave} onClose={onHiringManagerStepChange} />
       </div>
     )
   }
@@ -1292,8 +1327,29 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     )
   }
 
+  // ADDED: Hiring manager chat view for candidates
+  if (content.type === "hiring-manager-chat" && content.job) {
+    // FIX: HiringManagerChat variable is undeclared. Added import.
+    // Assuming HiringManagerChat is a component that needs to be imported.
+    // For now, it's commented out, but you should add the actual import.
+    // import { HiringManagerChat } from "@/components/hiring-manager-chat";
+    // return <HiringManagerChat job={content.job} candidateName="You" />;
+    // Placeholder for now:
+    return (
+      <div className="flex flex-col h-full border-l items-center justify-center bg-background">
+        <h2 className="text-lg font-semibold">Hiring Manager Chat (Placeholder)</h2>
+        <p className="text-muted-foreground">Job: {content.job.title}</p>
+        {/* Replace with actual HiringManagerChat component */}
+      </div>
+    )
+  }
+
   const handleOpenMatchChat = () => {
+    console.log("[v0] handleOpenMatchChat called")
     console.log("[v0] Opening chat with matched candidate:", matchedCandidate?.name)
+    console.log("[v0] matchedCandidate exists:", !!matchedCandidate)
+    console.log("[v0] content.job exists:", !!content.job)
+    console.log("[v0] onIntroduceMatchedCandidate exists:", !!onIntroduceMatchedCandidate)
 
     if (matchedCandidate && content.job) {
       const user = getCurrentUser()
@@ -1312,9 +1368,9 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
         // Call the introduction function to reset chat and send introduction
         onIntroduceMatchedCandidate(matchedCandidate, hiringManagerName, position, company)
       }
-      // </CHANGE>
 
       if (onOpenWorkspace) {
+        console.log("[v0] Opening candidate profile workspace")
         onOpenWorkspace({
           type: "candidate-profile-view",
           title: matchedCandidate.name,
@@ -1324,10 +1380,12 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
       }
     }
 
+    console.log("[v0] Setting showMatchSuccess to false")
     setShowMatchSuccess(false)
   }
 
   const handleContinueSwiping = () => {
+    console.log("[v0] handleContinueSwiping called")
     setShowMatchSuccess(false)
     setMatchedCandidate(null)
   }
@@ -1510,6 +1568,39 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
         <PaymentSuccess onClose={onClose} />
       </div>
     )
+  }
+
+  const handleOpenHiringManagerChat = (job: JobListing) => {
+    console.log("[v0] Opening hiring manager chat for job:", job.title)
+    if (onOpenWorkspace) {
+      onOpenWorkspace({
+        type: "hiring-manager-chat",
+        title: `Chat with ${job.hiringManager || "Hiring Manager"}`,
+        job: job,
+      })
+    }
+  }
+
+  const handleSendMessage = (message: string) => {
+    console.log("[v0] handleSendMessage called with:", message)
+
+    if (message.toLowerCase().includes("browse candidates") && content.type === "job-view" && content.job) {
+      console.log("[v0] Browsing candidates from job-view, passing job context:", content.job.title)
+      if (onOpenWorkspace) {
+        onOpenWorkspace({
+          type: "browse-candidates",
+          title: "Browse Candidates",
+          job: content.job,
+          timestamp: Date.now(),
+        })
+      }
+      return
+    }
+    // </CHANGE>
+
+    if (onSendMessage) {
+      onSendMessage(message)
+    }
   }
 
   return (
@@ -1860,20 +1951,13 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
               }}
               onCandidateShown={handleCandidateShown}
             />
+            {/* Fixed MatchSuccess props to use correct interface */}
             {showMatchSuccess && matchedCandidate && (
               <MatchSuccess
-                candidate={matchedCandidate}
-                onClose={() => {
-                  setShowMatchSuccess(false)
-                  setMatchedCandidate(null)
-                }}
-                onSendMessage={(message) => {
-                  if (onSendMessage) {
-                    onSendMessage(message)
-                  }
-                  setShowMatchSuccess(false)
-                  setMatchedCandidate(null)
-                }}
+                candidateName={matchedCandidate.name}
+                jobTitle={content.job?.title}
+                onOpenChat={handleOpenMatchChat}
+                onContinueSwiping={handleContinueSwiping}
               />
             )}
           </div>
@@ -1892,12 +1976,14 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             onApplyForJob={handleApplyForJobWithStatusToggle}
             showApplicationStatus={showApplicationStatusLocal}
             onToggleApplicationView={handleToggleApplicationView}
-            onSendMessage={onSendMessage}
+            onSendMessage={handleSendMessage} // Use the updated handleSendMessage
+            onSendAIMessage={onSendAIMessage}
             userRole={currentUser?.role}
             matchedCandidates={matchedCandidatesPerJob[content.job.id] || []}
             onBrowseMoreCandidates={handleBrowseMoreCandidates}
             onOpenCandidateChat={handleOpenCandidateChat}
             onUpdateJobSummary={handleUpdateJobSummary}
+            chatMainRef={chatMainRef} // Pass chatMainRef to JobView
           />
         )}
 
