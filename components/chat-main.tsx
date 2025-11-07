@@ -88,6 +88,12 @@ type JobListing = {
     location?: string
   }>
   // Add other relevant properties as needed
+  // </CHANGE>
+  requirements?: string[] // Added for job view context
+  benefits?: string[] // Added for job view context
+  posted?: string // Added for job view context
+  applicationStage?: string // Added for job view context
+  // </CHANGE>
 }
 
 // Define CandidateProfile type for clarity
@@ -157,10 +163,10 @@ export interface ChatMainProps {
   onOpenWorkspace: (content: WorkspaceContent) => void
   initialAgentId?: string | null
   shouldShowWelcome?: boolean
-  // currentWorkspaceContent?: WorkspaceContent // Removed as it's now managed internally
+  currentWorkspaceContent?: WorkspaceContent
+  // </CHANGE>
   currentJobBoardTab?: "applied" | "invited" | "saved" | "browse"
   onSetJobBoardTab?: (tab: "applied" | "invited" | "saved" | "browse") => void
-  // </CHANGE>
   userType?: "candidate" | "hiring_manager" // Added userType
   onWorkspaceUpdate?: (content: WorkspaceContent) => void // Added for voice mode integration
 }
@@ -485,27 +491,70 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
             })
           }
         } else {
-          // Candidate view - show applied/saved counts
-          context += `The user is viewing the job board with available positions.\n`
-          const appliedJobs = jobs.filter((j: JobListing) => j.applied)
-          const savedJobs = jobs.filter((j: JobListing) => j.saved)
-          context += `- Total jobs displayed: ${jobs.length}\n`
-          context += `- Applied jobs: ${appliedJobs.length}\n`
-          context += `- Saved jobs: ${savedJobs.length}\n`
+          const tabName = content.jobBoardTab || "all"
+          const tabLabel =
+            tabName === "applied"
+              ? "Applied Jobs"
+              : tabName === "invited"
+                ? "Invited Jobs"
+                : tabName === "saved"
+                  ? "Saved Jobs"
+                  : tabName === "browse"
+                    ? "Browse Jobs"
+                    : "Job Board"
+
+          context += `The candidate is viewing the ${tabLabel}.\n`
+          context += `- Total jobs displayed: ${jobs.length}\n\n`
+
+          if (jobs.length > 0) {
+            context += `**Job Listings:**\n`
+            jobs.forEach((job: JobListing, index: number) => {
+              context += `${index + 1}. ${job.title} at ${job.company}\n`
+              context += `   - Location: ${job.location}\n`
+              context += `   - Salary: ${job.salary}\n`
+              context += `   - Type: ${job.type}\n`
+              if (job.skillMatch) context += `   - Skill Match: ${job.skillMatch}%\n`
+              if (job.applied) context += `   - Status: Applied\n`
+              if (job.invited) context += `   - Status: Invited\n`
+              if (job.saved) context += `   - Status: Saved\n`
+              if (job.requirements && job.requirements.length > 0) {
+                context += `   - Key Requirements: ${job.requirements.slice(0, 3).join(", ")}\n`
+              }
+              if (index < jobs.length - 1) context += `\n`
+            })
+            context += `\nYou can answer questions about any of these specific jobs, compare them, or provide recommendations.\n`
+          }
+          // </CHANGE>
         }
       } else {
         console.log("[v0] Job board workspace has no jobs data")
       }
       break
     // </CHANGE>
-
-    case "candidate-swipe":
-      if (content.candidates && content.candidates.length > 0) {
-        context += `The user is in candidate swipe mode with ${content.candidates.length} candidates.\n`
+    case "analytics":
+      if (content.jobs && content.jobs.length > 0) {
+        context += `The user is viewing a job comparison with ${content.jobs.length} positions:\n\n`
+        content.jobs.forEach((job: JobListing, index: number) => {
+          context += `**Job ${index + 1}: ${job.title}**\n`
+          context += `- Company: ${job.company}\n`
+          context += `- Location: ${job.location}\n`
+          context += `- Salary: ${job.salary}\n`
+          context += `- Type: ${job.type}\n`
+          if (job.skillMatch) context += `- Skill Match: ${job.skillMatch}%\n`
+          if (job.requirements && job.requirements.length > 0) {
+            context += `- Key Requirements: ${job.requirements.slice(0, 3).join(", ")}\n`
+          }
+          if (job.benefits && job.benefits.length > 0) {
+            context += `- Benefits: ${job.benefits.slice(0, 3).join(", ")}\n`
+          }
+          if (index < content.jobs.length - 1) context += `\n`
+        })
+        context += `\nYou can answer questions comparing these specific jobs, their salaries, requirements, benefits, locations, or skill matches.\n`
       } else {
-        console.log("[v0] Candidate swipe workspace has no candidates")
+        context += `The user is viewing general analytics.\n`
       }
       break
+    // </CHANGE>
 
     default:
       if (content.title) {
@@ -527,8 +576,9 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       onToggleSidebar,
       onOpenWorkspace,
       initialAgentId,
-      shouldShowWelcome,
-      // currentWorkspaceContent, // Removed as it's now managed internally
+      shouldShowWelcome = false,
+      currentWorkspaceContent: externalWorkspaceContent,
+      // </CHANGE>
       currentJobBoardTab,
       onSetJobBoardTab,
       userType, // Added userType
@@ -574,11 +624,11 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     // </CHANGE>
 
     useEffect(() => {
-      console.log("[v0] currentWorkspaceContent updated:", currentWorkspaceContent?.type)
-      if (currentWorkspaceContent) {
-        setCurrentWorkspaceContent(currentWorkspaceContent)
+      if (externalWorkspaceContent) {
+        console.log("[v0] Syncing external workspace content:", externalWorkspaceContent.type)
+        setCurrentWorkspaceContent(externalWorkspaceContent)
       }
-    }, [currentWorkspaceContent])
+    }, [externalWorkspaceContent])
     // </CHANGE>
 
     const chatBody = useMemo(
@@ -1553,6 +1603,61 @@ Looking forward to seeing this conversation develop! 🚀`,
         }
 
         const command = intentResult.command!
+
+        if (command === "compare jobs") {
+          console.log("[v0] Compare jobs command detected")
+
+          const user = getCurrentUser()
+          const jobList = user?.role === "hiring_manager" ? mockHiringManagerJobs : mockJobListings
+
+          // Get the most recent jobs (or applied/saved jobs for candidates)
+          let jobsToCompare: JobListing[] = []
+
+          if (user?.role === "hiring_manager") {
+            // For hiring managers, compare the first 2-3 open jobs
+            jobsToCompare = jobList.filter((j) => j.status === "open").slice(0, 2)
+          } else {
+            // For candidates, compare applied or saved jobs
+            jobsToCompare = jobList.filter((j) => j.applied || j.saved).slice(0, 2)
+          }
+
+          // If we don't have enough jobs, just take the first 2
+          if (jobsToCompare.length < 2) {
+            jobsToCompare = jobList.slice(0, 2)
+          }
+
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: `I've opened a comparison view for ${jobsToCompare.length} positions. You can see key details side by side to help you make a decision.`,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          const workspaceData: WorkspaceContent = {
+            type: "analytics", // Re-using analytics type for job comparison
+            title: "Job Comparison",
+            jobs: jobsToCompare,
+          }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        // </CHANGE>
 
         if (command === "view job" && intentResult.jobTitle) {
           console.log("[v0] Job view command detected for:", intentResult.jobTitle)

@@ -64,6 +64,23 @@ const RESERVED_COMMANDS = [
     keywords: ["data", "analytics", "dashboard", "statistics", "metrics", "insights", "reports", "show me data"],
   },
   {
+    command: "compare jobs",
+    description: "Compare multiple jobs side by side",
+    keywords: [
+      "compare jobs",
+      "compare 2 jobs",
+      "compare two jobs",
+      "compare 3 jobs",
+      "compare three jobs",
+      "compare positions",
+      "job comparison",
+      "compare these jobs",
+      "compare the jobs",
+      "show job comparison",
+      "view job comparison",
+    ],
+  },
+  {
     command: "applied jobs",
     description: "Show applied jobs tab in job board",
     keywords: [
@@ -78,6 +95,9 @@ const RESERVED_COMMANDS = [
       "my applications",
       "show applications",
       "view applications",
+      "open applied jobs",
+      "open my applied jobs",
+      "open applications",
     ],
   },
   {
@@ -95,6 +115,10 @@ const RESERVED_COMMANDS = [
       "show invitations",
       "view invitations",
       "invited positions",
+      "open invited jobs",
+      "open my invited jobs",
+      "open invitations",
+      "open my invitations",
     ],
   },
   {
@@ -112,6 +136,10 @@ const RESERVED_COMMANDS = [
       "my bookmarks",
       "show saved",
       "view saved",
+      "open saved jobs",
+      "open my saved jobs",
+      "open saved",
+      "open bookmarks",
     ],
   },
   {
@@ -134,6 +162,9 @@ const RESERVED_COMMANDS = [
       "show drafts",
       "view drafts",
       "see drafts",
+      "open draft jobs",
+      "open my draft jobs",
+      "open drafts",
     ],
   },
   {
@@ -150,6 +181,8 @@ const RESERVED_COMMANDS = [
       "jobs accepting applications",
       "show active jobs",
       "view active jobs",
+      "open my open jobs",
+      "open active jobs",
     ],
   },
   {
@@ -166,6 +199,9 @@ const RESERVED_COMMANDS = [
       "filled positions",
       "show archived jobs",
       "view archived jobs",
+      "open closed jobs",
+      "open my closed jobs",
+      "open archived jobs",
     ],
   },
   ...AI_AGENTS.map((agent) => ({
@@ -399,7 +435,17 @@ function levenshteinDistance(str1: string, str2: string): number {
 function fuzzyMatchNavigationCommand(input: string): { command: string; confidence: number } | null {
   const normalizedInput = input.toLowerCase().trim()
 
-  // Common speech recognition errors and variations
+  // Convert "OpenMyInvitedJobs" to "open my invited jobs"
+  const splitCamelCase = (str: string): string => {
+    return str
+      .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space before capital letters
+      .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2") // Handle consecutive capitals
+      .toLowerCase()
+  }
+
+  const processedInput = splitCamelCase(normalizedInput)
+  console.log("[v0] Processed input (camelCase split):", processedInput)
+
   const navigationMappings = [
     {
       command: "job board",
@@ -421,6 +467,10 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
       command: "applied jobs",
       variations: [
         "applied jobs",
+        "applied job",
+        "apply jobs", // Added common speech recognition error
+        "apply jumps", // Added common speech recognition error
+        "applied jumps", // Added common speech recognition error
         "show applied jobs",
         "view applied jobs",
         "see applied jobs",
@@ -431,12 +481,18 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "my applications",
         "show applications",
         "view applications",
+        "open applied jobs",
+        "open my applied jobs",
+        "open applications",
       ],
     },
     {
       command: "invited jobs",
       variations: [
         "invited jobs",
+        "invited job",
+        "invite jobs",
+        "invites",
         "show invited jobs",
         "view invited jobs",
         "see invited jobs",
@@ -447,12 +503,25 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "show invitations",
         "view invitations",
         "invited positions",
+        "open invited jobs",
+        "open my invited jobs",
+        "open invitations",
+        "open my invitations",
       ],
     },
     {
       command: "saved jobs",
       variations: [
         "saved jobs",
+        "saved job",
+        "save jobs",
+        "safe jobs", // Common speech recognition error
+        "same jobs", // Common speech recognition error
+        "team jobs", // Added common speech recognition error
+        "same jumps", // Added common speech recognition error
+        "safe jumps", // Added common speech recognition error
+        "saved jumps", // Added common speech recognition error
+        "saved", // Short form
         "show saved jobs",
         "view saved jobs",
         "see saved jobs",
@@ -463,6 +532,10 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "my bookmarks",
         "show saved",
         "view saved",
+        "open saved jobs",
+        "open my saved jobs",
+        "open saved",
+        "open bookmarks",
       ],
     },
     {
@@ -479,27 +552,32 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "search jobs",
         "explore jobs",
         "discover jobs",
+        "open browse jobs",
+        "open available jobs",
       ],
     },
     {
       command: "draft jobs",
       variations: [
         "draft jobs",
-        "drafted jobs", // Added "drafted jobs" to fuzzy matching variations
+        "drafted jobs",
         "show draft jobs",
-        "show drafted jobs", // Added variation with "drafted"
+        "show drafted jobs",
         "view draft jobs",
-        "view drafted jobs", // Added variation with "drafted"
+        "view drafted jobs",
         "see draft jobs",
-        "see drafted jobs", // Added variation with "drafted"
+        "see drafted jobs",
         "my draft jobs",
-        "my drafted jobs", // Added variation with "drafted"
+        "my drafted jobs",
         "jobs in draft",
         "draft positions",
-        "drafted positions", // Added variation with "drafted"
+        "drafted positions",
         "show drafts",
         "view drafts",
         "see drafts",
+        "open draft jobs",
+        "open my draft jobs",
+        "open drafts",
       ],
     },
     {
@@ -515,6 +593,8 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "jobs accepting applications",
         "show active jobs",
         "view active jobs",
+        "open my open jobs",
+        "open active jobs",
       ],
     },
     {
@@ -530,20 +610,71 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "filled positions",
         "show archived jobs",
         "view archived jobs",
+        "open closed jobs",
+        "open my closed jobs",
+        "open archived jobs",
+      ],
+    },
+    {
+      command: "compare jobs",
+      variations: [
+        "compare jobs",
+        "compare 2 jobs",
+        "compare two jobs",
+        "compare 3 jobs",
+        "compare three jobs",
+        "compare positions",
+        "job comparison",
+        "compare these jobs",
+        "compare the jobs",
+        "show job comparison",
+        "view job comparison",
       ],
     },
   ]
 
+  // Remove common filler words and phrases
+  const fillerWords = [
+    "how about",
+    "what about",
+    "can you",
+    "could you",
+    "show me",
+    "let me see",
+    "i want to see",
+    "open",
+    "the",
+  ]
+  let cleanedInput = processedInput // Use processedInput instead of normalizedInput
+  for (const filler of fillerWords) {
+    cleanedInput = cleanedInput.replace(new RegExp(`\\b${filler}\\b`, "g"), " ")
+  }
+  cleanedInput = cleanedInput.replace(/\s+/g, " ").trim()
+
+  console.log("[v0] Cleaned input for fuzzy matching:", cleanedInput)
+
   for (const mapping of navigationMappings) {
     for (const variation of mapping.variations) {
-      // Check if the variation appears in the input
+      // Check if the variation appears in the original input
       if (normalizedInput.includes(variation)) {
         return { command: mapping.command, confidence: 0.95 }
       }
 
-      // Check Levenshtein distance for typos
-      const distance = levenshteinDistance(normalizedInput, variation)
-      if (distance <= 3 && normalizedInput.length > 5) {
+      // Check if the variation appears in the processed input (camelCase split)
+      if (processedInput.includes(variation)) {
+        console.log(`[v0] Match found in processed input: "${processedInput}" contains "${variation}"`)
+        return { command: mapping.command, confidence: 0.95 }
+      }
+
+      // Check if the variation appears in the cleaned input
+      if (cleanedInput.includes(variation)) {
+        return { command: mapping.command, confidence: 0.9 }
+      }
+
+      // Check Levenshtein distance for typos on cleaned input
+      const distance = levenshteinDistance(cleanedInput, variation)
+      if (distance <= 2 && cleanedInput.length > 3) {
+        console.log(`[v0] Fuzzy match found: "${cleanedInput}" ≈ "${variation}" (distance: ${distance})`)
         return { command: mapping.command, confidence: 0.85 }
       }
     }
@@ -619,6 +750,7 @@ export async function detectCommandIntent(userInput: string): Promise<{
     "draft jobs",
     "open jobs",
     "closed jobs",
+    "compare jobs",
   ]
 
   for (const pattern of jobRequestPatterns) {

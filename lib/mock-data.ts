@@ -146,7 +146,7 @@ export const mockJobListings: JobListing[] = [
     applied: true,
     invited: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    logo: "/zai-company-logo.jpg",
     status: "open",
     skillMatch: 70,
     takeHomeChallengeStatus: "completed",
@@ -295,7 +295,7 @@ export const mockJobListings: JobListing[] = [
     applied: false,
     invited: true,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    logo: "/zai-company-logo.jpg",
     status: "open",
     skillMatch: 88,
     benefits: [
@@ -401,7 +401,7 @@ export const mockJobListings: JobListing[] = [
     applied: false,
     invited: false,
     saved: true,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    logo: "/zai-company-logo.jpg",
     status: "open",
     skillMatch: 76,
     benefits: [
@@ -481,7 +481,7 @@ export const mockJobListings: JobListing[] = [
     applied: false,
     invited: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    logo: "/zai-company-logo.jpg",
     status: "open",
     skillMatch: 84,
     benefits: [
@@ -585,7 +585,7 @@ export const mockJobListings: JobListing[] = [
     applied: false,
     invited: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    logo: "/zai-company-logo.jpg",
     status: "open",
     skillMatch: 71,
     benefits: [
@@ -715,7 +715,7 @@ export const mockJobListings: JobListing[] = [
     applied: false,
     invited: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    logo: "/zai-company-logo.jpg",
     status: "open",
     skillMatch: 62,
     benefits: [
@@ -793,7 +793,7 @@ export const mockJobListings: JobListing[] = [
     applied: false,
     invited: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUxx52Q.png",
+    logo: "/zai-company-logo.jpg",
     status: "open",
     skillMatch: 74,
     benefits: [
@@ -897,7 +897,7 @@ export const mockJobListings: JobListing[] = [
     applied: false,
     invited: false,
     saved: false,
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-mmp2tJXTgvXPeoADutH4SeeUExx52Q.png",
+    logo: "/zai-company-logo.jpg",
     status: "open",
     skillMatch: 76,
     benefits: [

@@ -59,6 +59,7 @@ import { PaymentSuccess } from "@/components/payment-success-full"
 // IMPORTED: mockJobListings from "@/lib/mock-data"
 import { mockJobListings } from "@/lib/mock-data"
 import { mockHiringManagerJobs } from "@/lib/mock-hiring-manager-jobs"
+import { JobComparison } from "./job-comparison" // ADDED: import for JobComparison
 
 // Mock getCurrentUser function - replace with actual implementation if needed
 // const getCurrentUser = () => ({
@@ -909,6 +910,37 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             <p className="text-muted-foreground">Your submission has been sent to the hiring manager</p>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if (content.type === "analytics") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title || "Recruitment Analytics"}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <JobComparison jobs={content.jobs || []} />
       </div>
     )
   }

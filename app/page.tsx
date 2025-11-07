@@ -110,14 +110,12 @@ export default function ChatPage() {
         filteredJobs.length,
       )
 
+      // Use the same structure that ChatMain expects (jobs directly, not in data)
       setWorkspaceContent({
         type: "job-board",
         title: user?.role === "candidate" ? "My Jobs" : "Job Board",
-        data: {
-          currentTab: currentJobBoardTab,
-          jobs: filteredJobs,
-          allJobs: mockJobListings,
-        },
+        jobs: filteredJobs,
+        jobBoardTab: currentJobBoardTab,
       })
     }
   }, [currentJobBoardTab, workspaceContent.type])
