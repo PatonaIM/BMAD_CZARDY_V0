@@ -31,6 +31,7 @@ import { DefaultChatTransport } from "ai"
 import { getCandidateConversation, saveCandidateMessage } from "@/lib/mock-conversations"
 import { VoiceMode, type VoiceModeRef } from "./voice-mode" // Changed import to include type VoiceModeRef
 import { detectCommandIntent } from "@/app/actions/detect-command-intent"
+import { messageSequencer, toSequencedMessage, generateMessageId } from "@/lib/message-sequencer"
 
 // Import mock data
 import { mockJobListings, mockHiringManagerJobs } from "@/lib/mock-data"
@@ -599,6 +600,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     const [hasOpenedWorkspace, setHasOpenedWorkspace] = useState(false)
     const [lastWorkspaceContent, setLastWorkspaceContent] = useState<WorkspaceContent | null>(null)
     const [localMessages, setLocalMessages] = useState<Message[]>([])
+    const [sequencedMessages, setSequencedMessages] = useState<Message[]>([])
     const [hasChallengeWelcomeShown, setHasChallengeWelcomeShown] = useState(false)
     const [currentChatCandidate, setCurrentChatCandidate] = useState<CandidateProfile | null>(null) // Updated to CandidateProfile
     const [isVoiceMode, setIsVoiceMode] = useState(false)
@@ -657,8 +659,19 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       },
     })
 
-    const isCentered = localMessages.length === 0 && aiMessages.length === 0
+    const isCentered = sequencedMessages.length === 0
     const isThinking = status === "in_progress"
+
+    // Subscribe to message sequencer for proper ordering
+    useEffect(() => {
+      const unsubscribe = messageSequencer.subscribe((messages) => {
+        setSequencedMessages(messages.map(msg => ({
+          ...msg,
+          type: msg.type as "user" | "ai"
+        })));
+      });
+      return unsubscribe;
+    }, [])
 
     useEffect(() => {
       console.log("[v0] aiMessages updated:", aiMessages.length, "messages")
@@ -722,71 +735,29 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       }
       // </CHANGE>
 
-      const aiMessageSet = new Set(convertedMessages.map((m) => m.id))
+      // Add new AI messages to the message sequencer instead of complex merging
+      convertedMessages.forEach(msg => {
+        const sequencedMsg = toSequencedMessage(msg);
+        messageSequencer.addMessage(sequencedMsg);
+      });
 
-      // Preserve local messages that aren't in aiMessages
-      const preservedLocalMessages = localMessages.filter((m) => !aiMessageSet.has(m.id))
+      // Also preserve any local messages that aren't AI messages
+      const aiMessageSet = new Set(convertedMessages.map((m) => m.id));
+      const preservedLocalMessages = localMessages.filter((m) => !aiMessageSet.has(m.id));
+      
+      preservedLocalMessages.forEach(msg => {
+        const sequencedMsg = toSequencedMessage(msg);
+        messageSequencer.addMessage(sequencedMsg);
+      });
 
-      // Don't clear welcome messages if there are no other messages
-      const hasWelcomeMessages = localMessages.some((m) => m.isWelcome)
-      const wouldClearWelcome =
-        hasWelcomeMessages && preservedLocalMessages.length === 0 && convertedMessages.length === 0
-
-      if (wouldClearWelcome) {
-        return
-      }
-
-      const newMessages = [...preservedLocalMessages, ...convertedMessages]
-
-      // Messages from the API are already in the correct order
-      // Only sort if we have mixed local and AI messages
-      if (preservedLocalMessages.length > 0 && convertedMessages.length > 0) {
-        newMessages.sort((a, b) => {
-          const getTimestamp = (msg: Message) => {
-            // Try to extract timestamp from message ID
-            // Handles formats like: "123456789", "voice-user-123456789", "cmd-ai-123456789"
-            const timestampMatch = msg.id.match(/(\d{13,})/)
-            if (timestampMatch) {
-              const timestamp = Number.parseInt(timestampMatch[1])
-              if (!isNaN(timestamp) && timestamp > 1000000000000) {
-                return timestamp
-              }
-            }
-
-            // Try parsing the entire ID as a number
-            const idAsNumber = Number.parseInt(msg.id)
-            if (!isNaN(idAsNumber) && idAsNumber > 1000000000000) {
-              return idAsNumber
-            }
-
-            // Fallback to timestamp property if available
-            if (msg.timestamp) {
-              return new Date(msg.timestamp).getTime()
-            }
-
-            // Last resort: return 0 (will maintain insertion order)
-            return 0
-          }
-
-          const timestampA = getTimestamp(a)
-          const timestampB = getTimestamp(b)
-
-          // If timestamps are the same, maintain insertion order
-          if (timestampA === timestampB) {
-            return 0
-          }
-
-          return timestampA - timestampB
-        })
-      }
-
-      // Only update if messages actually changed
+      // Update local messages to maintain compatibility
+      const newMessages = [...preservedLocalMessages, ...convertedMessages];
       const messagesChanged =
         newMessages.length !== localMessages.length ||
-        newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content)
+        newMessages.some((msg, idx) => msg.id !== localMessages[idx]?.id || msg.content !== localMessages[idx]?.content);
 
       if (messagesChanged) {
-        setLocalMessages(newMessages)
+        setLocalMessages(newMessages);
       }
     }, [aiMessages, activeAgent, localMessages, isHiringManagerIntroduction])
 
@@ -2616,19 +2587,17 @@ Are you ready to begin your Take Home Challenge?`,
       const userMessageTimestamp = Date.now()
 
       const userMsg: Message = {
-        id: userMessageTimestamp.toString(),
+        id: generateMessageId('user'),
         type: "user",
         content,
         agentId: targetAgentId, // Use the target agent ID instead of activeAgent.id
-        timestamp: new Date(userMessageTimestamp).toLocaleString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        }),
+        timestamp: new Date(userMessageTimestamp).toISOString(),
       }
+      
+      // Add to message sequencer for proper ordering
+      messageSequencer.addMessage(toSequencedMessage(userMsg));
+      
+      // Keep legacy state for compatibility
       setLocalMessages((prev) => [...prev, userMsg])
       // </CHANGE>
 
@@ -2646,22 +2615,19 @@ Are you ready to begin your Take Home Challenge?`,
       if (currentChatCandidate) {
         console.log("[v0] In candidate chat, sending message to candidate:", currentChatCandidate.name)
 
-        // Add hiring manager's message to local messages
+        // Add hiring manager's message using message sequencer for proper ordering
         const hiringManagerMessage: Message = {
-          id: `${Date.now()}-hm`,
+          id: generateMessageId('hm'),
           type: "user",
           content: inputMessage,
           agentId: activeAgent.id,
-          timestamp: new Date().toLocaleString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }),
+          timestamp: new Date().toISOString(),
         }
 
+        // Add to sequencer for proper ordering
+        messageSequencer.addMessage(toSequencedMessage(hiringManagerMessage));
+        
+        // Keep legacy state updated for compatibility
         setLocalMessages((prev) => [...prev, hiringManagerMessage])
         setInputMessage("")
 
@@ -2672,8 +2638,6 @@ Are you ready to begin your Take Home Challenge?`,
         const conversationHistory = getCandidateConversation(currentChatCandidate.id, currentChatCandidate.name)
 
         try {
-          const candidateMessageId = `${Date.now()}-candidate`
-
           // Call API to get candidate's response
           const response = await fetch("/api/candidate-chat", {
             method: "POST",
@@ -2694,6 +2658,7 @@ Are you ready to begin your Take Home Challenge?`,
           const reader = response.body?.getReader()
           const decoder = new TextDecoder()
           let candidateResponse = ""
+          const candidateMessageId = generateMessageId('candidate')
 
           if (reader) {
             while (true) {
@@ -2703,41 +2668,45 @@ Are you ready to begin your Take Home Challenge?`,
               const chunk = decoder.decode(value)
               candidateResponse += chunk
 
-              // Update the candidate's message in real-time
-              setLocalMessages((prev) => {
-                const lastMessage = prev[prev.length - 1]
-                if (lastMessage && lastMessage.type === "ai" && lastMessage.id === candidateMessageId) {
-                  // Update existing message
-                  return [
-                    ...prev.slice(0, -1),
-                    {
-                      ...lastMessage,
-                      content: candidateResponse,
-                    },
-                  ]
-                } else {
-                  // Add new candidate message
-                  return [
-                    ...prev,
-                    {
-                      id: candidateMessageId,
-                      type: "ai" as const,
-                      content: candidateResponse,
-                      agentId: activeAgent.id,
-                      avatar: currentChatCandidate.avatar,
-                      senderName: currentChatCandidate.name,
-                      timestamp: new Date().toLocaleString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      }),
-                    },
-                  ]
-                }
-              })
+              // Update using message sequencer for proper ordering
+              if (candidateResponse.trim()) {
+                const candidateMessage = {
+                  id: candidateMessageId,
+                  type: "ai" as const,
+                  content: candidateResponse,
+                  timestamp: Date.now(),
+                  agentId: activeAgent.id,
+                  avatar: currentChatCandidate.avatar,
+                  senderName: currentChatCandidate.name,
+                  isStreaming: !done
+                };
+                
+                messageSequencer.addMessage(candidateMessage);
+
+                // Keep legacy state updated for compatibility
+                setLocalMessages((prev) => {
+                  const lastMessage = prev[prev.length - 1]
+                  if (lastMessage && lastMessage.type === "ai" && lastMessage.id === candidateMessageId) {
+                    return [
+                      ...prev.slice(0, -1),
+                      { ...lastMessage, content: candidateResponse }
+                    ]
+                  } else {
+                    return [
+                      ...prev,
+                      {
+                        id: candidateMessageId,
+                        type: "ai" as const,
+                        content: candidateResponse,
+                        agentId: activeAgent.id,
+                        avatar: currentChatCandidate.avatar,
+                        senderName: currentChatCandidate.name,
+                        timestamp: new Date().toISOString(),
+                      }
+                    ]
+                  }
+                })
+              }
             }
 
             // Save candidate's response to conversation
@@ -3027,10 +2996,10 @@ Are you ready to begin your Take Home Challenge?`,
                 </div>
               ) : (
                 <div className="w-full max-w-[820px] mx-auto py-6 space-y-4">
-                  {localMessages.map((msg, index) => {
+                  {sequencedMessages.map((msg, index) => {
                     const isLastUserMessage =
-                      msg.type === "user" && index === localMessages.map((m) => m.type).lastIndexOf("user")
-                    const isLastMessage = index === localMessages.length - 1
+                      msg.type === "user" && index === sequencedMessages.map((m) => m.type).lastIndexOf("user")
+                    const isLastMessage = index === sequencedMessages.length - 1
                     const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
                     return (
                       <div

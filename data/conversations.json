@@ -1,0 +1,49 @@
+{
+  "aiAgentConversations": {},
+  "candidateConversations": {
+    "1": [
+      {
+        "id": "msg_1_1",
+        "senderId": "candidate_1",
+        "role": "user",
+        "content": "Hi! I saw your posting for the Senior React Developer role. I'm really excited about the opportunity to work with your team.",
+        "timestamp": "2024-01-15T10:00:00Z",
+        "type": "text"
+      },
+      {
+        "id": "msg_1_2", 
+        "senderId": "current_user",
+        "role": "assistant",
+        "content": "Thanks for reaching out! I'd love to learn more about your React experience. Can you tell me about your most challenging React project?",
+        "timestamp": "2024-01-15T10:05:00Z",
+        "type": "text"
+      },
+      {
+        "id": "msg_1_3",
+        "senderId": "candidate_1", 
+        "role": "user",
+        "content": "I led the migration of a legacy jQuery application to React 18 with TypeScript. It was a 6-month project serving 50k+ daily users. The biggest challenge was maintaining uptime during the migration.",
+        "timestamp": "2024-01-15T10:10:00Z",
+        "type": "text"
+      }
+    ],
+    "2": [
+      {
+        "id": "msg_2_1",
+        "senderId": "candidate_2",
+        "role": "user",
+        "content": "Hello! I'm interested in the Full-Stack Engineer position. I have 5 years of experience with Node.js and React.",
+        "timestamp": "2024-01-15T11:00:00Z",
+        "type": "text"
+      },
+      {
+        "id": "msg_2_2",
+        "senderId": "current_user", 
+        "role": "assistant",
+        "content": "Great to hear from you! What's your experience with scalable backend architectures?",
+        "timestamp": "2024-01-15T11:05:00Z",
+        "type": "text"
+      }
+    ]
+  }
+}

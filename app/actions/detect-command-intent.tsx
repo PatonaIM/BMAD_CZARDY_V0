@@ -1,6 +1,12 @@
 "use server"
 
 import { generateText } from "ai"
+import { createOpenAI } from "@ai-sdk/openai"
+
+// Configure OpenAI with API key
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
 import { AI_AGENTS } from "@/types/agents"
 
 const RESERVED_COMMANDS = [
@@ -822,7 +828,7 @@ export async function detectCommandIntent(userInput: string): Promise<{
 
   try {
     const { text } = await generateText({
-      model: "openai/gpt-4o-mini",
+      model: openai("gpt-4o-mini"),
       prompt: `You are a command intent detector. Analyze the user's input and determine if it matches any of these reserved commands:
 
 ${RESERVED_COMMANDS.map((cmd) => `- "${cmd.command}": ${cmd.description}`).join("\n")}
