@@ -252,17 +252,9 @@ const formatCommandName = (command: string): string => {
 
 // Helper function to generate agent introduction message
 const generateAgentIntroduction = (agent: AIAgent): string => {
-  const commandsList = agent.actions.map((action) => `- *${action} - ${formatCommandName(action)}`).join("\n")
-
-  return `Hello! I'm **${agent.firstName}**. Your **${agent.name}** AI Agent. ${agent.icon}
+  return `Hello! I'm **${agent.firstName}**, your **${agent.name}** AI Agent. ${agent.icon}
 
 ${agent.fullDescription}
-
-## Available Commands:
-- *help - Show this command list
-${commandsList}
-
-Simply type the command or just ask your queries away!
 
 ${agent.callToAction}`
 }
@@ -273,14 +265,10 @@ const generateHelpMessage = (agent: AIAgent): string => {
 
   return `## Available Commands for ${agent.name} ${agent.icon}
 
-Here are all the commands I can help you with:
-
 - *help - Show this command list
 ${commandsList}
 
-Simply type any command (e.g., \`*service-overview\`) or just ask your questions naturally!
-
-${agent.callToAction}`
+Simply type any command or ask your questions naturally!`
 }
 
 type SuggestionCategory = "suggested" | "apply-to-jobs" | "hiring" | "quote-me" | "legal" | "about-us"
@@ -1588,19 +1576,36 @@ Looking forward to seeing this conversation develop! 🚀`,
         }
 
         const introMessage = generateAgentIntroduction(agent)
+        const timestamp = Date.now()
 
+        // Add to local messages for immediate display
         setLocalMessages((prev) => [
           ...prev,
           {
-            id: `agent-switch-${Date.now()}`,
+            id: `agent-switch-${timestamp}`,
             type: "ai",
             content: introMessage,
             agentId: agent.id,
             isAgentSwitch: true,
+            timestamp,
+          },
+        ])
+
+        // Also add to AI messages so it's part of the conversation history
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `agent-switch-${timestamp}`,
+            role: "assistant",
+            content: introMessage,
+            extra: {
+              agentId: agent.id,
+              timestamp,
+            },
           },
         ])
       },
-      [currentChatCandidate, setLocalMessages, generateAgentIntroduction, AI_AGENTS], // Added AI_AGENTS to dependencies
+      [currentChatCandidate, setLocalMessages, setMessages],
     )
     // </CHANGE>
 
