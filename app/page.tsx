@@ -336,6 +336,11 @@ export default function ChatPage() {
     }
   }
 
+  const handleWorkspaceUpdate = (updatedContent: WorkspaceContent) => {
+    console.log("[v0] page.tsx - handleWorkspaceUpdate called with:", updatedContent)
+    setWorkspaceContent(updatedContent)
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -359,6 +364,7 @@ export default function ChatPage() {
               currentWorkspaceContent={workspaceContent}
               currentJobBoardTab={currentJobBoardTab}
               onSetJobBoardTab={setCurrentJobBoardTab}
+              onWorkspaceUpdate={handleWorkspaceUpdate}
             />
           </div>
           {workspaceContent.type && (

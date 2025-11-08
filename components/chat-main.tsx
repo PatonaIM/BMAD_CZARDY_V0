@@ -576,6 +576,8 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
       break
     // </CHANGE>
 
+    // </CHANGE>
+
     case "analytics":
       if (content.jobs && content.jobs.length > 0) {
         context += `The user is viewing a job comparison with ${content.jobs.length} positions:\n\n`
@@ -787,21 +789,125 @@ Simply type any command or ask your questions naturally!`
       },
     })
 
+    const handleTranscriptionUpdate = useCallback(
+      (userText: string, aiText: string) => {
+        console.log("[v0] Voice mode transcription update - user:", userText, "ai:", aiText)
+
+        // Check if we're viewing the contract workspace and if the AI response contains section references
+        if (currentWorkspaceContent?.type === "contract" && aiText && currentWorkspaceContent.contractData) {
+          console.log("[v0] Checking voice mode AI response for section references...")
+
+          // Match section references in the format [Section X] or [Section X.Y]
+          const sectionRefMatch = aiText.match(/\[Section\s+([IVX]+)(?:\.([A-Z]|[0-9]+))?\]/i)
+
+          if (sectionRefMatch) {
+            console.log("[v0] Found section reference in voice mode:", sectionRefMatch[0])
+
+            const romanNumeral = sectionRefMatch[1]
+            const subsection = sectionRefMatch[2]
+
+            // Convert Roman numeral to Arabic number
+            const sectionNumber = romanToArabic(romanNumeral)
+            console.log("[v0] Converted", romanNumeral, "to", sectionNumber)
+
+            // Build section ID
+            let sectionId = `section-${sectionNumber}`
+            if (subsection) {
+              sectionId += `-${subsection.toLowerCase()}`
+            }
+
+            console.log("[v0] Looking for section ID:", sectionId)
+
+            // Find the section in the contract data
+            const section = currentWorkspaceContent.contractData.sections.find((s) => {
+              if (s.id === sectionId) return true
+              return s.subsections?.some((sub) => sub.id === sectionId)
+            })
+
+            if (section) {
+              console.log("[v0] Section found! Updating workspace to highlight:", sectionId)
+
+              // Update workspace content with highlighted section
+              if (onWorkspaceUpdate) {
+                onWorkspaceUpdate({
+                  ...currentWorkspaceContent,
+                  highlightSection: sectionId,
+                })
+              }
+            } else {
+              console.log("[v0] Section not found in contract data")
+            }
+          } else {
+            console.log("[v0] No section reference found in voice mode AI response")
+          }
+        }
+
+        // Add the transcriptions to chat messages
+        if (userText) {
+          const userMsg = {
+            id: `voice-user-${Date.now()}`,
+            type: "user" as const,
+            content: userText,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+          setLocalMessages((prev) => [...prev, userMsg])
+        }
+
+        if (aiText) {
+          const aiMsg = {
+            id: `voice-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: aiText,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+          setLocalMessages((prev) => [...prev, aiMsg])
+        }
+      },
+      [activeAgent.id, currentWorkspaceContent, onWorkspaceUpdate],
+    )
+    // </CHANGE>
+
     useEffect(() => {
-      if (aiMessages.length === 0) return
+      console.log("[v0] Section parser useEffect triggered")
+      console.log("[v0] aiMessages length:", aiMessages.length)
+      console.log("[v0] currentWorkspaceContent:", currentWorkspaceContent?.type)
+
+      if (aiMessages.length === 0) {
+        console.log("[v0] No AI messages, skipping section parsing")
+        return
+      }
 
       const latestAiMessage = aiMessages[aiMessages.length - 1]
-      if (!latestAiMessage || latestAiMessage.role !== "assistant") return // Ensure it's an AI message
+      console.log("[v0] Latest message role:", latestAiMessage?.role)
+      console.log("[v0] Latest message content preview:", latestAiMessage?.content?.substring(0, 200))
+
+      if (!latestAiMessage || latestAiMessage.role !== "assistant") {
+        console.log("[v0] Not an assistant message, skipping")
+        return
+      }
 
       // Only process if contract workspace is open and has contract data
-      if (!currentWorkspaceContent || currentWorkspaceContent.type !== "contract") return
-      if (!currentWorkspaceContent.contractData) return
+      if (!currentWorkspaceContent || currentWorkspaceContent.type !== "contract") {
+        console.log("[v0] Contract workspace not open, skipping section parsing")
+        return
+      }
+
+      if (!currentWorkspaceContent.contractData) {
+        console.log("[v0] No contract data available, skipping")
+        return
+      }
 
       console.log("[v0] Checking AI response for section references...")
+      console.log("[v0] Full AI message:", latestAiMessage.content)
 
-      // Parse for section references like [Section IV.B] or [Section I.C]
-      const sectionReferenceRegex = /\[Section\s+([IVXLCDM]+)(?:\.([A-Z]))?(?:\.\d+)?\]/gi
+      // Parse for section references - more flexible patterns
+      // Matches: [Section IV.B], [Section IV], Section IV.B, Section IV, etc.
+      const sectionReferenceRegex = /\[?Section\s+([IVXLCDM]+)(?:\.([A-Z]))?\]?/gi
       const matches = [...(latestAiMessage.content?.matchAll(sectionReferenceRegex) || [])]
+
+      console.log("[v0] Regex matches found:", matches.length)
 
       if (matches.length > 0) {
         console.log(
@@ -823,17 +929,30 @@ Simply type any command or ask your questions naturally!`
         if (arabicNumber > 0) {
           // Find the matching section in contract data
           const contract = currentWorkspaceContent.contractData
+          console.log(
+            "[v0] Available sections:",
+            contract.sections.map((s) => s.id),
+          )
+
           const targetSection = contract.sections.find((section) => {
             const sectionIdParts = section.id.split("-")
             // Assumes section ID format is like "section-1", "section-4", etc.
             return sectionIdParts[1] === arabicNumber.toString()
           })
 
+          console.log("[v0] Target section found:", targetSection?.id)
+
           if (targetSection) {
             let targetId = targetSection.id // Default to main section ID
 
             // If there's a subsection letter, try to find it
             if (subsectionLetter && targetSection.subsections) {
+              console.log("[v0] Looking for subsection:", subsectionLetter)
+              console.log(
+                "[v0] Available subsections:",
+                targetSection.subsections.map((s) => s.id),
+              )
+
               // Find subsection by matching the letter (case-insensitive)
               const targetSubsection = targetSection.subsections.find((sub) => {
                 const subIdParts = sub.id.split("-")
@@ -862,18 +981,23 @@ Simply type any command or ask your questions naturally!`
               highlightSection: targetId,
             }
 
+            console.log("[v0] Updating workspace with highlightSection:", targetId)
             setCurrentWorkspaceContent(updatedWorkspace) // Update local state
 
             // Trigger update in parent component if necessary
             if (onWorkspaceUpdate) {
+              console.log("[v0] Calling onWorkspaceUpdate")
               onWorkspaceUpdate(updatedWorkspace)
             }
           } else {
             console.log("[v0] Could not find matching section for Roman numeral:", romanNumeral)
           }
         }
+      } else {
+        console.log("[v0] No section references found in AI response")
       }
     }, [aiMessages, currentWorkspaceContent, onWorkspaceUpdate])
+    // </CHANGE>
 
     useEffect(() => {
       console.log("[v0] aiMessages updated:", aiMessages.length, "messages")
@@ -2037,7 +2161,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             jobsToCompare = jobList.filter((j) => j.status === "open").slice(0, 2) // Limit to 2 for comparison view
           } else {
             // For candidates, compare applied or saved jobs
-            jobsToCompare = jobList.filter((j) => j.applied || j.saved).slice(0, 2) // Limit to 2
+            jobsToCompare = jobList.filter((j) => j.applied || j.invited || j.saved).slice(0, 2) // Limit to 2
           }
 
           // If not enough jobs found, default to the first few available
@@ -2635,7 +2759,6 @@ Looking forward to seeing this conversation develop! 🚀`,
         setCurrentWorkspaceContent({ type: "contract", title: "Service Agreement", contractData: TEAMIFIED_CONTRACT })
         return true
       }
-      // </CHANGE>
 
       // 6. Table: Simulate sending tabular data.
       if (lowerText === "table") {
@@ -3329,11 +3452,12 @@ Are you ready to begin your Take Home Challenge?`,
     )
 
     // Dummy handler for transcription update, to be replaced with actual implementation
-    const handleTranscriptionUpdate = (userText: string, aiText: string) => {
-      console.log("Transcription Update - User:", userText, "AI:", aiText)
-      // This function should handle adding transcribed messages to the chat.
-      // For now, we'll just log it.
-    }
+    // This duplicate declaration was the cause of the lint error.
+    // const handleTranscriptionUpdate = (userText: string, aiText: string) => {
+    //   console.log("Transcription Update - User:", userText, "AI:", aiText)
+    //   // This function should handle adding transcribed messages to the chat.
+    //   // For now, we'll just log it.
+    // }
 
     // Main render function for the ChatMain component
     return (

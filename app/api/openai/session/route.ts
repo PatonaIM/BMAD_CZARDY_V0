@@ -41,41 +41,13 @@ Simply say: "Hi! I'm ${agent.firstName}, your ${agent.name}. How can I help you 
 Your services:
 ${agent.actions.map((action) => `- ${action.replace(/-/g, " ")}`).join("\n")}
 
-**Platform Navigation Rules:**
-You CAN open and navigate the platform, but ONLY when the user EXPLICITLY asks with phrases like:
-- "show me [something]"
-- "open [something]"
-- "I want to see [something]"
-- "take me to [something]"
+**Function Calling:**
+You have access to functions that can navigate the platform and switch agents. Use them ONLY when the user explicitly requests:
 
-NEVER say things like:
-- "Would you like me to show you..."
-- "I can open..."
-- "Let me pull up..."
-- "Want to see..."
+- Use 'navigate' function when user asks to see/open/show something
+- Use 'switch_agent' function when user asks to speak with another agent
 
-When a user EXPLICITLY asks to see something, respond briefly:
-- If they ask for "browse candidates" / "see candidates" → Say: "Opening the candidate browser now."
-- If they ask for "job board" / "see jobs" / "view jobs" → Say: "Opening the job board now."
-- If they ask for "my jobs" / "applied jobs" → Say: "Opening your applied jobs now."
-- If they ask for "saved jobs" → Say: "Showing your saved jobs now."
-- If they ask for "invited jobs" → Say: "Opening your invited jobs now."
-- If they ask for "data" / "analytics" → Say: "Opening the analytics dashboard now."
-- If they ask about a SPECIFIC JOB (e.g., "tell me more about the Senior Backend Engineer") → Say: "Opening the [Job Title] position now."
-
-**Agent Switching Rules:**
-Available agents:
-${agentList}
-
-When a user EXPLICITLY asks to speak with another agent, respond briefly:
-"Connecting you with [Name] now."
-
-**IMPORTANT - What NOT to do:**
-- Do NOT mention navigation options unless directly asked
-- Do NOT offer to show/open things proactively
-- Do NOT suggest switching agents unless asked
-- Do NOT say "I can help you with..." followed by a list
-- Answer questions directly without offering additional actions
+After calling a function, give a brief confirmation (1 sentence).
 
 **Remember:**
 - SHORT responses (1-3 sentences)
@@ -83,6 +55,49 @@ When a user EXPLICITLY asks to speak with another agent, respond briefly:
 - Only elaborate when asked
 - Stay in character as ${agent.firstName}
 - Be PASSIVE - wait for explicit requests before offering to open/show anything`
+}
+
+function getFunctionsForAgent(agentId: string) {
+  return [
+    {
+      type: "function",
+      name: "navigate",
+      description:
+        "Navigate to a different view in the platform. Use this when the user explicitly asks to see, show, open, or view something.",
+      parameters: {
+        type: "object",
+        properties: {
+          view: {
+            type: "string",
+            enum: ["browse-candidates", "job-board", "my-jobs", "saved-jobs", "invited-jobs", "analytics"],
+            description: "The view to navigate to",
+          },
+          jobId: {
+            type: "string",
+            description: "Optional: The job ID if navigating to a specific job details page",
+          },
+        },
+        required: ["view"],
+      },
+    },
+    {
+      type: "function",
+      name: "switch_agent",
+      description:
+        "Switch to a different AI agent. Use this when the user explicitly asks to speak with or talk to another agent.",
+      parameters: {
+        type: "object",
+        properties: {
+          agentId: {
+            type: "string",
+            enum: ["technical-recruiter", "account-manager", "sales-marketing", "hr-manager", "financial-controller"],
+            description: "The ID of the agent to switch to",
+          },
+        },
+        required: ["agentId"],
+      },
+    },
+  ]
 }
 
 export async function POST(request: Request) {
@@ -97,6 +112,7 @@ export async function POST(request: Request) {
     const agentId = body.agentId || "technical-recruiter"
     const voice = getVoiceForAgent(agentId)
     const instructions = getInstructionsForAgent(agentId)
+    const tools = getFunctionsForAgent(agentId) // Get functions for the agent
 
     console.log(`[v0] Creating session for agent: ${agentId} with voice: ${voice}`)
 
@@ -110,6 +126,7 @@ export async function POST(request: Request) {
         model: "gpt-4o-realtime-preview-2024-12-17",
         voice: voice,
         instructions: instructions,
+        tools: tools, // Include function definitions
         input_audio_transcription: {
           model: "whisper-1",
         },
