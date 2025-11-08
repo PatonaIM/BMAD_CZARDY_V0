@@ -230,7 +230,21 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
     useEffect(() => {
       if (clientRef.current && !isConnecting) {
         console.log("[v0] Updating workspace context without reconnecting")
-        const systemInstructions = buildSystemPrompt(agentId, AI_AGENTS, true)
+
+        // Build base system prompt
+        let systemInstructions = buildSystemPrompt(agentId, AI_AGENTS, true)
+
+        // Add workspace context if available
+        const workspaceContext = formatWorkspaceContextForVoice(currentWorkspaceContent)
+        if (workspaceContext && workspaceContext.trim().length > 0) {
+          systemInstructions += workspaceContext
+          systemInstructions +=
+            "\n\n**CONTEXT-AWARE INSTRUCTIONS:**\n" +
+            "- When the user asks questions about what they're viewing (pricing plans, jobs, candidates, etc.), use the workspace context above to provide accurate, specific answers.\n" +
+            "- For pricing questions, be enthusiastic and persuasive while being helpful. Highlight the value proposition and benefits of upgrading.\n" +
+            "- Keep explanations brief but compelling - focus on key benefits that matter most to the user's needs.\n"
+        }
+
         clientRef.current.sendMessage({
           type: "session.update",
           session: {
@@ -634,19 +648,70 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
       break
 
     case "pricing-plans":
-      context += `The user is viewing the Pricing Plans workspace with detailed pricing information.\n\n`
-      context += `**CANDIDATE PRICING:**\n`
-      context += `- Free Plan: $0/month (basic features, 10 AI interactions/month)\n`
-      context += `- Premium Monthly: $19.99/month (was $29.99, ON SALE)\n`
-      context += `  - Unlimited AI interactions, resume optimization, priority matching, interview prep, mock interviews, learning access, salary insights, direct messaging, application tracking, 2 coaching sessions/month\n`
-      context += `- Premium Annual: $149/year (was $239.88, saves $90.88 = 38% off)\n`
-      context += `  - Same features as Premium Monthly, billed annually\n\n`
-      context += `**HIRING MANAGER PRICING:**\n`
-      context += `- Basic Plan: $300/month (payroll & HR essentials)\n`
-      context += `- Recruiter Plan: 9% of base salary per hire (pay only for successful placements)\n`
-      context += `- Enterprise Plan: $500/month (MOST POPULAR - includes equipment, workspace, priority matching, analytics, dedicated account manager)\n`
-      context += `- Premium Plan: 30% + $300/month (all-in solution with white-glove service, 24/7 support, custom integrations)\n\n`
-      context += `You can answer any questions about pricing, plan features, comparisons, or recommendations based on this information.\n`
+      context += `The user is viewing the Pricing Plans workspace. You have FULL ACCESS to detailed pricing information and should confidently explain and recommend plans.\n\n`
+
+      context += `**CANDIDATE PRICING PLANS:**\n\n`
+      context += `1. FREE PLAN - $0/month:\n`
+      context += `   - Basic job search features\n`
+      context += `   - Limited to 10 AI interactions per month\n`
+      context += `   - Good for casual job seekers\n\n`
+
+      context += `2. PREMIUM MONTHLY - $19.99/month (SAVE $10 - Was $29.99!):\n`
+      context += `   - UNLIMITED AI interactions for interview prep and career guidance\n`
+      context += `   - AI-powered resume optimization\n`
+      context += `   - Priority job matching algorithm\n`
+      context += `   - Comprehensive interview preparation tools\n`
+      context += `   - Mock interviews with AI feedback\n`
+      context += `   - Access to learning resources and courses\n`
+      context += `   - Real-time salary insights and negotiation tips\n`
+      context += `   - Direct messaging with hiring managers\n`
+      context += `   - Application tracking and analytics\n`
+      context += `   - 2 one-on-one coaching sessions per month\n`
+      context += `   - BEST for active job seekers who want maximum support\n\n`
+
+      context += `3. PREMIUM ANNUAL - $149/year (SAVE $90.88 = 38% OFF!):\n`
+      context += `   - All Premium Monthly features included\n`
+      context += `   - Pays for itself in just 7.5 months vs monthly plan\n`
+      context += `   - Best value for serious job seekers\n`
+      context += `   - Billed once annually at $149\n\n`
+
+      context += `**HIRING MANAGER / ENTERPRISE PRICING:**\n\n`
+      context += `1. BASIC PLAN - $300/month:\n`
+      context += `   - Payroll & HR essentials\n`
+      context += `   - Basic recruitment tools\n`
+      context += `   - Good for small teams with occasional hiring needs\n\n`
+
+      context += `2. RECRUITER PLAN - 9% of base salary per hire:\n`
+      context += `   - Pay ONLY for successful placements\n`
+      context += `   - No upfront costs or monthly fees\n`
+      context += `   - Full recruitment support\n`
+      context += `   - Risk-free hiring model\n`
+      context += `   - Perfect for companies with specific hiring needs\n\n`
+
+      context += `3. ENTERPRISE PLAN - $500/month (MOST POPULAR!):\n`
+      context += `   - Equipment & workspace provisioning\n`
+      context += `   - Priority candidate matching with AI\n`
+      context += `   - Advanced analytics and reporting dashboard\n`
+      context += `   - Dedicated account manager for personalized support\n`
+      context += `   - Unlimited job postings\n`
+      context += `   - ATS integration\n`
+      context += `   - BEST for growing companies with ongoing hiring needs\n\n`
+
+      context += `4. PREMIUM PLAN - 30% of salary + $300/month:\n`
+      context += `   - All-in white-glove recruitment solution\n`
+      context += `   - 24/7 priority support\n`
+      context += `   - Custom API integrations\n`
+      context += `   - Dedicated recruitment team\n`
+      context += `   - Employer branding support\n`
+      context += `   - For enterprises with high-volume or specialized hiring\n\n`
+
+      context += `**YOUR ROLE WHEN DISCUSSING PRICING:**\n`
+      context += `- Be enthusiastic and confident about the value we provide\n`
+      context += `- For candidates: Emphasize how Premium plans accelerate job search success and provide competitive advantages\n`
+      context += `- For hiring managers: Highlight ROI, time savings, and quality of hire improvements\n`
+      context += `- Recommend plans based on the user's stated needs and hiring/job search urgency\n`
+      context += `- Explain that upgrades can happen anytime and provide immediate access to all features\n`
+      context += `- Keep responses concise but compelling - focus on outcomes and benefits, not just features\n\n`
       break
 
     default:

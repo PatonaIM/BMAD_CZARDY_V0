@@ -312,15 +312,6 @@ const suggestionsByCategory: Record<SuggestionCategory, Array<{ text: string; em
   ],
 }
 
-const categoryTabs: Array<{ id: SuggestionCategory; label: string; icon: React.ReactNode }> = [
-  { id: "suggested", label: "Suggested", icon: <Sparkles className="w-4 h-4" /> },
-  { id: "apply-to-jobs", label: "Apply to Jobs", icon: <Briefcase className="w-4 h-4" /> },
-  { id: "hiring", label: "Hiring", icon: <Building2 className="w-4 h-4" /> },
-  { id: "quote-me", label: "Pricing", icon: <Calculator className="w-4 h-4" /> },
-  { id: "legal", label: "Legal", icon: <Scale className="w-4 h-4" /> },
-  { id: "about-us", label: "About Us", icon: <Info className="w-4 h-4" /> },
-]
-
 const generateWelcomeMessage = (agent: AIAgent, userRole: "candidate" | "hiring_manager"): string => {
   if (userRole === "candidate") {
     return `Hello! Welcome to Teamified AI! I'm **${agent.firstName}**, your **${agent.name}** AI Agent. ${agent.icon}
@@ -514,11 +505,25 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
           }
           // </CHANGE>
         }
-      } else {
-        console.log("[v0] Job board workspace has no jobs data")
+      } else if (content.type === "pricing-plans") {
+        context += `The user is viewing the Pricing Plans workspace with detailed pricing information.\n\n`
+        context += `**CANDIDATE PRICING:**\n`
+        context += `- Free Plan: $0/month (basic features, 10 AI interactions/month)\n`
+        context += `- Premium Monthly: $19.99/month (was $29.99, ON SALE)\n`
+        context += `  - Unlimited AI interactions, resume optimization, priority matching, interview prep, mock interviews, learning access, salary insights, direct messaging, application tracking, 2 coaching sessions/month\n`
+        context += `- Premium Annual: $149/year (was $239.88, saves $90.88 = 38% off)\n`
+        context += `  - Same features as Premium Monthly, billed annually\n\n`
+        context += `**HIRING MANAGER PRICING:**\n`
+        context += `- Basic Plan: $300/month (payroll & HR essentials)\n`
+        context += `- Recruiter Plan: 9% of base salary per hire (pay only for successful placements)\n`
+        context += `- Enterprise Plan: $500/month (MOST POPULAR - includes equipment, workspace, priority matching, analytics, dedicated account manager)\n`
+        context += `- Premium Plan: 30% + $300/month (all-in solution with white-glove service, 24/7 support, custom integrations)\n\n`
+        context += `You can answer any questions about pricing, plan features, comparisons, or recommendations based on this information.\n`
+        // </CHANGE>
       }
       break
     // </CHANGE>
+
     case "analytics":
       if (content.jobs && content.jobs.length > 0) {
         context += `The user is viewing a job comparison with ${content.jobs.length} positions:\n\n`
@@ -594,6 +599,9 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     const [isHiringManagerIntroduction, setIsHiringManagerIntroduction] = useState(false)
     // </CHANGE>
 
+    const currentRequestAgentRef = useRef<string>(activeAgent.id)
+    // </CHANGE>
+
     const lastUserMessageRef = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -665,18 +673,36 @@ Simply type any command or ask your questions naturally!`
     useEffect(() => {
       console.log("[v0] aiMessages updated:", aiMessages.length, "messages")
       if (aiMessages.length > 0) {
-        console.log("[v0] Last message:", aiMessages[aiMessages.length - 1])
-      }
-    }, [aiMessages])
-
-    useEffect(() => {
-      if (!aiMessages || aiMessages.length === 0) {
-        return
+        console.log("[v0] Last message:", JSON.stringify(aiMessages[aiMessages.length - 1]))
       }
 
       const convertedMessages: Message[] = aiMessages.map((msg) => {
-        // Find the corresponding agent if it's an AI message
-        const messageAgent = AI_AGENTS.find((a) => a.id === msg.extra?.agentId) || activeAgent
+        let messageAgentId: string | undefined
+
+        if (msg.extra?.agentId) {
+          messageAgentId = msg.extra.agentId
+        }
+        // Then, try providerMetadata from the API response (legacy)
+        else if (msg.providerMetadata?.agentId) {
+          messageAgentId = msg.providerMetadata.agentId as string
+        }
+        // Check all parts for providerMetadata (AI SDK v5 format)
+        else if (msg.parts) {
+          for (const part of msg.parts) {
+            if (part.providerMetadata?.agentId) {
+              messageAgentId = part.providerMetadata.agentId as string
+              break
+            }
+          }
+        }
+
+        // For AI responses without agentId metadata, use the current request's agent
+        const messageAgent = messageAgentId
+          ? AI_AGENTS.find((a) => a.id === messageAgentId) || AI_AGENTS[0]
+          : msg.role === "assistant"
+            ? AI_AGENTS.find((a) => a.id === currentRequestAgentRef.current) || AI_AGENTS[0]
+            : AI_AGENTS[0]
+        // </CHANGE>
 
         let content = ""
         // Handle AI SDK v5 parts array format
@@ -701,7 +727,7 @@ Simply type any command or ask your questions naturally!`
           id: msg.id,
           type: msg.role === "user" ? "user" : "ai",
           content,
-          agentId: messageAgent.id,
+          agentId: messageAgent.id, // Now using properly determined agentId
           responseType,
           thinkingTime: msg.extra?.thinkingTime,
           promptSuggestions: msg.extra?.promptSuggestions,
@@ -1188,7 +1214,7 @@ ${job.jobSummary ? job.jobSummary.split("\n").slice(0, 3).join("\n") : job.descr
 
 ${loremParagraphs[0]}
 
-### What I Can Help You With
+## What I Can Help You With
 
 I'm here to support you through every step of the application process. Whether you want to apply now, save this for later, or prepare yourself better, I've got you covered!
 
@@ -1225,9 +1251,18 @@ ${loremParagraphs[1]}`
         const isCommand = handleCommandOrMessage(message)
         if (!isCommand) {
           console.log("[v0] sendMessageFromWorkspace: Not a command, calling sendMessage")
-          sendMessage({ text: message })
+          console.log("[v0] Current activeAgent.id:", activeAgent.id)
+          sendMessage(
+            { text: message },
+            {
+              body: {
+                agentId: activeAgent.id, // Pass active agent ID here
+              },
+            },
+          )
         }
       },
+      // </CHANGE>
       sendAIMessageFromWorkspace: (message: string, agentId?: string) => {
         console.log("[v0] sendAIMessageFromWorkspace called")
         console.log("[v0] Message:", message.substring(0, 50) + "...")
@@ -1623,6 +1658,44 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         const command = intentResult.command!
 
+        if (command === "pricing" || command === "pricing plans") {
+          console.log("[v0] Pricing command detected")
+
+          // Don't force agent switch, let the current agent handle pricing questions
+          // All agents now have access to pricing information in their context
+          // </CHANGE>
+
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: "Opening the pricing plans for you. I'll help you find the perfect plan for your needs.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          const workspaceData: WorkspaceContent = {
+            type: "pricing-plans",
+            title: "Pricing Plans",
+          }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        // </CHANGE>
+
         if (command === "compare jobs") {
           console.log("[v0] Compare jobs command detected")
 
@@ -1771,7 +1844,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const aiMsg = {
             id: `voice-cmd-ai-${Date.now()}`,
             type: "ai" as const,
-            content: `Opening the job board to browse available positions. You can continue browsing while we chat.`,
+            content: "Opening the job board to browse available positions. You can continue browsing while we chat.",
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -1940,8 +2013,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const aiMsg = {
             id: `voice-cmd-ai-${Date.now()}`,
             type: "ai" as const,
-            content:
-              "Opening the candidate browser for you. You can now swipe through our pool of talented candidates.",
+            content: "Opening the candidate browser for you. You can continue browsing while we chat.",
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -2425,7 +2497,6 @@ Looking forward to seeing this conversation develop! 🚀`,
           agentId: activeAgent.id,
         }
 
-        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
         const aiMsg: Message = {
           id: `voice-cmd-ai-${Date.now()}`, // Changed ID to match voice command handling
           type: "ai" as const,
@@ -2651,8 +2722,18 @@ Are you ready to begin your Take Home Challenge?`,
       setLocalMessages((prev) => [...prev, userMsg])
       // </CHANGE>
 
-      // Send message to AI SDK
-      sendMessage({ text: content })
+      console.log("[v0] handleSendMessage: Sending message with agentId:", targetAgentId)
+      sendMessage(
+        { text: content },
+        {
+          body: {
+            agentId: targetAgentId, // This will be merged with the initial body
+            workspaceContext,
+            commandsContext: getCommandsContext(activeAgent),
+          },
+        },
+      )
+      // </CHANGE>
       setInputMessage("") // Clear input field
     }
 
@@ -2791,9 +2872,46 @@ Are you ready to begin your Take Home Challenge?`,
         return
       }
 
-      sendMessage({ text: userMessage })
+      // Check if the message is a command
+      const wasCommand = await detectAndHandleCommand(userMessage)
+      if (wasCommand) {
+        console.log("[v0] Command was handled, not sending to AI")
+        return
+      }
+      // </CHANGE>
 
-      handleCommandOrMessage(userMessage)
+      currentRequestAgentRef.current = activeAgent.id
+
+      try {
+        await sendMessage(
+          {
+            text: userMessage,
+            // Pass the current agent ID to the body
+            experimental_extra: {
+              agentId: activeAgent.id,
+            },
+          },
+          {
+            body: {
+              agentId: activeAgent.id,
+              workspaceContext,
+              commandsContext: getCommandsContext(activeAgent),
+            },
+          },
+        )
+      } catch (error) {
+        console.error("[v0] Error sending message:", error)
+        // Add an error message to the chat
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: `${Date.now()}-error`,
+            type: "ai",
+            content: "Sorry, I encountered an error. Please try again.",
+            agentId: activeAgent.id,
+          },
+        ])
+      }
     }
 
     const handleSuggestionClick = (text: string) => {
@@ -2838,6 +2956,16 @@ Are you ready to begin your Take Home Challenge?`,
 
     // const isCentered = localMessages.length === 0 && aiMessages.length === 0
     // const isThinking = status === "in_progress"
+
+    // Define categoryTabs here
+    const categoryTabs = [
+      { id: "suggested", label: "Suggested", icon: <Sparkles className="w-4 h-4" /> },
+      { id: "apply-to-jobs", label: "Apply to Jobs", icon: <Briefcase className="w-4 h-4" /> },
+      { id: "hiring", label: "Hiring", icon: <Building2 className="w-4 h-4" /> },
+      { id: "quote-me", label: "Quote Me", icon: <Calculator className="w-4 h-4" /> },
+      { id: "legal", label: "Legal", icon: <Scale className="w-4 h-4" /> },
+      { id: "about-us", label: "About Us", icon: <Info className="w-4 h-4" /> },
+    ]
 
     const renderSuggestions = () => (
       <>
@@ -3047,7 +3175,9 @@ Are you ready to begin your Take Home Challenge?`,
                     const isLastUserMessage =
                       msg.type === "user" && index === localMessages.map((m) => m.type).lastIndexOf("user")
                     const isLastMessage = index === localMessages.length - 1
-                    const messageAgent = msg.agentId ? AI_AGENTS.find((a) => a.id === msg.agentId) : activeAgent
+                    const messageAgent = msg.agentId
+                      ? AI_AGENTS.find((a) => a.id === msg.agentId) || AI_AGENTS[0]
+                      : AI_AGENTS[0]
                     return (
                       <div
                         key={msg.id}
