@@ -714,6 +714,59 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
       context += `- Keep responses concise but compelling - focus on outcomes and benefits, not just features\n\n`
       break
 
+    case "contract":
+      context += `The user is viewing the Service Agreement.\n\n`
+      context += `**TEAMIFIED SERVICE AGREEMENT**\n\n`
+      if (content.contractData) {
+        const contract = content.contractData
+        context += `**Contract Details:**\n`
+        context += `- Title: ${contract.title}\n`
+        context += `- Company: ${contract.parties.company}\n`
+        context += `- Client: ${contract.parties.client}\n`
+        context += `- Effective Date: ${contract.effectiveDate}\n`
+        context += `- Term: ${contract.term}\n`
+        context += `- Status: ${contract.status}\n\n`
+
+        context += `**CONTRACT SECTIONS:**\n\n`
+
+        contract.sections.forEach((section) => {
+          context += `**${section.title}** (ID: ${section.id})\n`
+          context += `${section.content}\n\n`
+
+          if (section.subsections && section.subsections.length > 0) {
+            section.subsections.forEach((subsection) => {
+              context += `  **${subsection.title}** (ID: ${subsection.id})\n`
+              context += `  ${subsection.content}\n\n`
+            })
+          }
+        })
+
+        if (contract.signatories && contract.signatories.length > 0) {
+          context += `\n**SIGNATORIES:**\n`
+          contract.signatories.forEach((signatory) => {
+            context += `- ${signatory.name}, ${signatory.position} (Signed: ${signatory.date})\n`
+          })
+          context += `\n`
+        }
+
+        context += `\n**INSTRUCTIONS FOR ANSWERING CONTRACT QUESTIONS:**\n`
+        context += `- When a user asks about specific contract terms (fees, termination, confidentiality, etc.), ALWAYS reference the relevant section by its ID in your response.\n`
+        context += `- Format section references like this: "According to [Section IV.B]..." or "As stated in [Section I.C]..."\n`
+        context += `- Put the section ID in square brackets so it can be detected and used for auto-scrolling.\n`
+        context += `- Examples:\n`
+        context += `  * For fees: Reference [Section IV.B] for pricing structure\n`
+        context += `  * For termination: Reference [Section I.C] for client termination, [Section I.D] for breach termination\n`
+        context += `  * For confidentiality: Reference [Section VI.A]\n`
+        context += `  * For intellectual property: Reference [Section VI.B]\n`
+        context += `  * For payment terms: Reference [Section IV.C]\n`
+        context += `  * For personnel: Reference [Section III]\n`
+        context += `- The contract workspace will automatically scroll to the section you reference when you use the [Section X] format.\n`
+        context += `- You CAN navigate to sections - do not say you cannot. Just reference them in your response.\n`
+      } else {
+        context += "Contract data is not available."
+      }
+      break
+
     default:
       if (content.title) {
         context += `The user is viewing: ${content.title}\n`

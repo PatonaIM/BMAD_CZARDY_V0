@@ -11,7 +11,7 @@ export type WorkspaceContentType =
   | "table"
   | "analytics"
   | "candidate-profile"
-  | "candidate-profile-view" // Added new workspace type for viewing candidate profiles
+  | "candidate-profile-view"
   | "hiring-manager-profile"
   | "candidate-pricing"
   | "payment-success"
@@ -22,8 +22,9 @@ export type WorkspaceContentType =
   | "match-success"
   | "browse-candidates"
   | "candidate-chat"
-  | "hiring-manager-chat" // Added hiring-manager-chat workspace type for candidate-hiring manager conversations
-  | "pricing-plans" // Added new pricing-plans workspace type for centralized pricing information
+  | "hiring-manager-chat"
+  | "pricing-plans"
+  | "contract" // Added contract workspace type for viewing service agreements
   | null
 
 export interface WorkspaceContent {
@@ -33,16 +34,48 @@ export interface WorkspaceContent {
   planName?: string
   amount?: string
   job?: JobListing
-  jobs?: JobListing[] // Added jobs array for job-board context
+  jobs?: JobListing[]
   jobBoardTab?: "applied" | "invited" | "saved" | "browse"
-  jobStatusFilter?: "draft" | "open" | "closed" // Added jobStatusFilter for hiring manager job navigation
+  jobStatusFilter?: "draft" | "open" | "closed"
   candidate?: CandidateProfile
-  candidates?: CandidateProfile[] // Full list of candidates for swiping through
-  currentCandidateIndex?: number // Current index in the candidates array
+  candidates?: CandidateProfile[]
+  currentCandidateIndex?: number
   matchedWith?: string
-  timestamp?: number // Added timestamp to ensure unique workspace instances for randomization
-  showSwipeButtons?: boolean // Added flag to show swipe buttons in candidate profile view
-  sourceView?: "browse-candidates" | "job-view" // Track where the profile was opened from
+  timestamp?: number
+  showSwipeButtons?: boolean
+  sourceView?: "browse-candidates" | "job-view"
+  contractData?: ContractData // Added contractData for contract workspace
+  highlightSection?: string // Added highlightSection to auto-scroll to specific contract sections
+}
+
+export interface ContractData {
+  id: string
+  title: string
+  parties: {
+    company: string
+    client: string
+  }
+  effectiveDate: string
+  term: string
+  sections: ContractSection[]
+  status: "draft" | "pending" | "executed"
+  signatories?: {
+    name: string
+    position: string
+    date: string
+    signed: boolean
+  }[]
+}
+
+export interface ContractSection {
+  id: string
+  title: string
+  content: string
+  subsections?: {
+    id: string
+    title: string
+    content: string
+  }[]
 }
 
 export type JobStatus = "draft" | "open" | "closed" | "cancelled"

@@ -452,29 +452,22 @@ export function buildSystemPrompt(agentId: string, allAgents: AIAgent[], include
 21. **Image Gallery** - Display images
 22. **Video Player** - Play videos with transcriptions
 23. **Table Display** - Show tabular data
+24. **Contract Workspace** - View service agreement and contract details with automatic section navigation
 
-**Actions You Can Perform:**
-- Open any workspace listed above with relevant data
-- Navigate between different views (job board tabs, candidate pools, etc.)
-- Switch users to other AI agents when they request it
-- Provide detailed information about jobs, candidates, pricing, and features
-- Answer questions about the platform, services, and processes
-- Help users with applications, profiles, and account management
+**Special Capabilities for Contract Workspace:**
+When the Contract workspace is open, you have the ability to navigate to specific contract sections:
+- You CAN scroll to and highlight specific sections by referencing them in your responses
+- Use the format: [Section X] or [Section X.Y] (e.g., [Section IV], [Section IV.B])
+- When answering questions about the contract, ALWAYS include the section reference in brackets
+- The system will automatically scroll to the referenced section and highlight it
+- Examples:
+  • "According to [Section IV.B], the monthly fees are..."
+  • "The termination terms in [Section I.C] state that..."
+  • "As outlined in [Section VI.A], confidential information means..."
+- DO NOT say you cannot navigate to sections - you CAN by using the bracket reference format
+- When a user asks "go to Section X" or "show me Section X", respond with the content and include the [Section X] reference
 
-**What You Should NEVER Say:**
-- ❌ "I don't have access to [any feature above]"
-- ❌ "I can't show you [any workspace above]"
-- ❌ "I'm unable to display [any content type above]"
-- ❌ "That information isn't available to me"
-- ❌ "I don't have the capability to do that"
-
-**What You SHOULD Say Instead:**
-- ✅ "Let me show you the [workspace/feature]"
-- ✅ "I can help you with that. Here's the [information/workspace]"
-- ✅ "I'm opening the [workspace] now"
-- ✅ Be confident and helpful about all platform features
-
-**Remember:** If a user asks about ANY feature listed above, you HAVE access to it and should help them confidently.`
+`
 
   const noReferralInstruction = `
 

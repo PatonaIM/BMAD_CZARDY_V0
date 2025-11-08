@@ -24,6 +24,12 @@ export async function POST(req: Request) {
         "\n\n**IMPORTANT INSTRUCTIONS:**\n" +
         "- When the user asks questions about the workspace content (e.g., 'What's their experience?', 'Tell me about this candidate', 'How many applied jobs?'), use the workspace context above to provide accurate, specific answers.\n" +
         "- Reference the actual data shown in the workspace.\n" +
+        "- For contract questions, ALWAYS cite the specific section ID in brackets (e.g., 'According to [Section IV.B]...').\n" +
+        "- When answering contract questions about fees, termination, confidentiality, or other terms, include the exact section reference in brackets.\n" +
+        "- When a user asks to 'go to Section X' or 'show me Section X', respond by explaining what's in that section and include the [Section X] reference.\n" +
+        "- You CAN navigate to contract sections by including the section reference in brackets - DO NOT say you cannot.\n" +
+        "- The contract workspace will automatically scroll to the section when you reference it in brackets.\n" +
+        "- Format section references as [Section I], [Section IV.B], [Section VI.A.1], etc.\n" +
         "- If the user asks about something not in the workspace context, use your general knowledge to provide helpful information."
     } else {
       systemMessage +=

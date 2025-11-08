@@ -242,6 +242,32 @@ const RESERVED_COMMANDS = [
       "plan benefits",
     ],
   },
+  {
+    command: "contract",
+    description: "View contract and service agreement documents",
+    keywords: [
+      "contract",
+      "view contract",
+      "show contract",
+      "open contract",
+      "see contract",
+      "contract details",
+      "service agreement",
+      "agreement",
+      "my contract",
+      "our contract",
+      "the contract",
+      "contract preview",
+      "show agreement",
+      "view agreement",
+      "see agreement",
+      "open agreement",
+      "service terms",
+      "terms of service",
+      "contract terms",
+      "agreement terms",
+    ],
+  },
   ...AI_AGENTS.map((agent) => ({
     command: `switch to ${agent.firstName.toLowerCase()}`,
     description: `Switch to ${agent.firstName} - ${agent.name}`,
@@ -706,6 +732,31 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "plan benefits",
       ],
     },
+    {
+      command: "contract",
+      variations: [
+        "contract",
+        "view contract",
+        "show contract",
+        "open contract",
+        "see contract",
+        "contract details",
+        "service agreement",
+        "agreement",
+        "my contract",
+        "our contract",
+        "the contract",
+        "contract preview",
+        "show agreement",
+        "view agreement",
+        "see agreement",
+        "open agreement",
+        "service terms",
+        "terms of service",
+        "contract terms",
+        "agreement terms",
+      ],
+    },
   ]
 
   // Remove common filler words and phrases
@@ -758,13 +809,17 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
   return null
 }
 
-export async function detectCommandIntent(userInput: string): Promise<{
+export async function detectCommandIntent(
+  userInput: string,
+  currentWorkspace?: string,
+): Promise<{
   isCommand: boolean
   command?: string
   confidence: number
-  jobTitle?: string // Added jobTitle for job-specific commands
+  jobTitle?: string
 }> {
   console.log("[v0] detectCommandIntent called with:", userInput)
+  console.log("[v0] Current workspace:", currentWorkspace)
 
   const normalizedInput = userInput.toLowerCase().trim()
 
@@ -776,7 +831,44 @@ export async function detectCommandIntent(userInput: string): Promise<{
     }
   }
 
-  // Check fuzzy navigation match first
+  const contextualKeywords = [
+    "in this",
+    "in the",
+    "this contract",
+    "the contract",
+    "this agreement",
+    "the agreement",
+    "this document",
+    "the document",
+    "where in",
+    "what does",
+    "explain this",
+    "tell me about this",
+    "about this",
+    "in here",
+    "from here",
+    "details about",
+    "information about",
+    "tell me more about",
+    "can you explain",
+    "what about",
+    "how about",
+    "section",
+    "clause",
+    "term",
+    "provision",
+  ]
+
+  const isAskingAboutCurrentWorkspace = contextualKeywords.some((keyword) => normalizedInput.includes(keyword))
+
+  if (isAskingAboutCurrentWorkspace && currentWorkspace) {
+    console.log("[v0] User is asking about current workspace content, not navigating. Skipping command detection.")
+    return {
+      isCommand: false,
+      confidence: 0,
+    }
+  }
+
   const fuzzyNavMatch = fuzzyMatchNavigationCommand(normalizedInput)
   if (fuzzyNavMatch) {
     console.log("[v0] Fuzzy navigation match found:", fuzzyNavMatch.command)
@@ -858,6 +950,26 @@ export async function detectCommandIntent(userInput: string): Promise<{
     "plan inclusions",
     "plan features",
     "plan benefits",
+    "contract",
+    "view contract",
+    "show contract",
+    "open contract",
+    "see contract",
+    "contract details",
+    "service agreement",
+    "agreement",
+    "my contract",
+    "our contract",
+    "the contract",
+    "contract preview",
+    "show agreement",
+    "view agreement",
+    "see agreement",
+    "open agreement",
+    "service terms",
+    "terms of service",
+    "contract terms",
+    "agreement terms",
   ]
 
   for (const pattern of jobRequestPatterns) {
