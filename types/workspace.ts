@@ -33,6 +33,7 @@ export interface WorkspaceContent {
   data?: any
   planName?: string
   amount?: string
+  planType?: "candidate" | "hiring-manager" // Added planType to support automatic navigation between candidate and hiring manager plans
   job?: JobListing
   jobs?: JobListing[]
   jobBoardTab?: "applied" | "invited" | "saved" | "browse"

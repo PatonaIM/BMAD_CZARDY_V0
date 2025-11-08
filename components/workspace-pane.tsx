@@ -1036,7 +1036,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             </svg>
           </button>
         </div>
-        <PricingPlansWorkspace onUpgradePlan={onUpgradePlan} />
+        <PricingPlansWorkspace initialView={content.planType || "candidate"} onUpgradePlan={onUpgradePlan} />
       </div>
     )
   }

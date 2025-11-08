@@ -798,7 +798,7 @@ Simply type any command or ask your questions naturally!`
           console.log("[v0] Checking voice mode AI response for section references...")
 
           // Match section references in the format [Section X] or [Section X.Y]
-          const sectionRefMatch = aiText.match(/\[Section\s+([IVX]+)(?:\.([A-Z]|[0-9]+))?\]/i)
+          const sectionRefMatch = aiText.match(/\[Section\s+([IVXLCDM]+)(?:\.([A-Z]))?\]/i)
 
           if (sectionRefMatch) {
             console.log("[v0] Found section reference in voice mode:", sectionRefMatch[0])
@@ -2112,7 +2112,6 @@ Looking forward to seeing this conversation develop! 🚀`,
         if (command === "pricing" || command === "pricing plans") {
           console.log("[v0] Pricing command detected")
 
-          // Add user message
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
@@ -2120,26 +2119,25 @@ Looking forward to seeing this conversation develop! 🚀`,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
-
-          // Add AI confirmation message
-          const aiMsg = {
-            id: `voice-cmd-ai-${Date.now()}`,
-            type: "ai" as const,
-            content: "Opening the pricing plans for you. I'll help you find the perfect plan for your needs.",
-            timestamp: new Date().toISOString(),
-            agentId: activeAgent.id,
-          }
-          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          setLocalMessages((prev) => [...prev, userMsg])
+          // </CHANGE>
 
           // Prepare workspace content for pricing plans
           const workspaceData: WorkspaceContent = {
             type: "pricing-plans",
             title: "Pricing Plans",
           }
-          onOpenWorkspace(workspaceData) // Open workspace
+          onOpenWorkspace(workspaceData)
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
           setCurrentWorkspaceContent(workspaceData)
+
+          if (isVoiceMode && voiceModeRef.current) {
+            console.log("[v0] Voice mode active, workspace context will update automatically")
+            // The workspace context will be sent via session.update in voice-mode.tsx useEffect
+            // The AI will naturally provide an overview based on the updated context
+          }
+          // </CHANGE>
 
           return true // Command was handled
         }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Sparkles, Building2, Users, ChevronRight } from "lucide-react"
+import { Check, Sparkles, Building2, Users, ChevronRight, Briefcase, Zap, Crown } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface PricingPlansUnifiedProps {
@@ -216,25 +216,52 @@ export function PricingPlansUnified({ userType = null, onClose }: PricingPlansUn
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 gap-4 mb-8">
               {/* Basic Plan */}
-              <div className="rounded-2xl border-2 border-border bg-card p-6 flex flex-col">
+              <div className="p-6 rounded-2xl border-2 border-border hover:border-[#A16AE8]/50 cursor-pointer transition-all bg-card">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-[#A16AE8]" />
+                    <div>
+                      <h4 className="text-lg font-bold text-foreground">Basic Plan</h4>
+                      <p className="text-xs text-muted-foreground">Payroll & HR essentials</p>
+                    </div>
+                  </div>
+                  <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center flex-shrink-0" />
+                </div>
                 <div className="mb-4">
-                  <h3 className="text-xl font-bold text-foreground mb-2">Basic Plan</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-foreground">$300</span>
-                    <span className="text-muted-foreground text-sm">USD/month</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold text-foreground">$300</span>
+                    <span className="text-sm text-muted-foreground">/mo</span>
                   </div>
                 </div>
-
-                <div className="space-y-3 mb-6 flex-1">
-                  <FeatureItem text="Payroll and HR essentials" />
-                  <FeatureItem text="Basic candidate search" />
-                  <FeatureItem text="Standard support" />
-                  <FeatureItem text="Monthly billing" />
-                </div>
-
-                <div className="text-xs text-muted-foreground mb-4">Perfect for small teams starting out</div>
+                <ul className="space-y-2 text-xs text-muted-foreground mb-6">
+                  <li className="flex items-start gap-2">
+                    <span className="font-semibold text-foreground">💰 PAYROLL</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <span>Global payroll & payslips</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <span>Taxes, insurance, and local benefits</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">👥 HR</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <span>HR record keeping & reporting</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">✨ TEAMIFIED AI</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <span>Limited Access to Teamified AI Agents</span>
+                  </li>
+                </ul>
 
                 <button
                   onClick={() => handleUpgrade("Basic Plan", "hiring-manager")}
@@ -246,23 +273,54 @@ export function PricingPlansUnified({ userType = null, onClose }: PricingPlansUn
               </div>
 
               {/* Recruiter Plan */}
-              <div className="rounded-2xl border-2 border-border bg-card p-6 flex flex-col">
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-foreground mb-2">Recruiter Plan</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-foreground">9%</span>
-                    <span className="text-muted-foreground text-sm">of base salary</span>
+              <div className="p-6 rounded-2xl border-2 border-border hover:border-[#A16AE8]/50 cursor-pointer transition-all bg-card">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-[#8096FD]" />
+                    <div>
+                      <h4 className="text-lg font-bold text-foreground">Recruiter Plan</h4>
+                      <p className="text-xs text-muted-foreground">Full recruitment lifecycle</p>
+                    </div>
                   </div>
+                  <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center flex-shrink-0" />
                 </div>
-
-                <div className="space-y-3 mb-6 flex-1">
-                  <FeatureItem text="Pay only for successful placements" />
-                  <FeatureItem text="Full candidate access" />
-                  <FeatureItem text="AI-powered matching" />
-                  <FeatureItem text="Performance-based pricing" />
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-foreground">9% of base salary</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Per hire</p>
                 </div>
-
-                <div className="text-xs text-muted-foreground mb-4">Risk-free hiring - only pay per hire</div>
+                <ul className="space-y-2 text-xs text-muted-foreground mb-6">
+                  <li className="flex items-start gap-2">
+                    <span className="font-semibold text-foreground">🎯 HIRING</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                    <span>Full recruitment lifecycle</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                    <span>Local compliance & onboarding</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">🤝 MANAGEMENT</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                    <span>HR and performance management</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                    <span>Employment contracts & benefits setup</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">✨ TEAMIFIED AI</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#8096FD] flex-shrink-0 mt-0.5" />
+                    <span>Limited Access to Teamified AI Agents</span>
+                  </li>
+                </ul>
 
                 <button
                   onClick={() => handleUpgrade("Recruiter Plan", "hiring-manager")}
@@ -274,64 +332,131 @@ export function PricingPlansUnified({ userType = null, onClose }: PricingPlansUn
               </div>
 
               {/* Enterprise Plan */}
-              <div className="rounded-2xl border-2 border-[#8096FD] bg-gradient-to-br from-[#8096FD]/5 to-[#8096FD]/10 p-6 relative flex flex-col">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#8096FD] to-[#6B7FE8] text-white text-xs font-bold">
-                  MOST POPULAR
+              <div className="p-6 rounded-2xl border-2 border-[#A16AE8] bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5 cursor-pointer transition-all relative">
+                <div className="absolute -top-3 right-4 px-3 py-1 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white text-xs font-semibold">
+                  Popular
                 </div>
 
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-foreground mb-2">Enterprise Plan</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-foreground">$500</span>
-                    <span className="text-muted-foreground text-sm">USD/month</span>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-[#A16AE8]" />
+                    <div>
+                      <h4 className="text-lg font-bold text-foreground">Enterprise Plan</h4>
+                      <p className="text-xs text-muted-foreground">Equipment & workspace</p>
+                    </div>
+                  </div>
+                  <div className="w-6 h-6 rounded-full border-2 border-[#A16AE8] bg-[#A16AE8] flex items-center justify-center flex-shrink-0">
+                    <Check className="w-4 h-4 text-white" />
                   </div>
                 </div>
-
-                <div className="space-y-3 mb-6 flex-1">
-                  <FeatureItem text="Equipment and workspace included" color="text-[#8096FD]" />
-                  <FeatureItem text="Priority candidate matching" color="text-[#8096FD]" />
-                  <FeatureItem text="Advanced analytics" color="text-[#8096FD]" />
-                  <FeatureItem text="Dedicated account manager" color="text-[#8096FD]" />
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold text-foreground">$500</span>
+                    <span className="text-sm text-muted-foreground">/mo</span>
+                  </div>
                 </div>
-
-                <div className="text-xs text-muted-foreground mb-4">Complete solution for growing companies</div>
+                <ul className="space-y-2 text-xs text-muted-foreground mb-6">
+                  <li className="flex items-start gap-2">
+                    <span className="font-semibold text-foreground">💻 EQUIPMENT</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <span>Managed laptops and accessories</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">🏢 WORKSPACE</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <span>Smart office locations</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <span>Workspace and IT setup</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">✨ TEAMIFIED AI</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-[#A16AE8] flex-shrink-0 mt-0.5" />
+                    <span>Full Access to Teamified AI Agents</span>
+                  </li>
+                </ul>
 
                 <button
                   onClick={() => handleUpgrade("Enterprise Plan", "hiring-manager")}
                   disabled={isProcessing}
-                  className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-[#8096FD] to-[#6B7FE8] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? "Processing..." : "Choose Plan"}
                 </button>
               </div>
 
               {/* Premium Plan */}
-              <div className="rounded-2xl border-2 border-[#FFD700] bg-gradient-to-br from-[#FFD700]/5 to-[#FFA500]/5 p-6 relative flex flex-col">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-white text-xs font-bold">
-                  ALL-IN
+              <div className="p-6 rounded-2xl border-2 border-border hover:border-[#A16AE8]/50 cursor-pointer transition-all relative bg-card">
+                <div className="absolute -top-3 right-4 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs font-semibold">
+                  All-In
                 </div>
 
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-5 h-5 text-amber-500" />
+                    <div>
+                      <h4 className="text-lg font-bold text-foreground">Premium Plan</h4>
+                      <p className="text-xs text-muted-foreground">Complete solution</p>
+                    </div>
+                  </div>
+                  <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center flex-shrink-0" />
+                </div>
                 <div className="mb-4">
-                  <h3 className="text-xl font-bold text-foreground mb-2">Premium Plan</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-foreground">30%</span>
-                    <span className="text-muted-foreground text-sm">+ $300/month</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-foreground">30% + $300</span>
+                    <span className="text-sm text-muted-foreground">/mo</span>
                   </div>
                 </div>
-
-                <div className="space-y-3 mb-6 flex-1">
-                  <FeatureItem text="All-in comprehensive solution" color="text-[#FFD700]" />
-                  <FeatureItem text="White-glove onboarding" color="text-[#FFD700]" />
-                  <FeatureItem text="24/7 dedicated support team" color="text-[#FFD700]" />
-                  <FeatureItem text="Custom integrations" color="text-[#FFD700]" />
-                </div>
-
-                <div className="text-xs text-muted-foreground mb-4">Premium service for enterprise clients</div>
+                <ul className="space-y-2 text-xs text-muted-foreground mb-6">
+                  <li className="flex items-start gap-2">
+                    <span className="font-semibold text-foreground">🤝 SERVICE</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <span>Dedicated account management</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <span>Continuous HR & compliance support</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">🤝 MANAGEMENT</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <span>Payroll + performance oversight</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <span>Centralized reporting tools</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">💻 EQUIPMENT</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <span>Laptop + Office Space</span>
+                  </li>
+                  <li className="flex items-start gap-2 mt-2">
+                    <span className="font-semibold text-foreground">✨ TEAMIFIED AI</span>
+                  </li>
+                  <li className="flex items-start gap-2 pl-4">
+                    <Check className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <span>Full Access to Teamified AI Agents + Dashboarding & Analytics</span>
+                  </li>
+                </ul>
 
                 <button
                   onClick={() => handleUpgrade("Premium Plan", "hiring-manager")}
                   disabled={isProcessing}
-                  className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 rounded-lg border-2 border-border bg-background text-foreground font-medium hover:bg-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? "Processing..." : "Choose Plan"}
                 </button>

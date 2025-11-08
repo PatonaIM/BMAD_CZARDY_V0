@@ -251,6 +251,30 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
             instructions: systemInstructions,
           },
         })
+
+        if (currentWorkspaceContent?.type === "pricing-plans" && !isIntroducingRef.current) {
+          console.log("[v0] Pricing workspace opened, triggering AI overview")
+
+          // Add a conversation item telling the AI to explain the pricing plans
+          clientRef.current.sendMessage({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: "Please provide a brief overview of the pricing plans we offer for candidates and hiring managers.",
+                },
+              ],
+            },
+          })
+
+          // Trigger the AI to respond
+          clientRef.current.sendMessage({
+            type: "response.create",
+          })
+        }
       }
     }, [currentWorkspaceContent, agentId, isConnecting, userType])
 

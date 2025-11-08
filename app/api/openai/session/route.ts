@@ -46,6 +46,7 @@ You have access to functions that can navigate the platform and switch agents. U
 
 - Use 'navigate' function when user asks to see/open/show something
 - Use 'switch_agent' function when user asks to speak with another agent
+- Use 'show_pricing_plans' function when user asks to see pricing plans for candidates or hiring managers
 
 After calling a function, give a brief confirmation (1 sentence).
 
@@ -95,6 +96,24 @@ function getFunctionsForAgent(agentId: string) {
           },
         },
         required: ["agentId"],
+      },
+    },
+    {
+      type: "function",
+      name: "show_pricing_plans",
+      description:
+        "Show pricing plans to the user. Use this when explaining pricing for candidates or hiring managers. Can switch between candidate and hiring manager plan views.",
+      parameters: {
+        type: "object",
+        properties: {
+          planType: {
+            type: "string",
+            enum: ["candidate", "hiring-manager"],
+            description:
+              "The type of plans to show: 'candidate' for candidate pricing or 'hiring-manager' for employer pricing",
+          },
+        },
+        required: ["planType"],
       },
     },
   ]
