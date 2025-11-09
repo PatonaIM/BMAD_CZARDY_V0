@@ -552,21 +552,22 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
     // </CHANGE>
 
     case "invoice-detail":
-      context += `The user is viewing a detailed invoice.\n\n`
+      context += `The user is viewing a detailed invoice in the invoice detail workspace.\n\n`
       if (content.data?.invoice) {
         const inv = content.data.invoice
         context += `**INVOICE DETAILS:**\n`
         context += `- Invoice Number: ${inv.invoiceNumber}\n`
-        context += `- Period: ${inv.period}\n`
+        context += `- Billing Period: ${inv.period}\n`
         context += `- Issue Date: ${inv.date}\n`
         context += `- Due Date: ${inv.dueDate}\n`
         context += `- Status: ${inv.status.toUpperCase()}\n`
-        context += `- Reference: ${inv.reference || "N/A"}\n\n`
+        context += `- Reference: ${inv.reference || "N/A"}\n`
+        context += `- Description: ${inv.description}\n\n`
 
         if (inv.contact) {
           context += `**BILLING TO:**\n`
-          context += `- Contact: ${inv.contact.name}\n`
-          context += `- Account: ${inv.contact.accountNumber}\n`
+          context += `- Contact Name: ${inv.contact.name}\n`
+          context += `- Account Number: ${inv.contact.accountNumber}\n`
           if (inv.contact.address) {
             context += `- Address: ${inv.contact.address}\n`
           }
@@ -574,31 +575,45 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
         }
 
         if (inv.lineItems && inv.lineItems.length > 0) {
-          context += `**LINE ITEMS BREAKDOWN:**\n`
+          context += `**DETAILED LINE ITEMS TABLE (${inv.lineItems.length} items):**\n`
+          context += `The invoice contains the following charges:\n\n`
           inv.lineItems.forEach((item, idx) => {
-            context += `\n${idx + 1}. **${item.description}**\n`
-            context += `   - Quantity: ${item.quantity.toFixed(4)}\n`
-            context += `   - Unit Price: $${item.price.toFixed(2)}\n`
-            context += `   - Discount: ${item.discount}%\n`
-            context += `   - Account: ${item.account}\n`
-            context += `   - Tax Rate: ${item.taxRate}\n`
-            context += `   - Tax Amount: $${item.taxAmount.toFixed(2)}\n`
-            context += `   - Line Total: $${item.amount.toFixed(2)}\n`
+            context += `Item ${idx + 1}: ${item.description}\n`
+            context += `   • Quantity: ${item.quantity.toFixed(4)} units\n`
+            context += `   • Unit Price: $${item.price.toFixed(2)}\n`
+            context += `   • Discount Applied: ${item.discount}%\n`
+            context += `   • Account Code: ${item.account}\n`
+            context += `   • Tax Rate: ${item.taxRate}\n`
+            context += `   • Tax Amount: $${item.taxAmount.toFixed(2)}\n`
+            context += `   • **Line Item Total: $${item.amount.toFixed(2)}**\n\n`
           })
-          context += `\n`
+        } else {
+          context += `**LINE ITEMS:**\n`
+          context += `No detailed line items are available for this invoice.\n\n`
         }
 
         context += `**FINANCIAL SUMMARY:**\n`
-        context += `- Subtotal: $${(inv.subtotal || 0).toFixed(2)}\n`
+        context += `- Subtotal (before tax): $${(inv.subtotal || 0).toFixed(2)}\n`
         context += `- ${inv.taxRate || "Tax"}: $${(inv.tax || 0).toFixed(2)}\n`
-        context += `- **Total Amount: $${inv.amount.toFixed(2)}**\n\n`
+        context += `- **Total Amount Due: $${inv.amount.toFixed(2)}**\n\n`
 
+        if (inv.notes) {
+          context += `**ADDITIONAL NOTES:**\n${inv.notes}\n\n`
+        }
+
+        context += `**HOW TO HELP THE USER:**\n`
         context += `You can answer detailed questions about this specific invoice, including:\n`
-        context += `- Explaining line items and what each charge is for\n`
-        context += `- Breaking down the pricing and quantities\n`
-        context += `- Clarifying tax calculations (GST on Income)\n`
-        context += `- Discussing payment status and due dates\n`
-        context += `- Comparing with other invoices if asked\n`
+        context += `- Explaining what each line item is for and why it was charged\n`
+        context += `- Breaking down the pricing calculations (quantity × unit price - discount + tax)\n`
+        context += `- Clarifying tax calculations and rates (e.g., GST, VAT)\n`
+        context += `- Discussing the account codes and what they represent\n`
+        context += `- Explaining payment status, due dates, and any overdue amounts\n`
+        context += `- Comparing charges with previous invoices if asked\n`
+        context += `- Helping understand why certain charges may vary month to month\n`
+        context += `- Providing context about the billing period and services rendered\n\n`
+
+        context += `When answering questions, refer to specific line items by their descriptions or item numbers. `
+        context += `Be conversational and helpful, as if you're a billing specialist explaining the invoice.\n`
       }
       break
     // </CHANGE>
@@ -932,7 +947,13 @@ Simply type any command or ask your questions naturally!`
     useEffect(() => {
       if (externalWorkspaceContent) {
         console.log("[v0] Syncing external workspace content:", externalWorkspaceContent.type)
+        console.log("[v0] Full external workspace content:", JSON.stringify(externalWorkspaceContent, null, 2))
+        // </CHANGE>
         setCurrentWorkspaceContent(externalWorkspaceContent)
+      } else {
+        console.log("[v0] External workspace content is null, clearing current workspace")
+        setCurrentWorkspaceContent(null)
+        // </CHANGE>
       }
     }, [externalWorkspaceContent])
     // </CHANGE>
@@ -1968,12 +1989,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         }
       },
       sendCandidateInsights: (candidate: CandidateProfile) => {
-        // Switch to Technical Recruiter agent for providing insights
-        const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
-        if (technicalRecruiter && activeAgent.id !== "technical-recruiter") {
-          setActiveAgent(technicalRecruiter)
-        }
-
+        // The agent should stay as the current agent when browsing candidates
         // Generate insights message based on candidate data
         const skillMatch = candidate.skillMatch || 0
         const experience = candidate.experience || "N/A"
@@ -2007,7 +2023,7 @@ Looking forward to seeing this conversation develop! 🚀`,
               id: Date.now().toString(),
               type: "ai",
               content: insightMessage,
-              agentId: technicalRecruiter?.id || "technical-recruiter",
+              agentId: activeAgent.id, // Use the current active agent
             },
           ])
         }, 300) // Sync with potential fade-in animation
@@ -2369,6 +2385,38 @@ Looking forward to seeing this conversation develop! 🚀`,
         if (command === "pricing" || command === "pricing plans") {
           console.log("[v0] Pricing command detected")
 
+          // Check if current agent has permission to access pricing plans
+          if (activeAgent.id !== "sales-marketing") {
+            console.log(`[v0] Agent ${activeAgent.id} does not have permission to access pricing plans`)
+
+            // Add user's command message to chat
+            const userMsg = {
+              id: `voice-cmd-user-${Date.now()}`,
+              type: "user" as const,
+              content: text,
+              timestamp: new Date().toISOString(),
+              agentId: activeAgent.id,
+            }
+
+            // Add denial message
+            const denialMsg = {
+              id: `voice-cmd-ai-${Date.now()}`,
+              type: "ai" as const,
+              content:
+                "I don't have access to pricing information. For detailed pricing plans and subscription options, please speak with Darlyn, our Sales & Marketing agent.",
+              timestamp: new Date().toISOString(),
+              agentId: activeAgent.id,
+            }
+            setLocalMessages((prev) => [...prev, userMsg, denialMsg])
+
+            // Speak the denial message in voice mode if applicable
+            if (voiceModeRef.current?.speakResponse) {
+              voiceModeRef.current.speakResponse(denialMsg.content)
+            }
+
+            return true // Command was handled (but denied)
+          }
+
           // Add user's command message to chat
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -2401,6 +2449,7 @@ Looking forward to seeing this conversation develop! 🚀`,
 
           return true // Command was handled
         }
+        // </CHANGE>
 
         // Compare Jobs Command
         if (command === "compare jobs") {

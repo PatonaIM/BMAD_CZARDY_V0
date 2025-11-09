@@ -45,7 +45,9 @@ ${agent.actions.map((action) => `- ${action.replace(/-/g, " ")}`).join("\n")}
 You have access to functions that can navigate the platform and switch agents. Use them ONLY when the user explicitly requests:
 
 - Use 'navigate' function when user asks to see/open/show something
-- Use 'switch_agent' function when user asks to speak with another agent
+- Use 'switch_agent' function ONLY when user explicitly asks to speak with/talk to another agent by name
+- NEVER automatically switch agents when navigating to different views
+- The current agent (you) can help with ALL navigation requests
 - Use 'show_pricing_plans' function when user asks to see pricing plans for candidates or hiring managers
 
 After calling a function, give a brief confirmation (1 sentence).
@@ -55,11 +57,12 @@ After calling a function, give a brief confirmation (1 sentence).
 - Natural conversation
 - Only elaborate when asked
 - Stay in character as ${agent.firstName}
-- Be PASSIVE - wait for explicit requests before offering to open/show anything`
+- Be PASSIVE - wait for explicit requests before offering to open/show anything
+- DO NOT switch agents unless the user explicitly asks for a different agent by name`
 }
 
 function getFunctionsForAgent(agentId: string) {
-  return [
+  const baseFunctions = [
     {
       type: "function",
       name: "navigate",
@@ -98,7 +101,11 @@ function getFunctionsForAgent(agentId: string) {
         required: ["agentId"],
       },
     },
-    {
+  ]
+
+  // Only add pricing plans function for Sales and Marketing agent
+  if (agentId === "sales-marketing") {
+    baseFunctions.push({
       type: "function",
       name: "show_pricing_plans",
       description:
@@ -115,8 +122,10 @@ function getFunctionsForAgent(agentId: string) {
         },
         required: ["planType"],
       },
-    },
-  ]
+    } as any)
+  }
+
+  return baseFunctions
 }
 
 export async function POST(request: Request) {

@@ -982,6 +982,12 @@ export async function detectCommandIntent(
     "what does",
     "explain this",
     "tell me about this",
+    "tell me about", // Added general "tell me about"
+    "what are", // Added "what are"
+    "what is", // Added "what is"
+    "explain", // Added general "explain"
+    "describe", // Added "describe"
+    "define", // Added "define"
     "about this",
     "in here",
     "from here",
@@ -1008,9 +1014,60 @@ export async function detectCommandIntent(
     "when is my",
     "what's my",
     "how much do i",
+    "breakdown",
+    "detailed",
+    "itemized",
+    "line items",
   ]
 
+  const questionStarters = ["tell me about", "what are", "what is", "explain", "describe", "define", "can you tell me"]
+  const isQuestion = questionStarters.some((starter) => normalizedInput.startsWith(starter))
+
+  if (isQuestion) {
+    console.log("[v0] Question pattern detected at start of input. Treating as contextual question, not navigation.")
+    return {
+      isCommand: false,
+      confidence: 0,
+    }
+  }
+
   const isAskingAboutCurrentWorkspace = contextualKeywords.some((keyword) => normalizedInput.includes(keyword))
+
+  if (currentWorkspace === "invoice-detail") {
+    // Only allow navigation away from invoice if user explicitly says "go back", "show all", "view all", etc.
+    const explicitNavigationPhrases = [
+      "go back",
+      "show all invoices",
+      "view all invoices",
+      "see all invoices",
+      "back to billing",
+      "return to billing",
+      "billing overview",
+      "billing summary",
+      "all my invoices",
+    ]
+
+    const isExplicitNavigation = explicitNavigationPhrases.some((phrase) => normalizedInput.includes(phrase))
+
+    if (!isExplicitNavigation) {
+      console.log(
+        "[v0] User is on invoice-detail, treating input as contextual question unless explicit navigation requested",
+      )
+      // If they're asking about the invoice content, don't navigate
+      if (
+        isAskingAboutCurrentWorkspace ||
+        normalizedInput.includes("invoice") ||
+        normalizedInput.includes("charge") ||
+        normalizedInput.includes("payment")
+      ) {
+        console.log("[v0] Invoice-related question detected, staying on invoice detail view")
+        return {
+          isCommand: false,
+          confidence: 0,
+        }
+      }
+    }
+  }
 
   // The contextual keyword detection above is sufficient to distinguish between questions and navigation commands
   const blockedCommands: string[] = []

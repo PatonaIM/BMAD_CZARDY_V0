@@ -256,7 +256,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         if (currentWorkspaceContent?.type === "contract" && !isIntroducingRef.current) {
           console.log("[v0] Contract workspace opened, triggering AI overview")
 
-          // Add a conversation item telling the AI to mention the contract opening
           clientRef.current.sendMessage({
             type: "conversation.item.create",
             item: {
@@ -265,13 +264,12 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               content: [
                 {
                   type: "input_text",
-                  text: "The contract workspace just opened with our Remote Team as a Service Agreement. Briefly mention that you've opened the agreement and ask if they have any questions about it. Keep it conversational and helpful.",
+                  text: "Say: 'I've opened the Remote Team as a Service Agreement. What questions can I answer?'",
                 },
               ],
             },
           })
 
-          // Trigger the AI to respond
           clientRef.current.sendMessage({
             type: "response.create",
           })
@@ -281,19 +279,16 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           console.log("[v0] Billing workspace opened, triggering AI overview")
 
           const billingData = currentWorkspaceContent.billingData
-          let overdueMessage = ""
-          let nextPaymentMessage = ""
+          let statusNote = ""
 
           if (billingData) {
             if (billingData.totalOverdue > 0) {
-              overdueMessage = ` You have $${billingData.totalOverdue.toFixed(2)} in overdue payments that need attention.`
-            }
-            if (billingData.nextPaymentDue) {
-              nextPaymentMessage = ` Your next payment of $${billingData.nextPaymentDue.amount.toFixed(2)} is due on ${billingData.nextPaymentDue.dueDate}.`
+              statusNote = ` You have $${billingData.totalOverdue.toFixed(2)} overdue.`
+            } else if (billingData.nextPaymentDue) {
+              statusNote = ` Next payment: $${billingData.nextPaymentDue.amount.toFixed(2)} on ${billingData.nextPaymentDue.dueDate}.`
             }
           }
 
-          // Add a conversation item telling the AI to mention the billing details
           clientRef.current.sendMessage({
             type: "conversation.item.create",
             item: {
@@ -302,13 +297,12 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               content: [
                 {
                   type: "input_text",
-                  text: `The billing workspace just opened showing the user's invoices and payment history.${overdueMessage}${nextPaymentMessage} Briefly mention the billing details and ask if they have any questions about their invoices or payments. Keep it conversational and helpful.`,
+                  text: `Say: 'Here's your billing overview.${statusNote} What would you like to know?'`,
                 },
               ],
             },
           })
 
-          // Trigger the AI to respond
           clientRef.current.sendMessage({
             type: "response.create",
           })
@@ -317,7 +311,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         if (currentWorkspaceContent?.type === "pricing-plans" && !isIntroducingRef.current) {
           console.log("[v0] Pricing workspace opened, triggering AI overview")
 
-          // Add a conversation item telling the AI to briefly mention the pricing plans
           clientRef.current.sendMessage({
             type: "conversation.item.create",
             item: {
@@ -326,16 +319,99 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               content: [
                 {
                   type: "input_text",
-                  text: "The pricing plans workspace just opened. Briefly mention that we offer Premium Monthly and Premium Annual plans for candidates, and Basic, Recruiter, Enterprise, and Premium plans for hiring managers. Keep it very brief and ask if they'd like to learn more about any specific plan. Don't go into details yet.",
+                  text: "Say: 'Here are the pricing plans. Which one interests you?'",
                 },
               ],
             },
           })
 
-          // Trigger the AI to respond
           clientRef.current.sendMessage({
             type: "response.create",
           })
+        }
+
+        if (currentWorkspaceContent?.type === "browse-candidates" && !isIntroducingRef.current) {
+          console.log("[v0] Browse candidates workspace opened, triggering AI overview")
+
+          if (currentWorkspaceContent.candidates && currentWorkspaceContent.candidates.length > 0) {
+            clientRef.current.sendMessage({
+              type: "conversation.item.create",
+              item: {
+                type: "message",
+                role: "user",
+                content: [
+                  {
+                    type: "input_text",
+                    text: `Say: 'You're browsing ${currentWorkspaceContent.candidates.length} candidates. What would you like to know?'`,
+                  },
+                ],
+              },
+            })
+
+            clientRef.current.sendMessage({
+              type: "response.create",
+            })
+          }
+        }
+
+        if (currentWorkspaceContent?.type === "job-board" && !isIntroducingRef.current) {
+          console.log("[v0] Job board workspace opened, triggering AI overview")
+
+          if (currentWorkspaceContent.jobs && currentWorkspaceContent.jobs.length > 0) {
+            const tabName =
+              currentWorkspaceContent.jobBoardTab === "browse"
+                ? "browsing available jobs"
+                : currentWorkspaceContent.jobBoardTab === "applied"
+                  ? "viewing applied jobs"
+                  : currentWorkspaceContent.jobBoardTab === "invited"
+                    ? "viewing invited jobs"
+                    : currentWorkspaceContent.jobBoardTab === "saved"
+                      ? "viewing saved jobs"
+                      : "viewing jobs"
+
+            clientRef.current.sendMessage({
+              type: "conversation.item.create",
+              item: {
+                type: "message",
+                role: "user",
+                content: [
+                  {
+                    type: "input_text",
+                    text: `Say: 'You're ${tabName}. Here are the ${currentWorkspaceContent.jobs.length} jobs currently displayed. What would you like to know?'`,
+                  },
+                ],
+              },
+            })
+
+            clientRef.current.sendMessage({
+              type: "response.create",
+            })
+          }
+        }
+
+        if (currentWorkspaceContent?.type === "job-view" && !isIntroducingRef.current) {
+          console.log("[v0] Job view workspace opened, triggering AI overview")
+
+          if (currentWorkspaceContent.job) {
+            const j = currentWorkspaceContent.job
+            clientRef.current.sendMessage({
+              type: "conversation.item.create",
+              item: {
+                type: "message",
+                role: "user",
+                content: [
+                  {
+                    type: "input_text",
+                    text: `Say: 'You're viewing the job posting for ${j.title} at ${j.company}. What would you like to know?'`,
+                  },
+                ],
+              },
+            })
+
+            clientRef.current.sendMessage({
+              type: "response.create",
+            })
+          }
         }
       }
     }, [currentWorkspaceContent, agentId, isConnecting, userType])
