@@ -2452,6 +2452,9 @@ Looking forward to seeing this conversation develop! 🚀`,
         setActiveAgent(agent) // Update the active agent
         setIsAgentDropdownOpen(false) // Close the dropdown
 
+        currentRequestAgentRef.current = agent.id
+        // </CHANGE>
+
         // If currently in a candidate chat, clear it to start fresh with the new agent
         if (currentChatCandidate) {
           setCurrentChatCandidate(null)
