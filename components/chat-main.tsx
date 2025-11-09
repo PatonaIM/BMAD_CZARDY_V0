@@ -607,6 +607,17 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
     case "pricing-plans":
       context += `The user is viewing the Pricing Plans workspace with detailed pricing information.\n\n`
 
+      context += `**IMPORTANT INSTRUCTIONS FOR ANSWERING PRICING QUESTIONS:**\n`
+      context += `When a user asks about any specific plan (e.g., "What's included in the Enterprise plan?" or "Tell me about the Premium plan for hiring managers"), you MUST:\n`
+      context += `1. **State the EXACT PRICE first** - Always lead with the pricing\n`
+      context += `2. **List ALL included features/services** - Be comprehensive and specific\n`
+      context += `3. **Highlight the VALUE PROPOSITION** - Explain what makes this plan special\n`
+      context += `4. **Mention SAVINGS or BENEFITS** - Include discounts, "most popular", ROI, or competitive advantages\n`
+      context += `5. **Be PERSUASIVE and SALES-ORIENTED** - Market the plan enthusiastically\n`
+      context += `6. **Compare when relevant** - Help users understand which plan fits their needs\n\n`
+      context += `Example format: "The Enterprise Plan is $500/month and is our MOST POPULAR option! Here's what you get: [list all features]. This plan is perfect for growing companies because [value prop]. Plus, you get full access to all Teamified AI Agents."\n\n`
+      // </CHANGE>
+
       context += `**CANDIDATE PRICING PLANS:**\n\n`
 
       context += `1. Free Plan - $0/month\n`
@@ -617,7 +628,7 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
       context += `   - Email notifications for new matches\n`
       context += `   - Access to public job board\n\n`
 
-      context += `2. Premium Monthly - $19.99/month (ON SALE from $29.99)\n`
+      context += `2. Premium Monthly - $19.99/month (ON SALE from $29.99 - SAVE $10/month)\n`
       context += `   Features:\n`
       context += `   - Everything in Free Plan\n`
       context += `   - Unlimited AI agent interactions\n`
@@ -632,15 +643,16 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
       context += `   - Career coaching sessions (2/month)\n`
       context += `   - Early access to new features\n\n`
 
-      context += `3. Premium Annual - $149/year (BEST VALUE - was $239.88)\n`
+      context += `3. Premium Annual - $149/year (BEST VALUE - was $239.88, SAVE $90.88/year - 38% OFF)\n`
       context += `   - Save $90.88 per year (38% discount)\n`
       context += `   - Everything in Premium Monthly\n`
-      context += `   - Billed annually at $149/year\n\n`
+      context += `   - Billed annually at $149/year\n`
+      context += `   - Less than $1/day investment in your career!\n\n`
 
       context += `**HIRING MANAGER PRICING PLANS:**\n\n`
 
       context += `1. Basic Plan - $300/month\n`
-      context += `   Payroll & HR essentials\n`
+      context += `   Best for: Small teams needing payroll and HR essentials\n`
       context += `   Features:\n`
       context += `   💰 PAYROLL:\n`
       context += `   - Global payroll & payslips\n`
@@ -648,10 +660,11 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
       context += `   👥 HR:\n`
       context += `   - HR record keeping & reporting\n`
       context += `   ✨ TEAMIFIED AI:\n`
-      context += `   - Limited Access to Teamified AI Agents\n\n`
+      context += `   - Limited Access to Teamified AI Agents\n`
+      context += `   Ideal for: Companies that need basic payroll and HR management without recruitment services\n\n`
 
       context += `2. Recruiter Plan - 9% of base salary per hire\n`
-      context += `   Full recruitment lifecycle (performance-based pricing)\n`
+      context += `   Best for: Companies focused on hiring (pay only for successful placements - NO UPFRONT COSTS!)\n`
       context += `   Features:\n`
       context += `   🎯 HIRING:\n`
       context += `   - Full recruitment lifecycle\n`
@@ -660,41 +673,51 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
       context += `   - HR and performance management\n`
       context += `   - Employment contracts & benefits setup\n`
       context += `   ✨ TEAMIFIED AI:\n`
-      context += `   - Limited Access to Teamified AI Agents\n\n`
+      context += `   - Limited Access to Teamified AI Agents\n`
+      context += `   Ideal for: Organizations that want to pay only when they successfully hire, with no upfront monthly costs. Perfect for companies with sporadic hiring needs\n\n`
 
-      context += `3. Enterprise Plan - $500/month (MOST POPULAR)\n`
-      context += `   Equipment & workspace\n`
+      context += `3. Enterprise Plan - $500/month ⭐ MOST POPULAR ⭐\n`
+      context += `   Best for: Growing companies needing equipment and workspace solutions\n`
       context += `   Features:\n`
-      context += `   💻EQUIPMENT:\n`
+      context += `   💻 EQUIPMENT:\n`
       context += `   - Managed laptops and accessories\n`
       context += `   🏢 WORKSPACE:\n`
       context += `   - Smart office locations\n`
       context += `   - Workspace and IT setup\n`
       context += `   ✨ TEAMIFIED AI:\n`
-      context += `   - Full Access to Teamified AI Agents\n\n`
+      context += `   - Full Access to Teamified AI Agents (UPGRADE from Basic/Recruiter!)\n`
+      context += `   Ideal for: Companies that want to provide equipment and office space for their teams, with comprehensive AI support for all HR and recruitment needs\n\n`
 
-      context += `4. Premium Plan - 30% + $300/month (ALL-IN SOLUTION)\n`
-      context += `   Complete solution with white-glove service\n`
+      context += `4. Premium Plan - 30% of base salary + $300/month 🏆 ALL-IN SOLUTION 🏆\n`
+      context += `   Best for: Organizations wanting a complete, hands-off solution with white-glove service\n`
       context += `   Features:\n`
       context += `   🤝 SERVICE:\n`
-      context += `   - Dedicated account management\n`
+      context += `   - Dedicated account management (EXCLUSIVE!)\n`
       context += `   - Continuous HR & compliance support\n`
       context += `   🤝 MANAGEMENT:\n`
       context += `   - Payroll + performance oversight\n`
       context += `   - Centralized reporting tools\n`
       context += `   💻 EQUIPMENT:\n`
-      context += `   - Laptop + Office Space\n`
+      context += `   - Laptop + Office Space (included!)\n`
       context += `   ✨ TEAMIFIED AI:\n`
-      context += `   - Full Access to Teamified AI Agents + Dashboarding & Analytics\n\n`
+      context += `   - Full Access to Teamified AI Agents + Dashboarding & Analytics (PREMIUM ONLY!)\n`
+      context += `   Ideal for: Companies that want a comprehensive, managed solution with dedicated support, equipment, workspace, and premium AI features including advanced analytics. This is the most complete package with everything included\n\n`
+
+      context += `**KEY VALUE PROPOSITIONS TO EMPHASIZE:**\n`
+      context += `- Basic Plan: Most affordable entry point at only $300/month for essential payroll and HR\n`
+      context += `- Recruiter Plan: Zero upfront costs, only 9% when you successfully hire - risk-free recruitment\n`
+      context += `- Enterprise Plan: Our most popular choice! Full AI access + equipment + workspace for $500/month\n`
+      context += `- Premium Plan: White-glove service with dedicated account manager and advanced analytics\n`
+      context += `- Candidate Premium saves up to 38% annually - less than $1/day for career acceleration\n\n`
 
       context += `**COMPARISON NOTES:**\n`
-      context += `- Candidate Premium Monthly is currently on sale (33% off)\n`
-      context += `- Candidate Premium Annual offers 38% savings compared to monthly\n`
-      context += `- Hiring Manager Enterprise Plan is the most popular option\n`
-      context += `- Hiring Manager Recruiter Plan uses performance-based pricing (only pay for successful hires)\n`
-      context += `- Hiring Manager Premium Plan includes everything for comprehensive support\n\n`
+      context += `- Candidate Premium Monthly is currently on sale (33% off - LIMITED TIME!)\n`
+      context += `- Candidate Premium Annual offers 38% savings compared to monthly (BEST VALUE!)\n`
+      context += `- Hiring Manager Enterprise Plan is the most popular option (chosen by majority of clients)\n`
+      context += `- Hiring Manager Recruiter Plan uses performance-based pricing (only pay for successful hires - NO RISK!)\n`
+      context += `- Hiring Manager Premium Plan includes everything for comprehensive support (ALL-IN-ONE SOLUTION)\n\n`
 
-      context += `You can answer detailed questions about specific plan features, pricing comparisons, recommendations based on needs, cost calculations, and which plan would be best for different use cases.\n`
+      context += `Remember: Always be enthusiastic, specific about features, and emphasize the value and ROI of each plan. Help users understand not just WHAT they get, but WHY it matters and HOW it will benefit them.\n`
       // </CHANGE>
       break
 
@@ -1656,7 +1679,7 @@ Ideal for **growing companies** focused on hiring. Best if you:
 - Need full recruitment lifecycle support
 - Require compliance and onboarding assistance
 
-## ⚡ **Enterprise Plan** - $500/month ⭐ MOST POPULAR
+## ⚡ **Enterprise Plan** - $500/month ⭐ MOST POPULAR ⭐
 Our **most popular choice**! Best if you:
 - Need equipment (laptops, accessories) for your team
 - Want smart office locations and workspace setup
