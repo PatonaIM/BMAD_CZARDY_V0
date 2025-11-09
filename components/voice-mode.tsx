@@ -58,6 +58,7 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
     const isIntroducingRef = useRef(false) // Added ref to track if introduction is in progress
     const pendingAgentSwitchRef = useRef<AIAgent | null>(null) // Added ref to track pending agent switch after confirmation speech completes
     const agentDropdownRef = useRef<HTMLDivElement>(null)
+    const givenOverviewsRef = useRef<Set<string>>(new Set()) // Added ref to track which workspace overviews have been given in this session
 
     useEffect(() => {
       const initializeVoiceMode = async () => {
@@ -254,80 +255,89 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         })
 
         if (currentWorkspaceContent?.type === "contract" && !isIntroducingRef.current) {
-          console.log("[v0] Contract workspace opened, triggering AI overview")
+          if (!givenOverviewsRef.current.has("contract")) {
+            console.log("[v0] Contract workspace opened, triggering AI overview")
+            givenOverviewsRef.current.add("contract")
 
-          clientRef.current.sendMessage({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "user",
-              content: [
-                {
-                  type: "input_text",
-                  text: "Say: 'I've opened the Remote Team as a Service Agreement. What questions can I answer?'",
-                },
-              ],
-            },
-          })
+            clientRef.current.sendMessage({
+              type: "conversation.item.create",
+              item: {
+                type: "message",
+                role: "user",
+                content: [
+                  {
+                    type: "input_text",
+                    text: "Say: 'I've opened the Remote Team as a Service Agreement. What questions can I answer?'",
+                  },
+                ],
+              },
+            })
 
-          clientRef.current.sendMessage({
-            type: "response.create",
-          })
+            clientRef.current.sendMessage({
+              type: "response.create",
+            })
+          }
         }
 
         if (currentWorkspaceContent?.type === "billing" && !isIntroducingRef.current) {
-          console.log("[v0] Billing workspace opened, triggering AI overview")
+          if (!givenOverviewsRef.current.has("billing")) {
+            console.log("[v0] Billing workspace opened, triggering AI overview")
+            givenOverviewsRef.current.add("billing")
 
-          const billingData = currentWorkspaceContent.billingData
-          let statusNote = ""
+            const billingData = currentWorkspaceContent.billingData
+            let statusNote = ""
 
-          if (billingData) {
-            if (billingData.totalOverdue > 0) {
-              statusNote = ` You have $${billingData.totalOverdue.toFixed(2)} overdue.`
-            } else if (billingData.nextPaymentDue) {
-              statusNote = ` Next payment: $${billingData.nextPaymentDue.amount.toFixed(2)} on ${billingData.nextPaymentDue.dueDate}.`
+            if (billingData) {
+              if (billingData.totalOverdue > 0) {
+                statusNote = ` You have $${billingData.totalOverdue.toFixed(2)} overdue.`
+              } else if (billingData.nextPaymentDue) {
+                statusNote = ` Next payment: $${billingData.nextPaymentDue.amount.toFixed(2)} on ${billingData.nextPaymentDue.dueDate}.`
+              }
             }
+
+            clientRef.current.sendMessage({
+              type: "conversation.item.create",
+              item: {
+                type: "message",
+                role: "user",
+                content: [
+                  {
+                    type: "input_text",
+                    text: `Say: 'Here's your billing overview.${statusNote} What would you like to know?'`,
+                  },
+                ],
+              },
+            })
+
+            clientRef.current.sendMessage({
+              type: "response.create",
+            })
           }
-
-          clientRef.current.sendMessage({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "user",
-              content: [
-                {
-                  type: "input_text",
-                  text: `Say: 'Here's your billing overview.${statusNote} What would you like to know?'`,
-                },
-              ],
-            },
-          })
-
-          clientRef.current.sendMessage({
-            type: "response.create",
-          })
         }
 
         if (currentWorkspaceContent?.type === "pricing-plans" && !isIntroducingRef.current) {
-          console.log("[v0] Pricing workspace opened, triggering AI overview")
+          if (!givenOverviewsRef.current.has("pricing-plans")) {
+            console.log("[v0] Pricing workspace opened, triggering AI overview")
+            givenOverviewsRef.current.add("pricing-plans")
 
-          clientRef.current.sendMessage({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "user",
-              content: [
-                {
-                  type: "input_text",
-                  text: "Say: 'Here are the pricing plans. Which one interests you?'",
-                },
-              ],
-            },
-          })
+            clientRef.current.sendMessage({
+              type: "conversation.item.create",
+              item: {
+                type: "message",
+                role: "user",
+                content: [
+                  {
+                    type: "input_text",
+                    text: "Say: 'Here are the pricing plans. Which one interests you?'",
+                  },
+                ],
+              },
+            })
 
-          clientRef.current.sendMessage({
-            type: "response.create",
-          })
+            clientRef.current.sendMessage({
+              type: "response.create",
+            })
+          }
         }
 
         if (currentWorkspaceContent?.type === "browse-candidates" && !isIntroducingRef.current) {

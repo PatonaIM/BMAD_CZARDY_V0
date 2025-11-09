@@ -1050,26 +1050,19 @@ export async function detectCommandIntent(
     const isExplicitNavigation = explicitNavigationPhrases.some((phrase) => normalizedInput.includes(phrase))
 
     if (!isExplicitNavigation) {
-      console.log(
-        "[v0] User is on invoice-detail, treating input as contextual question unless explicit navigation requested",
-      )
-      // If they're asking about the invoice content, don't navigate
-      if (
-        isAskingAboutCurrentWorkspace ||
-        normalizedInput.includes("invoice") ||
-        normalizedInput.includes("charge") ||
-        normalizedInput.includes("payment")
-      ) {
-        console.log("[v0] Invoice-related question detected, staying on invoice detail view")
-        return {
-          isCommand: false,
-          confidence: 0,
-        }
+      console.log("[v0] User is on invoice-detail. Will stay on invoice unless explicit navigation is requested.")
+      // Stay on invoice detail for ANY input that's not explicit navigation
+      // This prevents accidental navigation back to billing
+      console.log("[v0] No explicit navigation detected, staying on invoice detail view")
+      return {
+        isCommand: false,
+        confidence: 0,
       }
+    } else {
+      console.log("[v0] Explicit navigation phrase detected, allowing navigation away from invoice")
     }
   }
 
-  // The contextual keyword detection above is sufficient to distinguish between questions and navigation commands
   const blockedCommands: string[] = []
 
   if (isAskingAboutCurrentWorkspace && currentWorkspace) {
