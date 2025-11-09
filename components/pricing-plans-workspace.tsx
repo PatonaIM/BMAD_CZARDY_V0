@@ -9,16 +9,23 @@ interface PricingPlansWorkspaceProps {
 
 export function PricingPlansWorkspace({ initialView = "candidate", onViewChange }: PricingPlansWorkspaceProps = {}) {
   const [activeView, setActiveView] = useState<"candidate" | "hiring-manager">(initialView)
-  const [selectedCandidatePlan, setSelectedCandidatePlan] = useState<string | null>(null)
-  const [selectedManagerPlan, setSelectedManagerPlan] = useState<string | null>(null)
+  const [selectedCandidatePlan, setSelectedCandidatePlan] = useState<string | null>("monthly")
+  const [selectedManagerPlan, setSelectedManagerPlan] = useState<string | null>("enterprise")
 
   useEffect(() => {
+    console.log("[v0] PricingPlansWorkspace initialView changed to:", initialView)
     if (initialView) {
       setActiveView(initialView)
+      console.log("[v0] Updated activeView to:", initialView)
     }
   }, [initialView])
 
+  useEffect(() => {
+    console.log("[v0] PricingPlansWorkspace activeView is now:", activeView)
+  }, [activeView])
+
   const handleViewChange = (view: "candidate" | "hiring-manager") => {
+    console.log("[v0] User clicked to change view to:", view)
     setActiveView(view)
     onViewChange?.(view)
   }

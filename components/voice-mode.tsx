@@ -255,7 +255,7 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         if (currentWorkspaceContent?.type === "pricing-plans" && !isIntroducingRef.current) {
           console.log("[v0] Pricing workspace opened, triggering AI overview")
 
-          // Add a conversation item telling the AI to explain the pricing plans
+          // Add a conversation item telling the AI to briefly mention the pricing plans
           clientRef.current.sendMessage({
             type: "conversation.item.create",
             item: {
@@ -264,7 +264,7 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               content: [
                 {
                   type: "input_text",
-                  text: "Please provide a brief overview of the pricing plans we offer for candidates and hiring managers.",
+                  text: "The pricing plans workspace just opened. Briefly mention that we offer Premium Monthly and Premium Annual plans for candidates, and Basic, Recruiter, Enterprise, and Premium plans for hiring managers. Keep it very brief and ask if they'd like to learn more about any specific plan. Don't go into details yet.",
                 },
               ],
             },

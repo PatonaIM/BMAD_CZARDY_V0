@@ -19,7 +19,6 @@ import {
   PanelRight,
   Crown,
   Users,
-  Code,
   MessageSquare,
   CheckCircle,
 } from "lucide-react"
@@ -575,7 +574,6 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
       }
       break
     // </CHANGE>
-
     // </CHANGE>
 
     case "analytics":
@@ -1630,8 +1628,7 @@ ${loremParagraphs[1]}`
         // Simulate opening an interview option modal or performing an action
         window.dispatchEvent(new CustomEvent("interview-option-selected"))
 
-        // Send "Apply to this job" command to the chat input handler
-        handleCommandOrMessage("Apply to this job")
+        handleSendMessage("Apply to this job")
       },
       handleStartChallenge: handleStartChallenge, // Use the declared variable
       handleSubmitChallengeRequest: handleSubmitChallengeRequest,
@@ -2107,6 +2104,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           return true // Command was handled
         }
         // </CHANGE>
+        // </CHANGE>
 
         // Pricing Command
         if (command === "pricing" || command === "pricing plans") {
@@ -2120,7 +2118,6 @@ Looking forward to seeing this conversation develop! 🚀`,
             agentId: activeAgent.id,
           }
           setLocalMessages((prev) => [...prev, userMsg])
-          // </CHANGE>
 
           // Prepare workspace content for pricing plans
           const workspaceData: WorkspaceContent = {
@@ -2134,14 +2131,92 @@ Looking forward to seeing this conversation develop! 🚀`,
 
           if (isVoiceMode && voiceModeRef.current) {
             console.log("[v0] Voice mode active, workspace context will update automatically")
-            // The workspace context will be sent via session.update in voice-mode.tsx useEffect
             // The AI will naturally provide an overview based on the updated context
           }
-          // </CHANGE>
 
           return true // Command was handled
         }
 
+        if (command === "candidate plans") {
+          console.log("[v0] Candidate plans command detected")
+
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg])
+
+          const workspaceData: WorkspaceContent = {
+            type: "pricing-plans",
+            title: "Pricing Plans",
+            planType: "candidate",
+          }
+
+          // If workspace is already open, update it
+          if (currentWorkspaceContent?.type === "pricing-plans") {
+            console.log("[v0] Pricing workspace already open, updating to candidate view")
+            setCurrentWorkspaceContent(workspaceData)
+            if (onWorkspaceUpdate) {
+              onWorkspaceUpdate(workspaceData)
+            }
+          } else {
+            // Otherwise, open it
+            onOpenWorkspace(workspaceData)
+          }
+
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+
+          if (isVoiceMode && voiceModeRef.current) {
+            console.log("[v0] Voice mode active, will explain candidate plans")
+          }
+
+          return true
+        }
+
+        if (command === "hiring manager plans") {
+          console.log("[v0] Hiring manager plans command detected")
+
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg])
+
+          const workspaceData: WorkspaceContent = {
+            type: "pricing-plans",
+            title: "Pricing Plans",
+            planType: "hiring-manager",
+          }
+
+          // If workspace is already open, update it
+          if (currentWorkspaceContent?.type === "pricing-plans") {
+            console.log("[v0] Pricing workspace already open, updating to hiring manager view")
+            setCurrentWorkspaceContent(workspaceData)
+            if (onWorkspaceUpdate) {
+              onWorkspaceUpdate(workspaceData)
+            }
+          } else {
+            // Otherwise, open it
+            onOpenWorkspace(workspaceData)
+          }
+
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+
+          if (isVoiceMode && voiceModeRef.current) {
+            console.log("[v0] Voice mode active, will explain hiring manager plans")
+          }
+
+          return true
+        }
+        // </CHANGE>
         // </CHANGE>
 
         // Compare Jobs Command
@@ -2380,7 +2455,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           onOpenWorkspace(workspaceData) // Open/update workspace
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData) // Update internal state
+          setCurrentWorkspaceContent(workspaceData)
 
           // Notify parent if onWorkspaceUpdate callback exists
           if (onWorkspaceUpdate) {
@@ -2642,509 +2717,6 @@ Looking forward to seeing this conversation develop! 🚀`,
     }
 
     // Main handler for sending messages or executing commands
-    const handleCommandOrMessage = async (text: string) => {
-      // First, try to detect and handle it as a command.
-      const isCommand = await detectAndHandleCommand(text)
-      if (isCommand) {
-        return true // Command was successfully handled
-      }
-
-      // If not a command, check for predefined message types.
-      const lowerText = text.toLowerCase().trim()
-
-      // 1. Simple Text: Handled by the default AI response below.
-
-      // 2. Large Text: Predefined response for demonstration.
-      if (lowerText === "large text") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateLargeResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // 3. Bullet Text: Predefined response for demonstration.
-      if (lowerText === "bullet text") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateBulletResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // 4. File (PDF): Simulate sending a file without changing preview.
-      if (lowerText === "pdf") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateShortResponse(),
-          responseType: "file", // Indicate file response type
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // 5. PDF Preview: Open PDF viewer in workspace.
-      if (lowerText === "pdf preview") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateLargeResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        onOpenWorkspace({ type: "pdf", title: "candidate-resume.pdf" })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" })
-        setCurrentWorkspaceContent({ type: "pdf", title: "candidate-resume.pdf" }) // Update internal state
-        return true
-      }
-
-      // Contract: Open contract viewer in workspace.
-      if (lowerText === "contract" || lowerText === "service agreement" || lowerText === "show contract") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content:
-            "Opening your service agreement for review. I'm here to answer any questions you have about the contract terms.",
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        // Dynamically import contract data
-        const { TEAMIFIED_CONTRACT } = await import("@/lib/contract-data")
-        onOpenWorkspace({ type: "contract", title: "Service Agreement", contractData: TEAMIFIED_CONTRACT })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "contract", title: "Service Agreement", contractData: TEAMIFIED_CONTRACT })
-        setCurrentWorkspaceContent({ type: "contract", title: "Service Agreement", contractData: TEAMIFIED_CONTRACT })
-        return true
-      }
-
-      // 6. Table: Simulate sending tabular data.
-      if (lowerText === "table") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateShortResponse(),
-          responseType: "table", // Indicate table response type
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // 7. Table Preview: Open table workspace.
-      if (lowerText === "table preview") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateLargeResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        onOpenWorkspace({ type: "table", title: "Candidate Table" })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "table", title: "Candidate Table" })
-        setCurrentWorkspaceContent({ type: "table", title: "Candidate Table" }) // Update internal state
-        return true
-      }
-
-      // 8. Image: Simulate sending an image.
-      if (lowerText === "image") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateShortResponse(),
-          responseType: "image", // Indicate image response type
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // 9. Image Preview: Open image gallery workspace.
-      if (lowerText === "image preview") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateLargeResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        onOpenWorkspace({ type: "image", title: "Image Gallery" })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "image", title: "Image Gallery" })
-        setCurrentWorkspaceContent({ type: "image", title: "Image Gallery" }) // Update internal state
-        return true
-      }
-
-      // Video Preview: Open video player workspace.
-      if (lowerText === "video preview") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateLargeResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        onOpenWorkspace({ type: "video", title: "Video Player" })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "video", title: "Video Player" })
-        setCurrentWorkspaceContent({ type: "video", title: "Video Player" }) // Update internal state
-        return true
-      }
-
-      // 11. Code: Simulate sending code snippet.
-      if (lowerText === "code" || lowerText === "show code") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateShortResponse(),
-          responseType: "code", // Indicate code response type
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // 12. Code Preview: Open code editor workspace.
-      if (lowerText === "code preview") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateLargeResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        onOpenWorkspace({ type: "code", title: "server.js", data: codeSnippet })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "code", title: "server.js", data: codeSnippet })
-        setCurrentWorkspaceContent({ type: "code", title: "server.js", data: codeSnippet }) // Update internal state
-        return true
-      }
-
-      // 13. Job Board: Open job board workspace.
-      if (lowerText === "job board") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateLargeResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        onOpenWorkspace({ type: "job-board", title: "Available Positions" })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "job-board", title: "Available Positions" })
-        setCurrentWorkspaceContent({ type: "job-board", title: "Available Positions" }) // Update internal state
-        return true
-      }
-
-      // 14. Data Analytics: Open data analytics workspace.
-      if (lowerText === "data") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: generateLargeResponse(),
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        onOpenWorkspace({ type: "analytics", title: "Recruitment Analytics" })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" })
-        setCurrentWorkspaceContent({ type: "analytics", title: "Recruitment Analytics" }) // Update internal state
-        return true
-      }
-
-      // Browse Candidates: Open candidate swipe interface.
-      if (lowerText === "browse candidates") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: `voice-cmd-ai-${Date.now()}`, // Changed ID to match voice command handling convention
-          type: "ai" as const,
-          content:
-            "Perfect! I've opened the candidate browser for you. You can now swipe through our pool of talented candidates.",
-          timestamp: new Date().toISOString(),
-          agentId: activeAgent.id,
-        }
-        // </CHANGE>
-        // </CHANGE>
-
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        // Open browse candidates workspace, including job context if available
-        const workspaceData: WorkspaceContent = {
-          type: "browse-candidates",
-          title: "Browse Candidates",
-          timestamp: Date.now(),
-          ...(currentWorkspaceContent?.job && { job: currentWorkspaceContent.job }), // Conditionally add job context
-        }
-        onOpenWorkspace(workspaceData)
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent(workspaceData)
-        setCurrentWorkspaceContent(workspaceData) // Update internal state
-        return true
-      }
-
-      // 15. Apply to this job: Shows interview options and initiates application flow.
-      if (lowerText === "apply to this job") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: `Great! I'm excited to help you apply for this position.
-
-Here's how our application process works:
-
-**Step 1: Take Home Challenge**
-
-First, you'll complete a take-home challenge that's designed to showcase your skills in a real-world scenario. This challenge is tailored to the role you're applying for and typically takes 2-4 hours to complete.
-
-**Step 2: AI interviews**
-
-After submitting your take-home challenge, you'll participate in our AI interviews. These are:
-
-- 🎯 Personalized based on your role and experience
-- 📊 Recorded for review by the hiring manager
-- 🚀 Completed at your convenience
-
-**Step 3: Meet the Hiring Manager!**
-
-After you complete both the take-home challenge and AI interviews, we'll compile your complete application package including:
-
-- Your resume and portfolio
-- Take-home challenge submission
-- Recording of your AI interviews
-
-This package will be sent directly to the hiring manager for review.
-
-**Step 4: Job Offer**
-
-If the hiring manager is impressed with your application package, they'll reach out to you with a job offer. This is your opportunity to join the team and start your new role!
-
-Ready to get started? Let's begin with the take-home challenge!`,
-          agentId: activeAgent.id,
-          promptSuggestions: [
-            { text: "Take home challenge", icon: <Code className="w-4 h-4 text-[#A16AE8]" /> },
-            {
-              text: "Tell me more about the AI interviews",
-              icon: <MessageSquare className="w-4 h-4 text-[#8096FD]" />,
-            },
-          ],
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // Take Home Challenge: Shows confirmation with a button to start the challenge.
-      if (lowerText === "take home challenge") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: `Great! You're about to start your **Take Home Challenge**. This is an important step in the application process where you'll demonstrate your technical skills.
-
-**Important Information:**
-- ⏱️ You'll have **4 hours** to complete the challenge once you begin
-- 📝 The challenge can only be taken **once** - make sure you're ready before proceeding
-- 💻 You'll work in an interactive code editor with all the tools you need
-- ✅ Your submission will be automatically saved when you click "Submit Challenge"
-
-Once you start, the timer will begin immediately. Make sure you have:
-- A stable internet connection
-- Enough uninterrupted time to focus
-- Your development environment ready (if you want to test locally)
-
-Are you ready to begin your Take Home Challenge?`,
-          agentId: activeAgent.id,
-          hasActionButton: true, // Button to trigger the challenge start
-          actionButtonText: "Proceed to Take Home Challenge",
-          actionButtonHandler: "startChallenge", // Identifier for the handler
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-        return true
-      }
-
-      // 16. Connect with Candidate: Initiates a chat with a specific candidate.
-      if (lowerText.startsWith("connect with")) {
-        const candidateName = text.substring("connect with".length).trim()
-        // In a real application, you'd likely look up the candidate by name or ID.
-        // For this example, we'll simulate finding a candidate and opening their chat.
-        const mockCandidate: CandidateProfile = {
-          // Updated type to CandidateProfile
-          id: `cand-${Date.now()}`,
-          name: candidateName,
-          avatar: "/candidate-avatar.jpg", // Placeholder avatar
-          skillMatch: 85, // Example skill match
-          experience: "5 years",
-          location: "New York",
-          skills: ["React", "Node.js", "TypeScript"],
-        }
-
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: `Sure, I'll open a chat with ${candidateName}.`,
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        // Use setTimeout to allow the chat messages to render before opening the candidate chat
-        setTimeout(() => {
-          handleShowCandidateChat(mockCandidate)
-        }, 500)
-        // </CHANGE>
-        return true
-      }
-
-      // 17. Compare Candidates: Opens a comparison view for multiple candidates.
-      if (lowerText === "compare candidates") {
-        const userMsg: Message = {
-          id: Date.now().toString(),
-          type: "user",
-          content: text,
-          agentId: activeAgent.id,
-        }
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content: `Alright, opening the candidate comparison tool. You can select up to 3 candidates to compare side-by-side.`,
-          agentId: activeAgent.id,
-        }
-        setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-        // Simulate opening a candidate comparison workspace
-        onOpenWorkspace({ type: "compare-candidates", title: "Compare Candidates" })
-        setHasOpenedWorkspace(true)
-        setLastWorkspaceContent({ type: "compare-candidates", title: "Compare Candidates" })
-        setCurrentWorkspaceContent({ type: "compare-candidates", title: "Compare Candidates" }) // Update internal state
-        return true
-      }
-
-      // If the input is not a predefined command or message type, return false.
-      // This indicates that the message should be sent to the AI for a natural language response.
-      return false
-    }
-
-    // Handler for sending messages, including agent switching and command execution.
     const handleSendMessage = async (content: string) => {
       let targetAgentId = activeAgent.id // Default to the currently active agent
 
@@ -3448,14 +3020,6 @@ Are you ready to begin your Take Home Challenge?`,
         </div>
       </>
     )
-
-    // Dummy handler for transcription update, to be replaced with actual implementation
-    // This duplicate declaration was the cause of the lint error.
-    // const handleTranscriptionUpdate = (userText: string, aiText: string) => {
-    //   console.log("Transcription Update - User:", userText, "AI:", aiText)
-    //   // This function should handle adding transcribed messages to the chat.
-    //   // For now, we'll just log it.
-    // }
 
     // Main render function for the ChatMain component
     return (
@@ -3840,9 +3404,7 @@ Are you ready to begin your Take Home Challenge?`,
                                   <button
                                     onClick={() => {
                                       // Execute specific handler based on actionButtonHandler string
-                                      if (msg.actionButtonHandler === "startChallenge") {
-                                        handleStartChallenge()
-                                      } else if (msg.actionButtonHandler === "confirmSubmitChallenge") {
+                                      if (msg.actionButtonHandler === "confirmSubmitChallenge") {
                                         handleConfirmSubmitChallenge()
                                       }
                                     }}
