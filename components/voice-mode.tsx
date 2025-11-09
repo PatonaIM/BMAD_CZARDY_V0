@@ -252,6 +252,30 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           },
         })
 
+        if (currentWorkspaceContent?.type === "contract" && !isIntroducingRef.current) {
+          console.log("[v0] Contract workspace opened, triggering AI overview")
+
+          // Add a conversation item telling the AI to mention the contract opening
+          clientRef.current.sendMessage({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: "The contract workspace just opened with our Remote Team as a Service Agreement. Briefly mention that you've opened the agreement and ask if they have any questions about it. Keep it conversational and helpful.",
+                },
+              ],
+            },
+          })
+
+          // Trigger the AI to respond
+          clientRef.current.sendMessage({
+            type: "response.create",
+          })
+        }
+
         if (currentWorkspaceContent?.type === "pricing-plans" && !isIntroducingRef.current) {
           console.log("[v0] Pricing workspace opened, triggering AI overview")
 
