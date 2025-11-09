@@ -1171,54 +1171,267 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             <div className="flex items-center gap-3 pb-4 border-b">
               <FileText className="w-6 h-6 text-red-500" />
               <div>
-                <h3 className="font-semibold">Resume - Elena Popescu</h3>
-                <p className="text-sm text-muted-foreground">PDF Document • 2 pages</p>
+                <h3 className="font-semibold">CZAR VLADIMIR DY</h3>
+                <p className="text-sm text-muted-foreground">PDF Document • Resume</p>
               </div>
             </div>
-            <div className="space-y-4 text-sm">
-              <div>
-                <h4 className="font-semibold mb-2">Professional Summary</h4>
-                <p className="text-muted-foreground">
-                  Experienced software engineer with 5+ years in full-stack development. Specialized in React, Node.js,
-                  and cloud architecture. Proven track record of delivering scalable solutions.
-                </p>
+
+            {/* Header Section */}
+            <div className="text-center pb-4 border-b">
+              <h1 className="text-2xl font-bold mb-2">CZAR VLADIMIR DY</h1>
+              <p className="text-lg text-muted-foreground mb-2">ENGINEERING MANAGER</p>
+              <div className="flex justify-center gap-4 text-sm text-muted-foreground">
+                <span>czardy16@gmail.com</span>
+                <span>•</span>
+                <span>(+63) 998 569 0887</span>
+                <span>•</span>
+                <span>Manila, Philippines</span>
               </div>
-              <div>
-                <h4 className="font-semibold mb-2">Experience</h4>
-                <div className="space-y-3">
-                  <div>
-                    <p className="font-medium">Senior Software Engineer - TechCorp</p>
-                    <p className="text-xs text-muted-foreground">2020 - Present</p>
-                    <p className="text-muted-foreground mt-1">
-                      Led development of microservices architecture serving 1M+ users. Implemented CI/CD pipelines
-                      reducing deployment time by 60%.
-                    </p>
+            </div>
+
+            {/* Objective */}
+            <div>
+              <h4 className="font-semibold text-lg mb-2">OBJECTIVE</h4>
+              <p className="text-sm text-muted-foreground">
+                To be able to find a company where my technical & leadership skills be optimized best and to be part of
+                the organization's success, excellence & growth
+              </p>
+            </div>
+
+            {/* Experience */}
+            <div>
+              <h4 className="font-semibold text-lg mb-3">EXPERIENCE</h4>
+              <div className="space-y-4">
+                <div>
+                  <p className="font-semibold">ENGINEERING MANAGER</p>
+                  <p className="text-sm text-muted-foreground">MONEYME LTD. AUSTRALIA</p>
+                  <p className="text-xs text-muted-foreground mb-2">January 2022 to present</p>
+                  <p className="text-sm text-muted-foreground">
+                    Leading 11 cross-functional teams (80+ engineers, including .NET & mobile devs, QA automation, and
+                    scrum masters) through tech leads to deliver and maintain microservice-based Web Apps and the
+                    MONEYME mobile app (iOS & Android) on Microsoft Azure. Partner closely with Cybersecurity, Product,
+                    UI/UX, and Marketing to drive department-wide initiatives and deliver seamless customer experience.
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    * Consistent Outstanding Performer achieving the highest possible rating since 2022
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-semibold">SENIOR SOFTWARE ENGINEER, TEAM LEAD</p>
+                  <p className="text-sm text-muted-foreground">FACTSET PHILIPPINES INC.</p>
+                  <p className="text-xs text-muted-foreground mb-2">July 2017 to January 2022</p>
+                  <p className="text-sm text-muted-foreground">
+                    Leading 3 software engineering teams (around 10-15 full stack software engineers, directly managing
+                    3 team leads), we support multiple content products through various complex integration systems
+                    including backend web service APIs to deliver data across FactSet's applications.
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    * Consistent Top Performer achieving the highest possible rating since 2018
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-semibold">ASSOCIATE EDI MAPPING DEVELOPER</p>
+                  <p className="text-sm text-muted-foreground">OPENTEXT PHILIPPINES, INC.</p>
+                  <p className="text-xs text-muted-foreground mb-2">June 2016 to July 2017</p>
+                  <p className="text-sm text-muted-foreground">
+                    Develop data mapping models that would translate Standard EDI files (e.g. ANSI X12, EDIFACT,
+                    TRADACOM, VDA, ROSSANET, etc.) to another output EDI format/s the clients require.
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    * Top Performer with high productivity, on-time SLA delivery & minimum defects
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-semibold">IT SUPPORT INTERN</p>
+                  <p className="text-sm text-muted-foreground">MAGELLAN SOLUTIONS, INC.</p>
+                  <p className="text-xs text-muted-foreground mb-2">June to July 2015</p>
+                  <p className="text-sm text-muted-foreground">
+                    Worked on a Content Management System (CMS) which is a Java GUI Application that call center agents
+                    & supervisors can use to create account boards. Monitoring, Software Installation, Network
+                    Configurations & miscellaneous NOC ticketing requests.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Education */}
+            <div>
+              <h4 className="font-semibold text-lg mb-2">EDUCATION</h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <p className="font-medium">University of Sto. Tomas</p>
+                  <p className="text-muted-foreground">B.S. Computer Science</p>
+                  <p className="text-xs text-muted-foreground">2016</p>
+                </div>
+                <div>
+                  <p className="font-medium">Athens Academy</p>
+                  <p className="text-muted-foreground">Primary & Secondary Education</p>
+                  <p className="text-xs text-muted-foreground">2012</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Technical Skills */}
+            <div>
+              <h4 className="font-semibold text-lg mb-3">TECHNICAL SKILLS</h4>
+
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="font-medium mb-2">WEB DEVELOPMENT FRAMEWORKS</p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>.NET Framework / .NET Core (C#)</span>
+                      <span className="text-muted-foreground">Since 2017 • Excellent</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Django Framework (Python)</span>
+                      <span className="text-muted-foreground">Since 2017 • Excellent</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>NodeJS Framework (Javascript)</span>
+                      <span className="text-muted-foreground">Since 2019 • Proficient</span>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">Software Engineer - StartupXYZ</p>
-                    <p className="text-xs text-muted-foreground">2018 - 2020</p>
-                    <p className="text-muted-foreground mt-1">
-                      Built customer-facing web applications using React and TypeScript. Collaborated with design team
-                      to improve UX metrics by 40%.
-                    </p>
+                </div>
+
+                <div>
+                  <p className="font-medium mb-2">CLOUD COMPUTING PLATFORMS</p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>Microsoft Azure</span>
+                      <span className="text-muted-foreground">Since 2017 • Excellent</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Amazon Web Services (AWS)</span>
+                      <span className="text-muted-foreground">2017 – 2022 • Proficient</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="font-medium mb-2">DATA STORE TECHNOLOGIES</p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>MS SQL (RDBMS)</span>
+                      <span className="text-muted-foreground">Since 2017 • Excellent</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>NoSQL (CosmosDB, MongoDB)</span>
+                      <span className="text-muted-foreground">Since 2022 • Proficient</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Azure Storage Resources</span>
+                      <span className="text-muted-foreground">Since 2022 • Proficient</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div>
-                <h4 className="font-semibold mb-2">Education</h4>
-                <p className="font-medium">B.S. Computer Science - University of Technology</p>
-                <p className="text-xs text-muted-foreground">2014 - 2018</p>
+            </div>
+
+            {/* Leadership Skills */}
+            <div>
+              <h4 className="font-semibold text-lg mb-3">LEADERSHIP & MANAGEMENT SKILLS</h4>
+
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="font-medium mb-2">PEOPLEWARE</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>
+                      Leads multiple cross-functional engineering teams, managing resource allocation and team
+                      structures aligned with the business' strategic goals.
+                    </li>
+                    <li>Drives performance evaluations, coaching, and technical mentorship.</li>
+                    <li>
+                      Serves as SME in modern web development technologies in charge of department-wide upskilling,
+                      technical consultant and software design reviewer.
+                    </li>
+                    <li>
+                      Ensures department-wide compliance to company policies and partners closely with HR on
+                      administrative matters.
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-medium mb-2">PROJECTS</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>
+                      Acts as software architect for microservices-based systems, spearheading key business and
+                      engineering initiatives.
+                    </li>
+                    <li>
+                      Collaborates with product, design, marketing, and execs to deliver projects end-to-end and provide
+                      clear progress updates to stakeholders & leadership.
+                    </li>
+                    <li>
+                      Leads backlog grooming, prioritization, and sprint planning in partnership with scrum masters and
+                      tech leads.
+                    </li>
+                    <li>
+                      Defines macro strategies, breaks them into actionable roadmaps, manages dependencies, risks, and
+                      timelines.
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-medium mb-2">PROCESS</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>
+                      Develops and refines engineering processes including coding standards, code reviews, QA
+                      automation, VAPT, and release protocols.
+                    </li>
+                    <li>
+                      Champions Agile methodologies (Scrum, Kanban), enabling iterative delivery and continuous
+                      improvement.
+                    </li>
+                    <li>Partners with DevOps to streamline CI/CD pipelines and improve deployment efficiency.</li>
+                    <li>Drives a culture of accountability, documentation, and engineering best practices.</li>
+                  </ul>
+                </div>
               </div>
-              <div>
-                <h4 className="font-semibold mb-2">Skills</h4>
-                <div className="flex flex-wrap gap-2">
-                  {["React", "Node.js", "TypeScript", "AWS", "Docker", "PostgreSQL", "GraphQL", "CI/CD"].map(
-                    (skill) => (
-                      <span key={skill} className="px-3 py-1 bg-muted rounded-full text-xs">
-                        {skill}
-                      </span>
-                    ),
-                  )}
+            </div>
+
+            {/* Awards */}
+            <div>
+              <h4 className="font-semibold text-lg mb-2">AWARDS & RECOGNITIONS</h4>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p>• Consistent Best Innovator Awardee (for both OpenText Phils. Inc. and FactSet Phils. Inc.)</p>
+                <p>• FY24 People Champions Awardee - MONEYME's Company Wide Recognition</p>
+                <p className="text-xs mt-2">and many more!</p>
+              </div>
+            </div>
+
+            {/* Character References */}
+            <div>
+              <h4 className="font-semibold text-lg mb-3">CHARACTER REFERENCES</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium">Justine Marie Dinampo-Vaughan</p>
+                  <p className="text-xs text-muted-foreground">Head of People & Culture</p>
+                  <p className="text-xs text-muted-foreground">jm.dinampo@gmail.com</p>
+                  <p className="text-xs text-muted-foreground">+63 917 185 0208</p>
+                </div>
+                <div>
+                  <p className="font-medium">Ma. Tamara Rivero</p>
+                  <p className="text-xs text-muted-foreground">Product Designer</p>
+                  <p className="text-xs text-muted-foreground">iam.tammyrivero@gmail.com</p>
+                  <p className="text-xs text-muted-foreground">+63 998 566 6926</p>
+                </div>
+                <div>
+                  <p className="font-medium">Stephanie Hazel Robles-Benedicto</p>
+                  <p className="text-xs text-muted-foreground">Engineering Manager</p>
+                  <p className="text-xs text-muted-foreground">srobles@factset.com</p>
+                  <p className="text-xs text-muted-foreground">+63 998 591 3063</p>
+                </div>
+                <div>
+                  <p className="font-medium">Giselle Geronimo</p>
+                  <p className="text-xs text-muted-foreground">Senior Market Researcher</p>
+                  <p className="text-xs text-muted-foreground">sellegeronatwork@gmail.com</p>
+                  <p className="text-xs text-muted-foreground">+63 920 453 0534</p>
                 </div>
               </div>
             </div>
