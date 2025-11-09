@@ -1035,34 +1035,6 @@ Simply type any command or ask your questions naturally!`
       (text: string): boolean => {
         const lowerText = text.toLowerCase().trim()
 
-        // Helper function to generate short response
-        const generateShortResponse = () => {
-          return "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-        }
-
-        // Helper function to generate large text response
-        const generateLargeResponse = () => {
-          return `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
-
-At vero eos et accusamus et iusto odio dignissim ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.
-
-## Conclusion
-
-In summary, these fundamental principles provide a comprehensive framework for understanding the essential concepts discussed above. The interconnected nature of these ideas demonstrates their significance in practical applications.`
-        }
-
-        // Helper function to generate bullet text response
-        const generateBulletResponse = () => {
-          return `• Lorem ipsum dolor sit amet, consectetur adipiscing elit
-• Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
-• Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-• Duis aute irure dolor in reprehenderit in voluptate velit
-• Excepteur sint occaecat cupidatat non proident sunt in culpa`
-        }
-        // </CHANGE>
-
         // 1. Text - simple text response
         if (lowerText === "text") {
           const userMsg: Message = {
@@ -1375,6 +1347,8 @@ Ready to get started? Let's begin with the take-home challenge!`,
 
         // 12. Take Home Challenge
         if (lowerText === "take home challenge") {
+          console.log("[v0] Take home challenge reserved command triggered")
+
           const userMsg: Message = {
             id: Date.now().toString(),
             type: "user",
@@ -1404,14 +1378,14 @@ I'm opening the coding environment for you now. Good luck!`,
           const loadingData: WorkspaceContent = { type: "challenge-loading" }
           onOpenWorkspace(loadingData)
           setHasOpenedWorkspace(true)
-          setCurrentWorkspaceContent(loadingData)
+          setCurrentWorkspaceContent(loadingData) // Update internal state
 
           // After a delay, open the actual code workspace
           setTimeout(() => {
             const workspaceData: WorkspaceContent = { type: "code", title: "Take Home Challenge" }
             onOpenWorkspace(workspaceData)
             setLastWorkspaceContent(workspaceData)
-            setCurrentWorkspaceContent(workspaceData)
+            setCurrentWorkspaceContent(workspaceData) // Update internal state
           }, 2000)
 
           return true
@@ -2189,10 +2163,9 @@ ${loremParagraphs[1]}`
         ])
       },
       handleJobApplication: (job: JobListing) => {
-        // Simulate opening an interview option modal or performing an action
+        // Only trigger the interview option event, don't send a chat message
         window.dispatchEvent(new CustomEvent("interview-option-selected"))
-
-        handleSendMessage("Apply to this job")
+        // </CHANGE>
       },
       handleStartChallenge: handleStartChallenge, // Use the declared variable
       handleSubmitChallengeRequest: handleSubmitChallengeRequest,
@@ -3275,6 +3248,14 @@ Looking forward to seeing this conversation develop! 🚀`,
 
     // Main handler for sending messages or executing commands
     const handleSendMessage = async (content: string) => {
+      console.log("[v0] handleSendMessage called with:", content)
+      const wasReservedCommand = handleCommandOrMessage(content)
+      console.log("[v0] Was reserved command in handleSendMessage:", wasReservedCommand)
+      if (wasReservedCommand) {
+        return
+      }
+      // </CHANGE>
+
       let targetAgentId = activeAgent.id // Default to the currently active agent
 
       // If a hiring manager introduction is in progress, use the specified hiring manager agent.
@@ -3462,13 +3443,6 @@ Looking forward to seeing this conversation develop! 🚀`,
         return // Exit handler after processing candidate chat
       }
 
-      const wasReservedCommand = handleCommandOrMessage(userMessage)
-      if (wasReservedCommand) {
-        return
-      }
-      // </CHANGE>
-
-      // Check if the message is a command that should be handled locally.
       const wasCommand = await detectAndHandleCommand(userMessage)
       if (wasCommand) {
         return // Command was handled, stop processing.

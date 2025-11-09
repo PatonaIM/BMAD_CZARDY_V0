@@ -311,7 +311,13 @@ export default function JobView({
   }
 
   const handleStageClick = (stageName: string) => {
-    if (onSendMessage) {
+    console.log("[v0] handleStageClick called with:", stageName)
+    console.log("[v0] onSendMessage exists:", !!onSendMessage)
+
+    if (stageName === "Take Home Challenge" && onSendMessage) {
+      console.log("[v0] Sending 'take home challenge' message")
+      onSendMessage("take home challenge")
+    } else if (onSendMessage) {
       onSendMessage(stageName.toLowerCase())
     }
   }
