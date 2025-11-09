@@ -13,9 +13,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-001.pdf",
     receiptUrl: "/receipts/receipt-2025-001.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "January 2025",
     lineItems: [
@@ -47,9 +47,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-002.pdf",
     receiptUrl: "/receipts/receipt-2025-002.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "February 2025",
     lineItems: [
@@ -81,9 +81,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-003.pdf",
     receiptUrl: "/receipts/receipt-2025-003.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "March 2025",
     lineItems: [
@@ -115,9 +115,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-004.pdf",
     receiptUrl: "/receipts/receipt-2025-004.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "April 2025",
     lineItems: [
@@ -149,9 +149,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-005.pdf",
     receiptUrl: "/receipts/receipt-2025-005.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "May 2025",
     lineItems: [
@@ -183,9 +183,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-006.pdf",
     receiptUrl: "/receipts/receipt-2025-006.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "June 2025",
     lineItems: [
@@ -217,9 +217,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-007.pdf",
     receiptUrl: "/receipts/receipt-2025-007.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "July 2025",
     lineItems: [
@@ -251,9 +251,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-008.pdf",
     receiptUrl: "/receipts/receipt-2025-008.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "August 2025",
     lineItems: [
@@ -285,9 +285,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-009.pdf",
     receiptUrl: "/receipts/receipt-2025-009.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "September 2025",
     lineItems: [
@@ -319,9 +319,9 @@ export const mockInvoices: Invoice[] = [
     pdfUrl: "/invoices/inv-2025-010.pdf",
     receiptUrl: "/receipts/receipt-2025-010.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "October 2025",
     lineItems: [
@@ -352,9 +352,9 @@ export const mockInvoices: Invoice[] = [
     period: "November 2025",
     pdfUrl: "/invoices/inv-2025-011.pdf",
     contact: {
-      name: "Acme Corporation",
-      accountNumber: "ACC-001",
-      address: "123 Business St, Tech City, TC 12345",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "November 2025",
     lineItems: [
@@ -385,9 +385,9 @@ export const mockInvoices: Invoice[] = [
     period: "October and November 2025",
     pdfUrl: "/invoices/inv-2025-012.pdf",
     contact: {
-      name: "Famaso",
-      accountNumber: "FMO",
-      address: "No address",
+      name: "Stark Industries Inc.",
+      accountNumber: "TMFSTARK12345",
+      address: "Penthouse Level, Avengers Tower, Midtown Manhattan, New York City, USA",
     },
     reference: "November 2025",
     lineItems: [
