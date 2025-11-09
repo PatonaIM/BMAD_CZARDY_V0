@@ -13,19 +13,14 @@ export function PricingPlansWorkspace({ initialView = "candidate", onViewChange 
   const [selectedManagerPlan, setSelectedManagerPlan] = useState<string | null>("enterprise")
 
   useEffect(() => {
-    console.log("[v0] PricingPlansWorkspace initialView changed to:", initialView)
     if (initialView) {
       setActiveView(initialView)
-      console.log("[v0] Updated activeView to:", initialView)
     }
   }, [initialView])
 
-  useEffect(() => {
-    console.log("[v0] PricingPlansWorkspace activeView is now:", activeView)
-  }, [activeView])
+  useEffect(() => {}, [activeView])
 
   const handleViewChange = (view: "candidate" | "hiring-manager") => {
-    console.log("[v0] User clicked to change view to:", view)
     setActiveView(view)
     onViewChange?.(view)
   }

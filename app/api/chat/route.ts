@@ -14,8 +14,6 @@ export async function POST(req: Request) {
     }: { messages: UIMessage[]; agentId: string; workspaceContext?: string; commandsContext?: string } =
       await req.json()
 
-    console.log("[v0] Chat API received request with agentId:", agentId)
-
     let systemMessage = buildSystemPrompt(agentId, AI_AGENTS, false)
 
     if (workspaceContext && workspaceContext.trim().length > 0) {

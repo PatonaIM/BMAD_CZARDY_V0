@@ -142,8 +142,6 @@ export async function POST(request: Request) {
     const instructions = getInstructionsForAgent(agentId)
     const tools = getFunctionsForAgent(agentId) // Get functions for the agent
 
-    console.log(`[v0] Creating session for agent: ${agentId} with voice: ${voice}`)
-
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
       headers: {

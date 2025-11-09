@@ -479,9 +479,6 @@ const RESERVED_COMMANDS = [
 function fuzzyMatchAgentName(input: string): string | null {
   const normalizedInput = input.toLowerCase().trim()
 
-  console.log("[v0] Fuzzy matching input:", normalizedInput)
-
-  // Extract potential name from phrases like "I want to speak to Darlene"
   const nameExtractionPatterns = [
     /(?:talk to|speak to|speak with|switch to|connect (?:me )?(?:with|to)|get me)\s+(.+)/i,
     /(?:i want to|i wanted to|i'd like to)\s+(?:talk to|speak to|speak with)\s+(.+)/i,
@@ -493,7 +490,6 @@ function fuzzyMatchAgentName(input: string): string | null {
     const match = normalizedInput.match(pattern)
     if (match && match[1]) {
       extractedName = match[1].trim()
-      console.log("[v0] Extracted name from pattern:", extractedName)
       break
     }
   }
@@ -503,29 +499,22 @@ function fuzzyMatchAgentName(input: string): string | null {
     .replace(/\b(the|agent|our)\b/gi, "") // Remove common words
     .trim()
 
-  console.log("[v0] Cleaned extracted name:", extractedName)
-
-  // Direct name matching with typo tolerance
   for (const agent of AI_AGENTS) {
     const firstName = agent.firstName.toLowerCase()
 
     // Exact match
     if (extractedName === firstName) {
-      console.log("[v0] Exact match found:", agent.firstName)
       return agent.firstName.toLowerCase()
     }
 
     // Check if input contains the name
     if (extractedName.includes(firstName) || firstName.includes(extractedName)) {
-      console.log("[v0] Partial match found:", agent.firstName)
       return agent.firstName.toLowerCase()
     }
 
     // Simple Levenshtein distance for typos (e.g., "Darlene" → "Darlyn", "Lorenz" → "Lawrence")
     const distance = levenshteinDistance(extractedName, firstName)
-    console.log(`[v0] Levenshtein distance between "${extractedName}" and "${firstName}":`, distance)
     if (distance <= 2) {
-      console.log("[v0] Fuzzy match found:", agent.firstName)
       return agent.firstName.toLowerCase()
     }
   }
@@ -533,25 +522,21 @@ function fuzzyMatchAgentName(input: string): string | null {
   // Role-based matching
   if (normalizedInput.includes("account") || (normalizedInput.includes("manager") && !normalizedInput.includes("hr"))) {
     const accountManager = AI_AGENTS.find((a) => a.id === "account-manager")
-    console.log("[v0] Role-based match: account manager")
     return accountManager?.firstName.toLowerCase() || null
   }
 
   if (normalizedInput.includes("recruit") || normalizedInput.includes("technical")) {
     const recruiter = AI_AGENTS.find((a) => a.id === "technical-recruiter")
-    console.log("[v0] Role-based match: recruiter")
     return recruiter?.firstName.toLowerCase() || null
   }
 
   if (normalizedInput.includes("hr") || normalizedInput.includes("human resource")) {
     const hrManager = AI_AGENTS.find((a) => a.id === "hr-manager")
-    console.log("[v0] Role-based match: hr manager")
     return hrManager?.firstName.toLowerCase() || null
   }
 
   if (normalizedInput.includes("sales") || normalizedInput.includes("marketing")) {
     const salesMarketing = AI_AGENTS.find((a) => a.id === "sales-marketing")
-    console.log("[v0] Role-based match: sales/marketing")
     return salesMarketing?.firstName.toLowerCase() || null
   }
 
@@ -562,11 +547,9 @@ function fuzzyMatchAgentName(input: string): string | null {
     normalizedInput.includes("accounting")
   ) {
     const financialController = AI_AGENTS.find((a) => a.id === "financial-controller")
-    console.log("[v0] Role-based match: financial controller")
     return financialController?.firstName.toLowerCase() || null
   }
 
-  console.log("[v0] No fuzzy match found")
   return null
 }
 
@@ -611,7 +594,6 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
   }
 
   const processedInput = splitCamelCase(normalizedInput)
-  console.log("[v0] Processed input (camelCase split):", processedInput)
 
   const navigationMappings = [
     {
@@ -909,8 +891,6 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
   }
   cleanedInput = cleanedInput.replace(/\s+/g, " ").trim()
 
-  console.log("[v0] Cleaned input for fuzzy matching:", cleanedInput)
-
   for (const mapping of navigationMappings) {
     for (const variation of mapping.variations) {
       // Check if the variation appears in the original input
@@ -920,7 +900,6 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
 
       // Check if the variation appears in the processed input (camelCase split)
       if (processedInput.includes(variation)) {
-        console.log(`[v0] Match found in processed input: "${processedInput}" contains "${variation}"`)
         return { command: mapping.command, confidence: 0.95 }
       }
 
@@ -932,7 +911,6 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
       // Check Levenshtein distance for typos on cleaned input
       const distance = levenshteinDistance(cleanedInput, variation)
       if (distance <= 2 && cleanedInput.length > 3) {
-        console.log(`[v0] Fuzzy match found: "${cleanedInput}" ≈ "${variation}" (distance: ${distance})`)
         return { command: mapping.command, confidence: 0.85 }
       }
     }
@@ -950,13 +928,9 @@ export async function detectCommandIntent(
   confidence: number
   jobTitle?: string
 }> {
-  console.log("[v0] detectCommandIntent called with:", userInput)
-  console.log("[v0] Current workspace:", currentWorkspace)
-
   const normalizedInput = userInput.toLowerCase().trim()
 
   if (normalizedInput.length < 3) {
-    console.log("[v0] Input too short, skipping command detection")
     return {
       isCommand: false,
       confidence: 0,
@@ -1024,7 +998,6 @@ export async function detectCommandIntent(
   const isQuestion = questionStarters.some((starter) => normalizedInput.startsWith(starter))
 
   if (isQuestion) {
-    console.log("[v0] Question pattern detected at start of input. Treating as contextual question, not navigation.")
     return {
       isCommand: false,
       confidence: 0,
@@ -1050,23 +1023,20 @@ export async function detectCommandIntent(
     const isExplicitNavigation = explicitNavigationPhrases.some((phrase) => normalizedInput.includes(phrase))
 
     if (!isExplicitNavigation) {
-      console.log("[v0] User is on invoice-detail. Will stay on invoice unless explicit navigation is requested.")
       // Stay on invoice detail for ANY input that's not explicit navigation
       // This prevents accidental navigation back to billing
-      console.log("[v0] No explicit navigation detected, staying on invoice detail view")
       return {
         isCommand: false,
         confidence: 0,
       }
     } else {
-      console.log("[v0] Explicit navigation phrase detected, allowing navigation away from invoice")
+      // Explicit navigation phrase detected, allowing navigation away from invoice
     }
   }
 
   const blockedCommands: string[] = []
 
   if (isAskingAboutCurrentWorkspace && currentWorkspace) {
-    console.log("[v0] User is asking about current workspace content, not navigating. Skipping command detection.")
     return {
       isCommand: false,
       confidence: 0,
@@ -1076,15 +1046,11 @@ export async function detectCommandIntent(
   const fuzzyNavMatch = fuzzyMatchNavigationCommand(normalizedInput)
   if (fuzzyNavMatch) {
     if (blockedCommands.includes(fuzzyNavMatch.command)) {
-      console.log(
-        `[v0] Command "${fuzzyNavMatch.command}" is blocked in workspace "${currentWorkspace}". Treating as contextual question.`,
-      )
       return {
         isCommand: false,
         confidence: 0,
       }
     }
-    console.log("[v0] Fuzzy navigation match found:", fuzzyNavMatch.command)
     return {
       isCommand: true,
       command: fuzzyNavMatch.command,
@@ -1097,15 +1063,11 @@ export async function detectCommandIntent(
     for (const keyword of cmd.keywords) {
       if (normalizedInput.includes(keyword)) {
         if (blockedCommands.includes(cmd.command)) {
-          console.log(
-            `[v0] Command "${cmd.command}" is blocked in workspace "${currentWorkspace}". Treating as contextual question.`,
-          )
           return {
             isCommand: false,
             confidence: 0,
           }
         }
-        console.log("[v0] Keyword match found:", keyword, "→", cmd.command)
         return {
           isCommand: true,
           command: cmd.command,
@@ -1286,7 +1248,6 @@ export async function detectCommandIntent(
         )
 
       if (!isNavigationCommand && potentialJobTitle.length > 3 && hasJobTitleWords) {
-        console.log("[v0] Job-specific request detected:", potentialJobTitle)
         return {
           isCommand: true,
           command: "view job",
@@ -1319,12 +1280,9 @@ export async function detectCommandIntent(
   const hasSwitchingKeyword = switchingKeywords.some((keyword) => normalizedInput.includes(keyword))
 
   if (hasSwitchingKeyword) {
-    console.log("[v0] Switching keyword detected, attempting fuzzy agent name matching")
     const fuzzyAgentName = fuzzyMatchAgentName(normalizedInput)
-    console.log("[v0] Fuzzy agent name result:", fuzzyAgentName)
 
     if (fuzzyAgentName) {
-      console.log("[v0] Agent switch command detected:", `switch to ${fuzzyAgentName}`)
       return {
         isCommand: true,
         command: `switch to ${fuzzyAgentName}`,
@@ -1332,7 +1290,7 @@ export async function detectCommandIntent(
       }
     }
   } else {
-    console.log("[v0] No switching keywords detected, skipping fuzzy agent name matching")
+    // No switching keywords detected, skipping fuzzy agent name matching
   }
 
   try {
@@ -1391,7 +1349,7 @@ Examples of NOT COMMANDS (isCommand: false):
       confidence: result.confidence || 0,
     }
   } catch (error) {
-    console.error("[v0] Error detecting command intent:", error)
+    console.error("Error detecting command intent:", error)
     return {
       isCommand: false,
       confidence: 0,

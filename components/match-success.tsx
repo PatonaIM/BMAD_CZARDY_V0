@@ -12,17 +12,12 @@ interface MatchSuccessProps {
 
 export function MatchSuccess({ candidateName, jobTitle, onOpenChat, onContinueSwiping }: MatchSuccessProps) {
   const handleOpenChatClick = () => {
-    console.log("[v0] MatchSuccess: Start Conversation clicked for:", candidateName)
-    console.log("[v0] MatchSuccess: onOpenChat function exists:", !!onOpenChat)
     onOpenChat()
   }
 
   const handleContinueSwipingClick = () => {
-    console.log("[v0] MatchSuccess: Continue Reviewing Candidates clicked")
-    console.log("[v0] MatchSuccess: onContinueSwiping function exists:", !!onContinueSwiping)
     onContinueSwiping()
   }
-  // </CHANGE>
 
   return (
     <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#A16AE8]/5 to-[#8096FD]/5">

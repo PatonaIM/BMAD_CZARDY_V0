@@ -251,7 +251,6 @@ export function CandidateProfileView({ candidate, showSwipeButtons = false, onSw
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      console.log("[v0] View transcript clicked")
                     }}
                     className="px-3 py-1.5 text-sm font-medium text-[#A16AE8] hover:text-[#8096FD] hover:bg-[#A16AE8]/10 rounded-lg transition-colors"
                   >

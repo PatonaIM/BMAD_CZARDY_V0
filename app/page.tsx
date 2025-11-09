@@ -99,13 +99,6 @@ export default function ChatPage() {
           break
       }
 
-      console.log(
-        "[v0] Updating workspace content with job board tab:",
-        currentJobBoardTab,
-        "Jobs:",
-        filteredJobs.length,
-      )
-
       // Use the same structure that ChatMain expects (jobs directly, not in data)
       setWorkspaceContent({
         type: "job-board",
@@ -141,16 +134,11 @@ export default function ChatPage() {
 
   const handleEditProfile = () => {
     const user = getCurrentUser()
-    console.log("[v0] handleEditProfile called, user role:", user?.role)
 
     if (user?.role === "hiring_manager") {
       const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
-      console.log("[v0] Found account manager:", accountManager?.name)
       if (accountManager && chatMainRef.current) {
-        console.log("[v0] Calling switchAgent with:", accountManager.id)
         chatMainRef.current.switchAgent(accountManager.id)
-      } else {
-        console.log("[v0] ERROR: chatMainRef.current is null or account manager not found")
       }
       setWorkspaceContent({ type: "hiring-manager-profile", title: "Enterprise Setup" })
     } else {
@@ -159,27 +147,20 @@ export default function ChatPage() {
   }
 
   const handleUpgradePlan = () => {
-    console.log("[v0] Upgrade plan clicked")
     const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
     if (accountManager && chatMainRef.current) {
-      console.log("[v0] Switching to Account Manager agent")
       chatMainRef.current.switchAgent(accountManager.id)
     }
-    console.log("[v0] Opening candidate pricing workspace")
     setWorkspaceContent({ type: "candidate-pricing", title: "Upgrade to Premium" })
   }
 
   const handleHiringManagerStepChange = (step: number) => {
-    console.log("[v0] Hiring manager step changed to:", step)
-
     if (step === 2 && chatMainRef.current) {
-      console.log("[v0] Triggering pricing guidance from Account Manager")
       chatMainRef.current.showPricingGuidance()
     }
   }
 
   const handleViewJob = (job: JobListing | HiringManagerJob) => {
-    console.log("[v0] View job clicked:", job.title)
     const user = getCurrentUser()
 
     setWorkspaceContent({
@@ -192,36 +173,28 @@ export default function ChatPage() {
   }
 
   const handleMyJobs = () => {
-    console.log("[v0] My Jobs clicked")
     const user = getCurrentUser()
 
     if (user?.role === "hiring_manager") {
-      // Switch to Account Manager AI Agent for hiring managers
       const accountManager = AI_AGENTS.find((agent) => agent.id === "account-manager")
       if (accountManager && chatMainRef.current) {
-        console.log("[v0] Switching to Account Manager agent")
         chatMainRef.current.switchAgent(accountManager.id)
       }
     } else {
-      // Switch to Technical Recruiter AI Agent for candidates
       const technicalRecruiter = AI_AGENTS.find((agent) => agent.id === "technical-recruiter")
       if (technicalRecruiter && chatMainRef.current) {
-        console.log("[v0] Switching to Technical Recruiter agent")
         chatMainRef.current.switchAgent(technicalRecruiter.id)
       }
     }
 
-    // Open job board in workspace
-    console.log("[v0] Opening job board workspace")
     setWorkspaceContent({
       type: "job-board",
       title: user?.role === "candidate" ? "My Jobs" : "Job Board",
     })
 
     if (user?.role === "candidate" && chatMainRef.current) {
-      // Mock data - in a real app, this would come from the database
-      const appliedCount = 4 // Number of jobs the user has applied to
-      const savedCount = 2 // Number of jobs the user has saved
+      const appliedCount = 4
+      const savedCount = 2
 
       setTimeout(() => {
         if (chatMainRef.current) {
@@ -238,7 +211,6 @@ export default function ChatPage() {
   }
 
   const handleBackToJobBoard = () => {
-    console.log("[v0] Back to job board clicked")
     const user = getCurrentUser()
 
     setWorkspaceContent({
@@ -248,49 +220,36 @@ export default function ChatPage() {
   }
 
   const handleApplyForJob = (job: JobListing) => {
-    console.log("[v0] handleApplyForJob called for:", job.title)
     if (chatMainRef.current) {
       chatMainRef.current.handleJobApplication(job)
     }
   }
 
   const handleRequestSubmit = () => {
-    console.log("[v0] handleRequestSubmit called")
     if (chatMainRef.current) {
       chatMainRef.current.handleSubmitChallengeRequest()
     }
   }
 
   const handleSubmissionComplete = () => {
-    console.log("[v0] handleSubmissionComplete called")
     if (chatMainRef.current) {
       chatMainRef.current.handleSubmissionComplete()
     }
   }
 
   const handleSendMessage = (message: string) => {
-    console.log("[v0] handleSendMessage called with:", message)
     if (chatMainRef.current) {
       chatMainRef.current.sendMessageFromWorkspace(message)
     }
   }
 
   const handleOpenCandidateChat = (candidate: CandidateProfile, job?: JobListing) => {
-    console.log("[v0] handleOpenCandidateChat called for:", candidate.name)
-    console.log("[v0] handleOpenCandidateChat - candidate:", candidate)
-    console.log("[v0] handleOpenCandidateChat - job:", job)
-    console.log("[v0] handleOpenCandidateChat - job exists:", !!job)
-    console.log("[v0] chatMainRef.current exists:", !!chatMainRef.current)
-    console.log("[v0] chatMainRef.current.showCandidateChat exists:", !!chatMainRef.current?.showCandidateChat)
-
     setWorkspaceContent({
       type: "candidate-profile-view",
       title: candidate.name,
       candidate: candidate,
-      job: job, // Store job info for back navigation
+      job: job,
     })
-
-    console.log("[v0] Workspace content set with job:", job)
 
     if (chatMainRef.current) {
       chatMainRef.current.showCandidateChat(candidate)
@@ -303,41 +262,24 @@ export default function ChatPage() {
     position: string,
     company: string,
   ) => {
-    console.log(
-      "[v0] handleIntroduceMatchedCandidate called with:",
-      candidate.name,
-      hiringManagerName,
-      position,
-      company,
-    )
     if (chatMainRef.current) {
       chatMainRef.current.introduceMatchedCandidate(candidate, hiringManagerName, position, company)
     }
   }
 
   const handleSendAIMessage = (message: string, agentId?: string) => {
-    console.log("[v0] handleSendAIMessage called with message:", message.substring(0, 50) + "...")
-    console.log("[v0] handleSendAIMessage agentId:", agentId)
-    console.log("[v0] chatMainRef.current exists:", !!chatMainRef.current)
-    console.log(
-      "[v0] chatMainRef.current.sendAIMessageFromWorkspace exists:",
-      !!chatMainRef.current?.sendAIMessageFromWorkspace,
-    )
     if (chatMainRef.current) {
       chatMainRef.current.sendAIMessageFromWorkspace(message, agentId)
-      console.log("[v0] sendAIMessageFromWorkspace called successfully")
     }
   }
 
   const handleClearMessages = () => {
-    console.log("[v0] Clear messages clicked")
     if (chatMainRef.current) {
       chatMainRef.current.clearMessages()
     }
   }
 
   const handleWorkspaceUpdate = (updatedContent: WorkspaceContent) => {
-    console.log("[v0] page.tsx - handleWorkspaceUpdate called with:", updatedContent)
     setWorkspaceContent(updatedContent)
   }
 

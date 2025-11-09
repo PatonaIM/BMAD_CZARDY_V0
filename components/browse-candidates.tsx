@@ -47,7 +47,6 @@ export function BrowseCandidates({
 
   useEffect(() => {
     if (currentCandidate && onCandidateShown && !isLoading && shownCandidateRef.current !== currentCandidate.id) {
-      console.log("[v0] Showing candidate:", currentCandidate.name)
       shownCandidateRef.current = currentCandidate.id
       const timer = setTimeout(() => {
         onCandidateShown(currentCandidate)

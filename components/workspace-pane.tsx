@@ -22,7 +22,6 @@ import {
   MapPin,
   DollarSign,
   ArrowLeft,
-  ImageIcon,
   Play,
   Mail,
   Search,
@@ -259,12 +258,9 @@ export const WorkspacePane = ({
   // </CHANGE>
   onOpenHiringManagerChat, // ADDED: prop to open hiring manager chat
 }: WorkspacePaneProps) => {
-  console.log("[v0] WorkspacePane rendered with content.type:", content.type)
-
   const currentUser = useMemo(() => getCurrentUser(), [])
 
   const sentInsightsForCandidate = useRef<string | null>(null)
-  // </CHANGE>
 
   // This useEffect sends AI insights when a candidate profile is opened
   useEffect(() => {
@@ -303,7 +299,6 @@ export const WorkspacePane = ({
       }
 
       message += `\n\nWould you like to proceed with this candidate or would you like me to show you more options?`
-      // </CHANGE>
 
       onSendAIMessage(message, "technical-recruiter")
     }
@@ -346,13 +341,14 @@ export const WorkspacePane = ({
   const [browseCandidates, setBrowseCandidates] = useState<CandidateProfile[]>(getRandomizedCandidates())
 
   const lastSyncedToParent = useRef<"applied" | "invited" | "saved" | "browse">(jobBoardTab || "applied")
-  // </CHANGE>
 
   // FIX: Declare jobStatusFilter
   const [jobStatusFilter, setJobStatusFilter] = useState("open")
   const [candidateJobFilter, setCandidateJobFilter] = useState<"applied" | "invited" | "saved" | "browse">(
     jobBoardTab || "applied",
   )
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   // </CHANGE>
 
   // Only sync if the prop changed externally (not from our own upward sync)
@@ -363,43 +359,33 @@ export const WorkspacePane = ({
       jobBoardTab !== candidateJobFilter &&
       jobBoardTab !== lastSyncedToParent.current
     ) {
-      console.log("[v0] Syncing jobBoardTab prop to candidateJobFilter:", jobBoardTab)
       setCandidateJobFilter(jobBoardTab)
       lastSyncedToParent.current = jobBoardTab
     }
   }, [jobBoardTab, content.type, candidateJobFilter])
-  // </CHANGE>
 
   // The candidateJobFilter state is now the single source of truth for the job board tab
   // It only syncs upward to the parent via onJobBoardTabChange
-  // </CHANGE>
   useEffect(() => {
     if (content.type === "job-board" && onJobBoardTabChange && candidateJobFilter !== lastSyncedToParent.current) {
-      console.log("[v0] Syncing candidateJobFilter to parent:", candidateJobFilter)
       onJobBoardTabChange(candidateJobFilter)
       lastSyncedToParent.current = candidateJobFilter
     }
   }, [candidateJobFilter, content.type, onJobBoardTabChange])
-  // </CHANGE>
 
   useEffect(() => {
     if (content.type === "job-board" && content.jobStatusFilter && currentUser?.role === "hiring_manager") {
-      console.log("[v0] Syncing jobStatusFilter from workspace content:", content.jobStatusFilter)
       setJobStatusFilter(content.jobStatusFilter)
     }
   }, [content.jobStatusFilter, content.type, currentUser?.role])
-  // </CHANGE>
 
   useEffect(() => {
     if (content.type === "browse-candidates") {
-      console.log("[v0] Randomizing candidates for browse-candidates workspace")
       setBrowseCandidates(getRandomizedCandidates())
     }
   }, [content])
-  // </CHANGE>
 
   const handleSwipeLeft = (candidate: CandidateProfile) => {
-    console.log("[v0] Swiped left on candidate:", candidate.name)
     setSwipedCandidates((prev) => ({
       ...prev,
       left: [...prev.left, candidate.id],
@@ -444,11 +430,9 @@ export const WorkspacePane = ({
         onClose()
       }
     }
-    // </CHANGE>
   }
 
   const handleSwipeRight = (candidate: CandidateProfile) => {
-    console.log("[v0] Swiped right on candidate:", candidate.name)
     setSwipedCandidates((prev) => ({
       ...prev,
       right: [...prev.right, candidate.id],
@@ -456,15 +440,10 @@ export const WorkspacePane = ({
 
     // Simulate mutual match (in real app, check if candidate also swiped right)
     const isMutualMatch = Math.random() > 0.5 // 50% chance for demo
-    console.log("[v0] Match check - isMutualMatch:", isMutualMatch)
-    console.log("[v0] Match check - Math.random() result:", Math.random() > 0.5 ? "match" : "no match")
 
     if (isMutualMatch) {
-      console.log("[v0] IT'S A MATCH! Setting match state for:", candidate.name)
       setMatchedCandidate(candidate)
       setShowMatchSuccess(true)
-      console.log("[v0] Match state set - showMatchSuccess should now be true")
-      console.log("[v0] matchedCandidate set to:", candidate.name)
 
       if (content.type === "browse-candidates" && content.job) {
         setMatchedCandidatesPerJob((prev) => ({
@@ -473,13 +452,11 @@ export const WorkspacePane = ({
         }))
       }
     } else {
-      console.log("[v0] No match this time - sending application invite message")
       if (onSendAIMessage) {
         const message = `Great choice! I've sent an application invite to ${candidate.name}. They'll need to complete all required assessments before you can start chatting with them. I'll let you know once they've completed everything!`
         onSendAIMessage(message, "technical-recruiter")
       }
     }
-    // </CHANGE>
 
     if (content.type === "candidate-profile-view") {
       // If we have a candidates array and current index, show next candidate
@@ -520,7 +497,6 @@ export const WorkspacePane = ({
         onClose()
       }
     }
-    // </CHANGE>
   }
 
   const [fileContents, setFileContents] = useState<Record<string, string>>({
@@ -729,7 +705,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     setTimeout(() => {
       setIsPulling(false)
       setLastSyncTime("Just now")
-      console.log("[v0] Pulled changes from GitHub")
     }, 2000)
   }
 
@@ -739,7 +714,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     setTimeout(() => {
       setIsPushing(false)
       setLastSyncTime("Just now")
-      console.log("[v0] Pushed changes to GitHub")
     }, 2000)
   }
 
@@ -750,12 +724,10 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   }
 
   const handleToggleApplicationView = (show: boolean) => {
-    console.log("[v0] handleToggleApplicationView called with show:", show)
     setShowApplicationStatusLocal(show)
   }
 
   const handleViewJobDetails = (job: JobListing) => {
-    console.log("[v0] handleViewJobDetails called for:", job.title, "applied:", job.applied)
     // If the job is already applied, show application status by default
     setShowApplicationStatusLocal(job.applied || false)
     if (onViewJob) {
@@ -765,7 +737,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
 
   // Mock function for requesting skill gap analysis
   const handleRequestSkillGapAnalysis = (job: JobListing) => {
-    console.log("[v0] Requesting skill gap analysis for:", job.title)
     // In a real app, this would trigger a backend process or AI analysis
     // For now, simulate sending a message to the AI chat
     if (onSendMessage) {
@@ -773,9 +744,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     }
   }
   const handleUpdateJobSummary = (jobId: string, newSummary: string) => {
-    console.log("[v0] Updating job summary for job:", jobId)
-    console.log("[v0] New summary:", newSummary)
-
     // Update the local state with the new job summary
     setUpdatedJobSummaries((prev) => ({
       ...prev,
@@ -788,7 +756,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
 
   useEffect(() => {
     if (content.type === "job-view" && content.job) {
-      console.log("[v0] Job view opened, job.applied:", content.job.applied)
       setShowApplicationStatusLocal(content.job.applied || false)
     }
   }, [content.type, content.job])
@@ -820,18 +787,15 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     setIsSavingDraft(true)
     setTimeout(() => {
       setIsSavingDraft(false)
-      console.log("[v0] Draft saved successfully")
       // Show success toast or notification
     }, 1500)
   }
 
   const handleRequestExtension = () => {
-    console.log("[v0] Request extension clicked")
     // Open extension request dialog
   }
 
   const handleAskQuestion = () => {
-    console.log("[v0] Ask question clicked")
     // Open question dialog or chat
   }
 
@@ -1296,7 +1260,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
               contract={content.contractData}
               highlightSection={content.highlightSection}
               onSectionClick={(sectionId) => {
-                console.log("[v0] Contract section clicked:", sectionId)
+                // console.log("[v0] Contract section clicked:", sectionId)
               }}
             />
           ) : (
@@ -1310,6 +1274,44 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   }
 
   if (content.type === "image") {
+    // const [currentImageIndex, setCurrentImageIndex] = useState(0)
+    // </CHANGE>
+
+    const images = [
+      {
+        url: "/portfolio-dashboard-design.jpg",
+        title: "Dashboard Interface Design",
+        description: "Modern analytics dashboard with data visualization",
+      },
+      {
+        url: "/mobile-app-interface.png",
+        title: "Mobile App Interface",
+        description: "iOS app design for fitness tracking",
+      },
+      {
+        url: "/website-landing-page.png",
+        title: "Marketing Landing Page",
+        description: "Conversion-optimized landing page design",
+      },
+      {
+        url: "/admin-panel-interface.jpg",
+        title: "Admin Panel",
+        description: "Enterprise admin dashboard with role management",
+      },
+    ]
+
+    const goToNext = () => {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length)
+    }
+
+    const goToPrevious = () => {
+      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
+    }
+
+    const goToImage = (index: number) => {
+      setCurrentImageIndex(index)
+    }
+
     return (
       <div className="flex flex-col h-full border-l">
         <div className="flex items-center px-6 py-4 border-b">
@@ -1335,21 +1337,85 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold">Portfolio Images</h3>
-                <p className="text-sm text-muted-foreground">Project screenshots and designs</p>
+        <div className="flex-1 overflow-y-auto bg-muted/20">
+          <div className="max-w-7xl mx-auto p-6 space-y-6">
+            {/* Main Image Display */}
+            <div className="relative bg-black rounded-lg overflow-hidden group">
+              <div className="aspect-video flex items-center justify-center">
+                <img
+                  src={images[currentImageIndex].url || "/placeholder.svg"}
+                  alt={images[currentImageIndex].title}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Navigation Arrows */}
+              <button
+                onClick={goToPrevious}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/90 flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100"
+                aria-label="Previous image"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+
+              <button
+                onClick={goToNext}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/90 flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100"
+                aria-label="Next image"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+
+              {/* Image Counter */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/70 text-white text-sm font-medium">
+                {currentImageIndex + 1} / {images.length}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="aspect-video bg-muted rounded-lg overflow-hidden group cursor-pointer">
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-blue-500/20 group-hover:scale-105 transition-transform">
-                    <ImageIcon className="w-16 h-16 text-muted-foreground/50" />
-                  </div>
-                </div>
+
+            {/* Image Info */}
+            <div className="bg-card rounded-lg p-6 border">
+              <h3 className="text-xl font-semibold mb-2">{images[currentImageIndex].title}</h3>
+              <p className="text-muted-foreground">{images[currentImageIndex].description}</p>
+            </div>
+
+            {/* Thumbnail Navigation */}
+            <div className="grid grid-cols-4 gap-4">
+              {images.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToImage(index)}
+                  className={`aspect-video rounded-lg overflow-hidden border-2 transition-all ${
+                    index === currentImageIndex
+                      ? "border-[#A16AE8] ring-2 ring-[#A16AE8]/20"
+                      : "border-transparent hover:border-border"
+                  }`}
+                >
+                  <img src={image.url || "/placeholder.svg"} alt={image.title} className="w-full h-full object-cover" />
+                </button>
               ))}
             </div>
           </div>
@@ -1449,13 +1515,8 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
         <div className="flex items-center px-6 py-4 border-b">
           <button
             onClick={() => {
-              console.log("[v0] Back button clicked in candidate-profile-view")
-              console.log("[v0] content.sourceView:", content.sourceView)
-              console.log("[v0] content.job exists:", !!content.job)
-
               // Return to browse-candidates if opened from there
               if (content.sourceView === "browse-candidates" && content.job && onOpenWorkspace) {
-                console.log("[v0] Navigating back to browse-candidates for:", content.job.title)
                 onOpenWorkspace({
                   type: "browse-candidates",
                   job: content.job,
@@ -1463,11 +1524,9 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                 })
               } else if (content.job && onOpenWorkspace) {
                 // Return to job view if opened from matched candidates
-                console.log("[v0] Navigating back to job view for:", content.job.title)
                 onOpenWorkspace({ type: "job-view", job: content.job, title: content.job.title })
               } else {
                 // Close workspace if no context available
-                console.log("[v0] Closing workspace - no navigation context available")
                 onClose()
               }
             }}
@@ -1476,7 +1535,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
           >
             <span className="text-lg font-semibold">←</span>
           </button>
-          {/* </CHANGE> */}
           <h2 className="text-lg font-semibold">{content.title}</h2>
 
           <button
@@ -1548,12 +1606,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   }
 
   const handleOpenMatchChat = () => {
-    console.log("[v0] handleOpenMatchChat called")
-    console.log("[v0] Opening chat with matched candidate:", matchedCandidate?.name)
-    console.log("[v0] matchedCandidate exists:", !!matchedCandidate)
-    console.log("[v0] content.job exists:", !!content.job)
-    console.log("[v0] onIntroduceMatchedCandidate exists:", !!onIntroduceMatchedCandidate)
-
     if (matchedCandidate && content.job) {
       const user = getCurrentUser()
       if (user && onIntroduceMatchedCandidate) {
@@ -1561,19 +1613,11 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
         const position = content.job.title // Use the job title as the position
         const company = user.company || "the company"
 
-        console.log("[v0] Introducing matched candidate with:", {
-          candidateName: matchedCandidate.name,
-          hiringManagerName,
-          position,
-          company,
-        })
-
         // Call the introduction function to reset chat and send introduction
         onIntroduceMatchedCandidate(matchedCandidate, hiringManagerName, position, company)
       }
 
       if (onOpenWorkspace) {
-        console.log("[v0] Opening candidate profile workspace")
         onOpenWorkspace({
           type: "candidate-profile-view",
           title: matchedCandidate.name,
@@ -1583,18 +1627,15 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
       }
     }
 
-    console.log("[v0] Setting showMatchSuccess to false")
     setShowMatchSuccess(false)
   }
 
   const handleContinueSwiping = () => {
-    console.log("[v0] handleContinueSwiping called")
     setShowMatchSuccess(false)
     setMatchedCandidate(null)
   }
 
   const handleBackToMyJobs = () => {
-    console.log("[v0] Back to my jobs from candidate swipe")
     const user = currentUser
     if (onBackToJobBoard) {
       onBackToJobBoard()
@@ -1602,25 +1643,18 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   }
 
   const handleBrowseMoreCandidates = () => {
-    console.log("[v0] Browse more candidates clicked")
     if (content.job && onOpenWorkspace) {
       onOpenWorkspace({ type: "candidate-swipe", job: content.job })
     }
   }
 
   const handleOpenCandidateChat = (candidate: CandidateProfile, job?: JobListing) => {
-    console.log("[v0] Opening chat with candidate:", candidate.name)
-    console.log("[v0] workspace-pane.tsx - job parameter:", job)
-    console.log("[v0] workspace-pane.tsx - job exists:", !!job)
     if (onOpenCandidateChat) {
       onOpenCandidateChat(candidate, job)
     }
   }
 
   if (showMatchSuccess && matchedCandidate) {
-    console.log("[v0] Rendering MatchSuccess screen for:", matchedCandidate.name)
-    console.log("[v0] showMatchSuccess:", showMatchSuccess)
-    console.log("[v0] matchedCandidate:", matchedCandidate)
     return (
       <div className="flex flex-col h-full border-l">
         <MatchSuccess
@@ -1632,7 +1666,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
       </div>
     )
   }
-  // </CHANGE>
 
   const handleCandidateSelect = (candidate: CandidateProfile) => {
     if (onOpenWorkspace) {
@@ -1647,24 +1680,18 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
         job: content.type === "browse-candidates" ? content.job : undefined, // Pass job context if available
         sourceView: content.type === "browse-candidates" ? "browse-candidates" : undefined,
       })
-      // </CHANGE>
     }
   }
 
   const handleCandidateShown = (candidate: CandidateProfile) => {
     if (chatMainRef?.current?.sendCandidateInsights && sentInsightsForCandidate.current !== candidate.id) {
-      console.log("[v0] Sending insights for candidate:", candidate.name)
       sentInsightsForCandidate.current = candidate.id
       chatMainRef.current.sendCandidateInsights(candidate)
     }
-    // </CHANGE>
   }
-
-  // REMOVED: handleBrowseCandidatesLoadingComplete function
 
   // Function to handle applying for a job and toggling application status
   const handleApplyForJobWithStatusToggle = (job: JobListing) => {
-    console.log("[v0] Applying for job:", job.title)
     if (onApplyForJob) {
       onApplyForJob(job)
     }
@@ -1777,7 +1804,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   }
 
   const handleOpenHiringManagerChat = (job: JobListing) => {
-    console.log("[v0] Opening hiring manager chat for job:", job.title)
     if (onOpenWorkspace) {
       onOpenWorkspace({
         type: "hiring-manager-chat",
@@ -1788,10 +1814,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
   }
 
   const handleSendMessage = (message: string) => {
-    console.log("[v0] handleSendMessage called with:", message)
-
     if (message.toLowerCase().includes("browse candidates") && content.type === "job-view" && content.job) {
-      console.log("[v0] Browsing candidates from job-view, passing job context:", content.job.title)
       if (onOpenWorkspace) {
         onOpenWorkspace({
           type: "browse-candidates",
@@ -1802,7 +1825,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
       }
       return
     }
-    // </CHANGE>
 
     if (onSendMessage) {
       onSendMessage(message)
@@ -2205,7 +2227,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       <button
                         type="button"
                         onClick={() => {
-                          console.log("[v0] Draft Jobs button clicked")
                           setJobStatusFilter("draft")
                         }}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -2222,7 +2243,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       <button
                         type="button"
                         onClick={() => {
-                          console.log("[v0] Open Jobs button clicked")
                           setJobStatusFilter("open")
                         }}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -2239,7 +2259,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       <button
                         type="button"
                         onClick={() => {
-                          console.log("[v0] Closed Jobs button clicked")
                           setJobStatusFilter("closed")
                         }}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -2258,7 +2277,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                     {/* Create New Job button - aligned right */}
                     <button
                       onClick={() => {
-                        console.log("[v0] Create New Job button clicked")
                         // TODO: Implement create job functionality
                       }}
                       className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
@@ -2353,7 +2371,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       })}
                   </div>
                 </div>
-                // </CHANGE>
               ) : (
                 // Candidate View - Job Board with Applied/Invited/Saved tabs
                 <div>
@@ -2363,7 +2380,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       <button
                         type="button"
                         onClick={() => {
-                          console.log("[v0] Applied Jobs button clicked")
                           setCandidateJobFilter("applied")
                         }}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -2380,7 +2396,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       <button
                         type="button"
                         onClick={() => {
-                          console.log("[v0] Invited Jobs button clicked")
                           setCandidateJobFilter("invited")
                         }}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -2397,7 +2412,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                       <button
                         type="button"
                         onClick={() => {
-                          console.log("[v0] Saved Jobs button clicked")
                           setCandidateJobFilter("saved")
                         }}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -2417,7 +2431,6 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
                     <button
                       type="button"
                       onClick={() => {
-                        console.log("[v0] Browse Jobs clicked")
                         setCandidateJobFilter("browse")
                       }}
                       className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"

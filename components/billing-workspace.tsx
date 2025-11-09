@@ -74,17 +74,14 @@ export function BillingWorkspace({ data, onViewInvoice }: BillingWorkspaceProps)
   }
 
   const handleDownloadInvoice = (invoice: Invoice) => {
-    console.log("[v0] Downloading invoice:", invoice.invoiceNumber)
     // Download logic would go here
   }
 
   const handleViewReceipt = (invoice: Invoice) => {
-    console.log("[v0] Viewing receipt for:", invoice.invoiceNumber)
     // View receipt logic would go here
   }
 
   const handleInvoiceClick = (invoice: Invoice) => {
-    console.log("[v0] Opening invoice detail:", invoice.invoiceNumber)
     onViewInvoice?.(invoice)
   }
 

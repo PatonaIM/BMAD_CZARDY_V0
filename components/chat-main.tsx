@@ -181,7 +181,7 @@ const loremParagraphs = [
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
   "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
-  "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt moll anim id est laborum.",
+  "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
   "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
   "Totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
   "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores.",
@@ -196,19 +196,31 @@ const loremBullets = [
   "Excepteur sint occaecat cupidatat non proident",
 ]
 
-const generateShortResponse = () => loremParagraphs[0]
-
-const generateLargeResponse = () => {
-  const mainContent = loremParagraphs.slice(0, 5).join("\n\n")
-  const summary = `\n\n## In Summary\n\n${loremParagraphs[6]}\n\n${loremParagraphs[7]}`
-  return `${mainContent}${summary}`
+// Helper function to generate short response
+const generateShortResponse = () => {
+  return "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 }
 
+// Helper function to generate large text response
+const generateLargeResponse = () => {
+  return `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
+
+At vero eos et accusamus et iusto odio dignissim ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.
+
+## Conclusion
+
+In summary, these fundamental principles provide a comprehensive framework for understanding the essential concepts discussed above. The interconnected nature of these ideas demonstrates their significance in practical applications.`
+}
+
+// Helper function to generate bullet text response
 const generateBulletResponse = () => {
-  const intro = loremParagraphs[0]
-  const bullets = loremBullets.map((bullet) => `• ${bullet}`).join("\n")
-  const summary = `\n\n## Summary\n\n${loremParagraphs[1]}`
-  return `${intro}\n\n${bullets}${summary}`
+  return `• Lorem ipsum dolor sit amet, consectetur adipiscing elit
+• Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
+• Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+• Duis aute irure dolor in reprehenderit in voluptate velit
+• Excepteur sint occaecat cupidatat non proident sunt in culpa`
 }
 
 const codeSnippet = `from flask import Flask, jsonify, request
@@ -366,11 +378,8 @@ Now that I have your information, I can help you in several ways. Here are some 
 
 const formatWorkspaceContext = (content: WorkspaceContent | undefined): string => {
   if (!content) {
-    console.log("[v0] No workspace content available")
     return ""
   }
-
-  console.log("[v0] Formatting workspace context for type:", content.type)
 
   let context = "\n\n**CURRENT WORKSPACE CONTEXT:**\n"
 
@@ -398,8 +407,6 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
         if (c.aiGeneratedInsights.length > 0) {
           context += `- AI Insights: ${c.aiGeneratedInsights.join("; ")}\n`
         }
-      } else {
-        console.log("[v0] Candidate profile workspace has no candidate data")
       }
       break
 
@@ -412,8 +419,6 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
             context += `Currently viewing: ${currentCandidate.name} (${currentCandidate.title})\n`
           }
         }
-      } else {
-        console.log("[v0] Browse candidates workspace has no candidates")
       }
       break
 
@@ -435,8 +440,6 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
         if (j.saved) context += `- Status: Saved\n`
         if (j.skillMatch) context += `- Skill Match: ${j.skillMatch}%\n`
         if (j.applicationStage) context += `- Application Stage: ${j.applicationStage}\n`
-      } else {
-        console.log("[v0] Job view workspace has no job data")
       }
       break
 
@@ -595,7 +598,7 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
         context += `**FINANCIAL SUMMARY:**\n`
         context += `- Subtotal (before tax): $${(inv.subtotal || 0).toFixed(2)}\n`
         context += `- ${inv.taxRate || "Tax"}: $${(inv.tax || 0).toFixed(2)}\n`
-        context += `- **Total Amount Due: $${inv.amount.toFixed(2)}**\n\n`
+        context += `**Total Amount Due: $${inv.amount.toFixed(2)}**\n\n`
 
         if (inv.notes) {
           context += `**ADDITIONAL NOTES:**\n${inv.notes}\n\n`
@@ -616,6 +619,7 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
         context += `Be conversational and helpful, as if you're a billing specialist explaining the invoice.\n`
       }
       break
+
     // </CHANGE>
     // </CHANGE>
 
@@ -818,12 +822,9 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
     default:
       if (content.title) {
         context += `The user is viewing: ${content.title}\n`
-      } else {
-        console.log("[v0] Unknown workspace type with no title:", content.type)
       }
   }
 
-  console.log("[v0] Workspace context formatted:", context.length, "characters")
   return context
 }
 
@@ -927,6 +928,31 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     const [workspaceType, setWorkspaceType] = useState<WorkspaceContent["type"] | null>(null)
     const [currentWorkspaceContent, setCurrentWorkspaceContent] = useState<WorkspaceContent | null>(null) // Added internal state for workspace content
 
+    const handleCommandFromUI = useCallback(
+      (workspaceData: WorkspaceContent, skipAIConfirmation?: boolean) => {
+        onOpenWorkspace(workspaceData)
+        setHasOpenedWorkspace(true)
+        setLastWorkspaceContent(workspaceData)
+        setCurrentWorkspaceContent(workspaceData)
+
+        // Only send AI confirmation if explicitly not skipped
+        if (!skipAIConfirmation) {
+          // Send confirmation message logic here if needed
+          // For example, adding a message to localMessages that indicates the workspace was opened.
+          const confirmationMessage: Message = {
+            id: `ui-command-${Date.now()}`,
+            type: "ai",
+            content: `Opening ${workspaceData.title || workspaceData.type} for you.`,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+          setLocalMessages((prev) => [...prev, confirmationMessage])
+        }
+      },
+      [onOpenWorkspace, activeAgent.id, setLocalMessages], // Added activeAgent.id and setLocalMessages to dependencies
+    )
+    // </CHANGE>
+
     const getCommandsContext = useCallback((agent: AIAgent): string => {
       const commandsList = agent.actions.map((action) => `- *${action} - ${formatCommandName(action)}`).join("\n")
 
@@ -946,14 +972,11 @@ Simply type any command or ask your questions naturally!`
 
     useEffect(() => {
       if (externalWorkspaceContent) {
-        console.log("[v0] Syncing external workspace content:", externalWorkspaceContent.type)
-        console.log("[v0] Full external workspace content:", JSON.stringify(externalWorkspaceContent, null, 2))
-        // </CHANGE>
+        // Sync external workspace content
         setCurrentWorkspaceContent(externalWorkspaceContent)
       } else {
-        console.log("[v0] External workspace content is null, clearing current workspace")
+        // Clear internal state if external content is null
         setCurrentWorkspaceContent(null)
-        // </CHANGE>
       }
     }, [externalWorkspaceContent])
     // </CHANGE>
@@ -992,50 +1015,441 @@ Simply type any command or ask your questions naturally!`
       body: chatBody, // Use memoized body object
       initialMessages: [], // Start with an empty array, welcome messages are handled separately
       onError: (error) => {
-        console.error("[v0] useChat error:", error)
+        // console.error("[v0] useChat error:", error) // Removed console.log
         setIsThinking(false) // Ensure thinking state is reset on error
       },
       onFinish: (message) => {
-        console.log("[v0] useChat finished:", message)
+        // console.log("[v0] useChat finished:", message) // Removed console.log
         setIsThinking(false) // Ensure thinking state is reset when AI finishes
       },
       // Add onResponse to track when the AI starts responding
       onResponse: async (response) => {
-        console.log("[v0] useChat onResponse started")
+        // console.log("[v0] useChat onResponse started") // Removed console.log
         setIsThinking(true) // Set thinking state to true when AI starts responding
         // If streaming, the actual message content will be processed later.
         // We just need to know that the AI has started generating a response.
       },
     })
 
+    const handleCommandOrMessage = useCallback(
+      (text: string): boolean => {
+        const lowerText = text.toLowerCase().trim()
+
+        // Helper function to generate short response
+        const generateShortResponse = () => {
+          return "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        }
+
+        // Helper function to generate large text response
+        const generateLargeResponse = () => {
+          return `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
+
+At vero eos et accusamus et iusto odio dignissim ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.
+
+## Conclusion
+
+In summary, these fundamental principles provide a comprehensive framework for understanding the essential concepts discussed above. The interconnected nature of these ideas demonstrates their significance in practical applications.`
+        }
+
+        // Helper function to generate bullet text response
+        const generateBulletResponse = () => {
+          return `• Lorem ipsum dolor sit amet, consectetur adipiscing elit
+• Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
+• Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+• Duis aute irure dolor in reprehenderit in voluptate velit
+• Excepteur sint occaecat cupidatat non proident sunt in culpa`
+        }
+        // </CHANGE>
+
+        // 1. Text - simple text response
+        if (lowerText === "text") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: generateShortResponse(),
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          return true
+        }
+
+        // 2. Large Text
+        if (lowerText === "large text") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: generateLargeResponse(),
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          return true
+        }
+
+        // 3. Bullet Text
+        if (lowerText === "bullet text") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: generateBulletResponse(),
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          return true
+        }
+
+        // 4. PDF (with file attachment, no preview change)
+        if (lowerText === "pdf") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: generateShortResponse(),
+            responseType: "file",
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          return true
+        }
+
+        // 5. PDF Preview (opens PDF viewer in workspace)
+        if (lowerText === "pdf preview") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: generateLargeResponse(),
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Open PDF viewer in workspace
+          const workspaceData: WorkspaceContent = { type: "pdf", title: "candidate-resume.pdf" }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        // 6. Image (with image thumbnail, no preview change)
+        if (lowerText === "image") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: generateShortResponse(),
+            responseType: "image",
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          return true
+        }
+
+        // 7. Image Preview (opens large image preview)
+        if (lowerText === "image preview") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: generateLargeResponse(),
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Open image preview workspace
+          const workspaceData: WorkspaceContent = { type: "image", title: "Image Gallery" }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        // 8. Video Preview (opens video player)
+        if (lowerText === "video preview") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: generateLargeResponse(),
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Open video player workspace
+          const workspaceData: WorkspaceContent = { type: "video", title: "Video Player" }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        // 9. Code (with code snippet, no preview change)
+        if (lowerText === "code") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const codeSnippet = `// Sample code snippet
+function calculateTotal(items) {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+
+const cart = [
+  { name: 'Product 1', price: 29.99 },
+  { name: 'Product 2', price: 49.99 }
+];
+
+console.log('Total:', calculateTotal(cart));`
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: codeSnippet,
+            responseType: "code",
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          return true
+        }
+
+        // 10. Code Preview (opens code preview with file structure)
+        if (lowerText === "code preview") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content:
+              "Opening the code editor with your take-home challenge. You can view files, edit code, and submit when ready.",
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Open code preview workspace
+          const workspaceData: WorkspaceContent = { type: "code", title: "Take Home Challenge" }
+          onOpenWorkspace(workspaceData)
+          setHasOpenedWorkspace(true)
+          setLastWorkspaceContent(workspaceData)
+          setCurrentWorkspaceContent(workspaceData)
+
+          return true
+        }
+
+        // 11. Apply for job
+        if (lowerText === "apply for job") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: `Great! I'm excited to help you apply for this position.
+
+Here's how our application process works:
+
+**Step 1: Take Home Challenge**
+
+First, you'll complete a take-home challenge that's designed to showcase your skills in a real-world scenario. This challenge is tailored to the role you're applying for and typically takes 2-4 hours to complete.
+
+**Step 2: AI Interviews**
+
+After submitting your take-home challenge, you'll participate in our AI interviews. These are:
+
+- 🎯 Personalized based on your role and experience
+- 📊 Recorded for review by the hiring manager
+- 🚀 Completed at your convenience
+
+**Step 3: Meet the Hiring Manager!**
+
+After you complete both the take-home challenge and AI interviews, we'll compile your complete application package for the hiring manager's review.
+
+Ready to get started? Let's begin with the take-home challenge!`,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+          return true
+        }
+
+        // 12. Take Home Challenge
+        if (lowerText === "take home challenge") {
+          const userMsg: Message = {
+            id: Date.now().toString(),
+            type: "user",
+            content: text,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "ai",
+            content: `Great! You're about to start your **Take Home Challenge**. This is an important step in the application process where you'll demonstrate your technical skills.
+
+**Important Information:**
+- ⏱️ You'll have **4 hours** to complete the challenge once you begin
+- 💾 Your work will be auto-saved as you code
+- 📤 Submit when you're ready or save as a draft
+
+I'm opening the coding environment for you now. Good luck!`,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Show loading state
+          const loadingData: WorkspaceContent = { type: "challenge-loading" }
+          onOpenWorkspace(loadingData)
+          setHasOpenedWorkspace(true)
+          setCurrentWorkspaceContent(loadingData)
+
+          // After a delay, open the actual code workspace
+          setTimeout(() => {
+            const workspaceData: WorkspaceContent = { type: "code", title: "Take Home Challenge" }
+            onOpenWorkspace(workspaceData)
+            setLastWorkspaceContent(workspaceData)
+            setCurrentWorkspaceContent(workspaceData)
+          }, 2000)
+
+          return true
+        }
+
+        // If no reserved command matched, return false
+        return false
+      },
+      [
+        activeAgent,
+        onOpenWorkspace,
+        setLocalMessages,
+        setHasOpenedWorkspace,
+        setLastWorkspaceContent,
+        setCurrentWorkspaceContent,
+      ],
+    )
+    // </CHANGE>
+
     const handleTranscriptionUpdate = useCallback(
       (userText: string, aiText: string) => {
-        console.log("[v0] Voice mode transcription update - user:", userText, "ai:", aiText)
-
         // Check if we're viewing the contract workspace and if the AI response contains section references
         if (currentWorkspaceContent?.type === "contract" && aiText && currentWorkspaceContent.contractData) {
-          console.log("[v0] Checking voice mode AI response for section references...")
-
           // Match section references in the format [Section X] or [Section X.Y]
           const sectionRefMatch = aiText.match(/\[Section\s+([IVXLCDM]+)(?:\.([A-Z]))?\]/i)
 
           if (sectionRefMatch) {
-            console.log("[v0] Found section reference in voice mode:", sectionRefMatch[0])
-
             const romanNumeral = sectionRefMatch[1]
             const subsection = sectionRefMatch[2]
 
             // Convert Roman numeral to Arabic number
             const sectionNumber = romanToArabic(romanNumeral)
-            console.log("[v0] Converted", romanNumeral, "to", sectionNumber)
 
             // Build section ID
             let sectionId = `section-${sectionNumber}`
             if (subsection) {
               sectionId += `-${subsection.toLowerCase()}`
             }
-
-            console.log("[v0] Looking for section ID:", sectionId)
 
             // Find the section in the contract data
             const section = currentWorkspaceContent.contractData.sections.find((s) => {
@@ -1044,8 +1458,6 @@ Simply type any command or ask your questions naturally!`
             })
 
             if (section) {
-              console.log("[v0] Section found! Updating workspace to highlight:", sectionId)
-
               // Update workspace content with highlighted section
               if (onWorkspaceUpdate) {
                 onWorkspaceUpdate({
@@ -1053,11 +1465,7 @@ Simply type any command or ask your questions naturally!`
                   highlightSection: sectionId,
                 })
               }
-            } else {
-              console.log("[v0] Section not found in contract data")
             }
-          } else {
-            console.log("[v0] No section reference found in voice mode AI response")
           }
         }
 
@@ -1067,8 +1475,8 @@ Simply type any command or ask your questions naturally!`
             id: `voice-user-${Date.now()}`,
             type: "user" as const,
             content: userText,
+            timestamp: new Date().toISOString(), // ISO string for consistency
             agentId: activeAgent.id,
-            timestamp: new Date().toISOString(),
           }
           setLocalMessages((prev) => [...prev, userMsg])
         }
@@ -1078,8 +1486,8 @@ Simply type any command or ask your questions naturally!`
             id: `voice-ai-${Date.now()}`,
             type: "ai" as const,
             content: aiText,
-            agentId: activeAgent.id,
             timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
           }
           setLocalMessages((prev) => [...prev, aiMsg])
         }
@@ -1089,89 +1497,53 @@ Simply type any command or ask your questions naturally!`
     // </CHANGE>
 
     useEffect(() => {
-      console.log("[v0] Section parser useEffect triggered")
-      console.log("[v0] aiMessages length:", aiMessages.length)
-      console.log("[v0] currentWorkspaceContent:", currentWorkspaceContent?.type)
-
       if (aiMessages.length === 0) {
-        console.log("[v0] No AI messages, skipping section parsing")
         return
       }
 
       const latestAiMessage = aiMessages[aiMessages.length - 1]
-      console.log("[v0] Latest message role:", latestAiMessage?.role)
-      console.log("[v0] Latest message content preview:", latestAiMessage?.content?.substring(0, 200))
 
       if (!latestAiMessage || latestAiMessage.role !== "assistant") {
-        console.log("[v0] Not an assistant message, skipping")
         return
       }
 
       // Only process if contract workspace is open and has contract data
       if (!currentWorkspaceContent || currentWorkspaceContent.type !== "contract") {
-        console.log("[v0] Contract workspace not open, skipping section parsing")
         return
       }
 
       if (!currentWorkspaceContent.contractData) {
-        console.log("[v0] No contract data available, skipping")
         return
       }
-
-      console.log("[v0] Checking AI response for section references...")
-      console.log("[v0] Full AI message:", latestAiMessage.content)
 
       // Parse for section references - more flexible patterns
       // Matches: [Section IV.B], [Section IV], Section IV.B, Section IV, etc.
       const sectionReferenceRegex = /\[?Section\s+([IVXLCDM]+)(?:\.([A-Z]))?\]?/gi
       const matches = [...(latestAiMessage.content?.matchAll(sectionReferenceRegex) || [])]
 
-      console.log("[v0] Regex matches found:", matches.length)
-
       if (matches.length > 0) {
-        console.log(
-          "[v0] Found section references:",
-          matches.map((m) => m[0]),
-        )
-
         // Use the first reference found
         const firstMatch = matches[0]
         const romanNumeral = firstMatch[1] // e.g., "IV"
         const subsectionLetter = firstMatch[2] // e.g., "B" (optional)
 
-        console.log("[v0] Parsed reference - Roman:", romanNumeral, "Subsection:", subsectionLetter)
-
         // Convert Roman numeral to Arabic
         const arabicNumber = romanToArabic(romanNumeral)
-        console.log("[v0] Converted to Arabic:", arabicNumber)
 
         if (arabicNumber > 0) {
           // Find the matching section in contract data
           const contract = currentWorkspaceContent.contractData
-          console.log(
-            "[v0] Available sections:",
-            contract.sections.map((s) => s.id),
-          )
-
           const targetSection = contract.sections.find((section) => {
             const sectionIdParts = section.id.split("-")
             // Assumes section ID format is like "section-1", "section-4", etc.
             return sectionIdParts[1] === arabicNumber.toString()
           })
 
-          console.log("[v0] Target section found:", targetSection?.id)
-
           if (targetSection) {
             let targetId = targetSection.id // Default to main section ID
 
             // If there's a subsection letter, try to find it
             if (subsectionLetter && targetSection.subsections) {
-              console.log("[v0] Looking for subsection:", subsectionLetter)
-              console.log(
-                "[v0] Available subsections:",
-                targetSection.subsections.map((s) => s.id),
-              )
-
               // Find subsection by matching the letter (case-insensitive)
               const targetSubsection = targetSection.subsections.find((sub) => {
                 const subIdParts = sub.id.split("-")
@@ -1181,18 +1553,8 @@ Simply type any command or ask your questions naturally!`
 
               if (targetSubsection) {
                 targetId = targetSubsection.id
-                console.log("[v0] Found subsection:", targetId)
-              } else {
-                console.log(
-                  "[v0] Could not find matching subsection for:",
-                  subsectionLetter,
-                  "in section",
-                  targetSection.id,
-                )
               }
             }
-
-            console.log("[v0] Auto-scrolling to section:", targetId)
 
             // Update workspace with highlight
             const updatedWorkspace: WorkspaceContent = {
@@ -1200,30 +1562,19 @@ Simply type any command or ask your questions naturally!`
               highlightSection: targetId,
             }
 
-            console.log("[v0] Updating workspace with highlightSection:", targetId)
             setCurrentWorkspaceContent(updatedWorkspace) // Update local state
 
             // Trigger update in parent component if necessary
             if (onWorkspaceUpdate) {
-              console.log("[v0] Calling onWorkspaceUpdate")
               onWorkspaceUpdate(updatedWorkspace)
             }
-          } else {
-            console.log("[v0] Could not find matching section for Roman numeral:", romanNumeral)
           }
         }
-      } else {
-        console.log("[v0] No section references found in AI response")
       }
     }, [aiMessages, currentWorkspaceContent, onWorkspaceUpdate])
     // </CHANGE>
 
     useEffect(() => {
-      console.log("[v0] aiMessages updated:", aiMessages.length, "messages")
-      if (aiMessages.length > 0) {
-        console.log("[v0] Last message:", JSON.stringify(aiMessages[aiMessages.length - 1]))
-      }
-
       const convertedMessages: Message[] = aiMessages.map((msg) => {
         let messageAgentId: string | undefined
 
@@ -1331,7 +1682,6 @@ Simply type any command or ask your questions naturally!`
         hasWelcomeMessages && preservedLocalMessages.length === 0 && convertedMessages.length === 0
 
       if (wouldClearWelcome) {
-        console.log("[v0] Skipping message update to preserve welcome messages.")
         return
       }
 
@@ -1365,7 +1715,7 @@ Simply type any command or ask your questions naturally!`
               try {
                 return new Date(msg.timestamp).getTime()
               } catch (e) {
-                console.warn("[v0] Could not parse timestamp:", msg.timestamp, e)
+                // console.warn("[v0] Could not parse timestamp:", msg.timestamp, e) // Removed console.log
               }
             }
 
@@ -1615,13 +1965,9 @@ Your code has been sent to our technical team for review. Here's what happens ne
 
     const handleShowCandidateChat = (candidate: CandidateProfile) => {
       // Updated type to CandidateProfile
-      console.log("[v0] handleShowCandidateChat called with candidate:", candidate)
       setCurrentChatCandidate(candidate)
-      setLocalMessages([])
-      console.log("[v0] Messages cleared")
-
+      setLocalMessages([]) // Clear previous messages
       const conversationHistory = getCandidateConversation(candidate.id, candidate.name)
-      console.log("[v0] Conversation history retrieved:", conversationHistory)
 
       // Create conversation messages from the candidate's unique history
       const conversationMessages: Message[] = conversationHistory.map((msg, index) => ({
@@ -1635,10 +1981,8 @@ Your code has been sent to our technical team for review. Here's what happens ne
         }),
         timestamp: msg.timestamp,
       }))
-      console.log("[v0] Conversation messages created:", conversationMessages.length, "messages")
 
       setLocalMessages(conversationMessages)
-      console.log("[v0] Messages set, scrolling to bottom")
       // Scroll to bottom after messages are set
       setTimeout(() => {
         if (messagesEndRef.current) {
@@ -1649,7 +1993,6 @@ Your code has been sent to our technical team for review. Here's what happens ne
     // </CHANGE>
 
     const clearMessages = () => {
-      console.log("[v0] Clearing all messages")
       setLocalMessages([])
       setMessages([]) // Also clear AI SDK messages
     }
@@ -1680,7 +2023,7 @@ Your code has been sent to our technical team for review. Here's what happens ne
         if (agent) {
           handleAgentChange(agent)
         } else {
-          console.warn(`[v0] Agent with ID "${agentId}" not found.`)
+          // console.warn(`[v0] Agent with ID "${agentId}" not found.`) // Removed console.log
         }
       },
       showPricingGuidance: () => {
@@ -1856,14 +2199,11 @@ ${loremParagraphs[1]}`
       handleSubmissionComplete: handleSubmissionComplete,
       // </CHANGE>
       sendMessageFromWorkspace: (message: string) => {
-        console.log("[v0] sendMessageFromWorkspace called with:", message)
         // Attempt to handle as a command first
         const isCommand = detectAndHandleCommand(message) // Use detectAndHandleCommand
         if (!isCommand) {
           // If not a command, send as a regular message
-          console.log("[v0] sendMessageFromWorkspace: Not a command, calling sendMessage")
           // Use the active agent for sending messages from workspace
-          console.log("[v0] Current activeAgent.id:", activeAgent.id)
           sendMessage(
             { text: message },
             {
@@ -1878,28 +2218,15 @@ ${loremParagraphs[1]}`
       },
       // </CHANGE>
       sendAIMessageFromWorkspace: (message: string, agentId?: string) => {
-        console.log("[v0] sendAIMessageFromWorkspace called")
-        console.log("[v0] Message:", message.substring(0, 50) + "...")
-        console.log("[v0] AgentId parameter:", agentId)
-        console.log("[v0] Active agent:", activeAgent.id)
-        // </CHANGE>
         const agent = agentId || activeAgent.id // Use provided agentId or fallback to activeAgent
-        console.log("[v0] Final agent ID being used:", agent)
-        // </CHANGE>
         const aiMessage: Message = {
           id: Date.now().toString(), // Unique ID for the message
           type: "ai",
           content: message,
           agentId: agent, // Assign the agent ID
         }
-        console.log("[v0] AI message object created:", {
-          id: aiMessage.id,
-          type: aiMessage.type,
-          agentId: aiMessage.agentId,
-        })
         // </CHANGE>
         setLocalMessages((prev) => [...prev, aiMessage]) // Add the AI message to local messages
-        console.log("[v0] AI message added to localMessages")
         // </CHANGE>
       },
       // </CHANGE>
@@ -2120,9 +2447,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         company: string,
         hiringManagerAgentId: string,
       ) => {
-        console.log("[v0] introduceHiringManager called")
         // Clear messages and reset chat context for a new introduction
-        console.log("[v0] Messages before clear:", localMessages.length)
         setLocalMessages([])
         setCurrentChatCandidate(null)
 
@@ -2211,7 +2536,6 @@ Looking forward to seeing this conversation develop! 🚀`,
     )
 
     const handleVoiceModeAgentChange = useCallback((agent: AIAgent) => {
-      console.log("[v0] Voice mode agent change requested:", agent.id)
       setActiveAgent(agent) // Update the active agent state
     }, [])
 
@@ -2262,17 +2586,8 @@ Looking forward to seeing this conversation develop! 🚀`,
     // Detect and handle commands that should open specific workspaces or trigger actions.
     const detectAndHandleCommand = useCallback(
       async (text: string): Promise<boolean> => {
-        console.log("[v0] detectAndHandleCommand called with:", text)
-
-        console.log("[v0] Current workspace content state:", currentWorkspaceContent)
-        console.log("[v0] Current workspace type:", currentWorkspaceContent?.type)
-        // </CHANGE>
-
         const currentWorkspaceType = currentWorkspaceContent?.type
         const intentResult = await detectCommandIntent(text, currentWorkspaceType)
-        // </CHANGE>
-
-        console.log("[v0] Intent detection result:", intentResult)
 
         // If it's not recognized as a command, return false to let the AI handle it.
         if (!intentResult.isCommand) {
@@ -2285,8 +2600,6 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         // Contract Command
         if (command === "contract") {
-          console.log("[v0] Contract command detected")
-
           // Add user's command message to chat
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -2316,18 +2629,13 @@ Looking forward to seeing this conversation develop! 🚀`,
             title: "Service Agreement",
             contractData: TEAMIFIED_CONTRACT,
           }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true) // Mark workspace as opened
-          setLastWorkspaceContent(workspaceData) // Store for potential reopening
-          setCurrentWorkspaceContent(workspaceData) // Update internal state for context
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           return true // Command was handled
         }
 
         // Billing Command
         if (command === "billing") {
-          console.log("[v0] Billing command detected")
-
           // Add user's command message to chat
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -2372,10 +2680,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             title: "Billing & Invoices",
             billingData: mockBillingData,
           }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true) // Mark workspace as opened
-          setLastWorkspaceContent(workspaceData) // Store for potential reopening
-          setCurrentWorkspaceContent(workspaceData) // Update internal state for context
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           return true // Command was handled
         }
@@ -2383,12 +2688,8 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         // Pricing Command
         if (command === "pricing" || command === "pricing plans") {
-          console.log("[v0] Pricing command detected")
-
           // Check if current agent has permission to access pricing plans
           if (activeAgent.id !== "sales-marketing") {
-            console.log(`[v0] Agent ${activeAgent.id} does not have permission to access pricing plans`)
-
             // Add user's command message to chat
             const userMsg = {
               id: `voice-cmd-user-${Date.now()}`,
@@ -2442,10 +2743,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             title: "Pricing Plans",
             planType: activeAgent.id.includes("candidate") ? "candidate" : "hiring-manager",
           }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true) // Mark workspace as opened
-          setLastWorkspaceContent(workspaceData) // Store for potential reopening
-          setCurrentWorkspaceContent(workspaceData) // Update internal state for context
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           return true // Command was handled
         }
@@ -2453,8 +2751,6 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         // Compare Jobs Command
         if (command === "compare jobs") {
-          console.log("[v0] Compare jobs command detected")
-
           const user = getCurrentUser()
           // Use mock data, differentiate between hiring manager and candidate views
           const jobList = user?.role === "hiring_manager" ? mockHiringManagerJobs : mockJobListings
@@ -2499,10 +2795,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             title: "Job Comparison",
             jobs: jobsToCompare, // Pass the jobs to compare
           }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData)
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           return true // Command was handled
         }
@@ -2511,8 +2804,6 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         // View Job Command
         if (command === "view job" && intentResult.jobTitle) {
-          console.log("[v0] Job view command detected for:", intentResult.jobTitle)
-
           const user = getCurrentUser()
           // Use mock data
           const jobList = user?.role === "hiring_manager" ? mockHiringManagerJobs : mockJobListings
@@ -2534,18 +2825,13 @@ Looking forward to seeing this conversation develop! 🚀`,
           })
 
           if (matchedJob) {
-            console.log("[v0] Matched job found:", matchedJob.title)
-
             // Prepare workspace content for job viewing
             const workspaceData: WorkspaceContent = {
               type: "job-view",
               job: matchedJob,
               title: matchedJob.title, // Set title for workspace header
             }
-            onOpenWorkspace(workspaceData) // Open workspace
-            setHasOpenedWorkspace(true)
-            setLastWorkspaceContent(workspaceData)
-            setCurrentWorkspaceContent(workspaceData)
+            handleCommandFromUI(workspaceData) // Use the new helper function
 
             // Add user message to chat history to show what they requested
             const userMsg = {
@@ -2559,7 +2845,6 @@ Looking forward to seeing this conversation develop! 🚀`,
 
             return true // Command was handled
           } else {
-            console.log("[v0] No matching job found for:", intentResult.jobTitle)
             // If no job is found, return false to let the AI generate a response.
             return false
           }
@@ -2569,8 +2854,6 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         // Browse Jobs Command
         if (command === "browse jobs") {
-          console.log("[v0] Browse jobs command detected")
-
           // Filter for open jobs that are not applied, invited, or saved
           const browseJobs = mockJobListings.filter((j) => !j.applied && !j.invited && !j.saved && j.status === "open")
 
@@ -2582,10 +2865,7 @@ Looking forward to seeing this conversation develop! 🚀`,
               jobs: browseJobs, // Pass the filtered jobs
               jobBoardTab: "browse", // Set the active tab
             }
-            onOpenWorkspace(workspaceData)
-            setHasOpenedWorkspace(true)
-            setLastWorkspaceContent(workspaceData)
-            setCurrentWorkspaceContent(workspaceData) // Update internal state
+            handleCommandFromUI(workspaceData) // Use the new helper function
           }
 
           // Update the job board tab if the component supports it
@@ -2625,8 +2905,6 @@ Looking forward to seeing this conversation develop! 🚀`,
           const tab = command.replace(" jobs", "") as "applied" | "invited" | "saved"
           const tabName = tab === "applied" ? "applied jobs" : tab === "invited" ? "invited jobs" : "saved jobs"
 
-          console.log("[v0] Job board tab navigation command detected:", tab)
-
           // Filter jobs based on the requested tab
           const filteredJobs = mockJobListings.filter((j) => {
             if (tab === "applied") return j.applied === true
@@ -2643,10 +2921,7 @@ Looking forward to seeing this conversation develop! 🚀`,
               jobs: filteredJobs,
               jobBoardTab: tab,
             }
-            onOpenWorkspace(workspaceData)
-            setHasOpenedWorkspace(true)
-            setLastWorkspaceContent(workspaceData)
-            setCurrentWorkspaceContent(workspaceData) // Update internal state
+            handleCommandFromUI(workspaceData) // Use the new helper function
           }
 
           // Update the active tab
@@ -2654,54 +2929,56 @@ Looking forward to seeing this conversation develop! 🚀`,
             onSetJobBoardTab(tab)
           }
 
-          const jobCount = filteredJobs.length
-          let aiResponse = ""
+          if (text && text.trim()) {
+            const jobCount = filteredJobs.length
+            let aiResponse = ""
 
-          if (tab === "applied") {
-            const appliedResponses = [
-              `Perfect! Here are the ${jobCount} ${jobCount === 1 ? "position" : "positions"} you've applied to. I can help you prepare for interviews or follow up on any of these applications.`,
-              `Got it! Showing your ${jobCount} applied ${jobCount === 1 ? "job" : "jobs"}. Let me know if you'd like help tracking your applications or preparing for next steps.`,
-              `There you go! You've applied to ${jobCount} ${jobCount === 1 ? "position" : "positions"}. Want me to help you with interview prep or application follow-ups?`,
-              `Opening your applications now. You have ${jobCount} ${jobCount === 1 ? "position" : "positions"} in progress. How can I help you with these?`,
-            ]
-            aiResponse = appliedResponses[Math.floor(Math.random() * appliedResponses.length)]
-          } else if (tab === "invited") {
-            const invitedResponses = [
-              `Excellent! Here are the ${jobCount} ${jobCount === 1 ? "position" : "positions"} you've been invited to interview for. These are great opportunities! Need help preparing?`,
-              `Perfect! You have ${jobCount} interview ${jobCount === 1 ? "invitation" : "invitations"}. I can help you prepare and make a great impression!`,
-              `There you go! Showing your ${jobCount} invited ${jobCount === 1 ? "position" : "positions"}. Would you like tips for any of these interviews?`,
-              `Opening your invitations now. You've been invited to ${jobCount} ${jobCount === 1 ? "interview" : "interviews"}. Let's get you ready!`,
-            ]
-            aiResponse = invitedResponses[Math.floor(Math.random() * invitedResponses.length)]
-          } else if (tab === "saved") {
-            const savedResponses = [
-              `Great! Here are your ${jobCount} saved ${jobCount === 1 ? "job" : "jobs"}. Would you like help deciding which ones to apply to?`,
-              `Perfect! Showing your ${jobCount} bookmarked ${jobCount === 1 ? "position" : "positions"}. Ready to take the next step with any of these?`,
-              `There you go! You've saved ${jobCount} ${jobCount === 1 ? "job" : "jobs"}. I can help you compare them or start an application.`,
-              `Opening your saved jobs now. You have ${jobCount} ${jobCount === 1 ? "position" : "positions"} marked for later. Want to review them together?`,
-            ]
-            aiResponse = savedResponses[Math.floor(Math.random() * savedResponses.length)]
-          }
+            if (tab === "applied") {
+              const appliedResponses = [
+                `Perfect! Here are the ${jobCount} ${jobCount === 1 ? "position" : "positions"} you've applied to. I can help you prepare for interviews or follow up on any of these applications.`,
+                `Got it! Showing your ${jobCount} applied ${jobCount === 1 ? "job" : "jobs"}. Let me know if you'd like help tracking your applications or preparing for next steps.`,
+                `There you go! You've applied to ${jobCount} ${jobCount === 1 ? "position" : "positions"}. Want me to help you with interview prep or application follow-ups?`,
+                `Opening your applications now. You have ${jobCount} ${jobCount === 1 ? "position" : "positions"} in progress. How can I help you with these?`,
+              ]
+              aiResponse = appliedResponses[Math.floor(Math.random() * appliedResponses.length)]
+            } else if (tab === "invited") {
+              const invitedResponses = [
+                `Excellent! Here are the ${jobCount} ${jobCount === 1 ? "position" : "positions"} you've been invited to interview for. These are great opportunities! Need help preparing?`,
+                `Perfect! You have ${jobCount} interview ${jobCount === 1 ? "invitation" : "invitations"}. I can help you prepare and make a great impression!`,
+                `There you go! Showing your ${jobCount} invited ${jobCount === 1 ? "position" : "positions"}. Would you like tips for any of these interviews?`,
+                `Opening your invitations now. You've been invited to ${jobCount} ${jobCount === 1 ? "interview" : "interviews"}. Let's get you ready!`,
+              ]
+              aiResponse = invitedResponses[Math.floor(Math.random() * invitedResponses.length)]
+            } else if (tab === "saved") {
+              const savedResponses = [
+                `Great! Here are your ${jobCount} saved ${jobCount === 1 ? "job" : "jobs"}. Would you like help deciding which ones to apply to?`,
+                `Perfect! Showing your ${jobCount} bookmarked ${jobCount === 1 ? "position" : "positions"}. Ready to take the next step with any of these?`,
+                `There you go! You've saved ${jobCount} ${jobCount === 1 ? "job" : "jobs"}. I can help you compare them or start an application.`,
+                `Opening your saved jobs now. You have ${jobCount} ${jobCount === 1 ? "position" : "positions"} marked for later. Want to review them together?`,
+              ]
+              aiResponse = savedResponses[Math.floor(Math.random() * savedResponses.length)]
+            }
 
-          // Add user and AI messages
-          const userMsg = {
-            id: `voice-cmd-user-${Date.now()}`,
-            type: "user" as const,
-            content: text,
-            timestamp: new Date().toISOString(),
-            agentId: activeAgent.id,
-          }
-          const aiMsg = {
-            id: `voice-cmd-ai-${Date.now()}`,
-            type: "ai" as const,
-            content: aiResponse,
-            timestamp: new Date().toISOString(),
-            agentId: activeAgent.id,
-          }
-          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+            // Add user and AI messages
+            const userMsg = {
+              id: `voice-cmd-user-${Date.now()}`,
+              type: "user" as const,
+              content: text,
+              timestamp: new Date().toISOString(),
+              agentId: activeAgent.id,
+            }
+            const aiMsg = {
+              id: `voice-cmd-ai-${Date.now()}`,
+              type: "ai" as const,
+              content: aiResponse,
+              timestamp: new Date().toISOString(),
+              agentId: activeAgent.id,
+            }
+            setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
-          if (voiceModeRef.current) {
-            voiceModeRef.current.speakResponse(aiResponse)
+            if (voiceModeRef.current) {
+              voiceModeRef.current.speakResponse(aiResponse)
+            }
           }
 
           return true // Command handled
@@ -2709,8 +2986,6 @@ Looking forward to seeing this conversation develop! 🚀`,
 
         // Resume command
         if (command === "resume") {
-          console.log("[v0] Resume command detected")
-
           // Add user's command message to chat
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -2737,10 +3012,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             // Placeholder for actual resume file path or data
             filePath: "/path/to/candidate-resume.pdf",
           }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true) // Mark workspace as opened
-          setLastWorkspaceContent(workspaceData) // Store for potential reopening
-          setCurrentWorkspaceContent(workspaceData) // Update internal state for context
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           return true // Command was handled
         }
@@ -2749,8 +3021,6 @@ Looking forward to seeing this conversation develop! 🚀`,
         if (command === "draft jobs" || command === "open jobs" || command === "closed jobs") {
           const status = command.replace(" jobs", "") as "draft" | "open" | "closed"
           const statusLabel = status === "draft" ? "draft jobs" : status === "open" ? "open jobs" : "closed jobs"
-
-          console.log("[v0] Hiring manager job status command detected:", status)
 
           // Filter jobs based on status
           const filteredJobs = mockHiringManagerJobs.filter((j) => j.status === status)
@@ -2763,10 +3033,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             jobStatusFilter: status, // Apply the filter to the workspace state
           }
 
-          onOpenWorkspace(workspaceData) // Open/update workspace
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData)
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           // Notify parent if onWorkspaceUpdate callback exists
           if (onWorkspaceUpdate) {
@@ -2801,8 +3068,6 @@ Looking forward to seeing this conversation develop! 🚀`,
 
           // If agent found and it's different from the current active agent
           if (targetAgent && targetAgent.id !== activeAgent.id) {
-            console.log("[v0] Agent switch command detected:", targetAgent.firstName)
-
             // If in voice mode, use the voice mode's agent switching handler
             if (isVoiceMode && voiceModeRef.current) {
               voiceModeRef.current.handleVerbalAgentSwitch(targetAgent)
@@ -2844,10 +3109,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             // Pass current job context if available
             ...(currentWorkspaceContent?.job && { job: currentWorkspaceContent.job }),
           }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData)
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           // Add user and AI messages
           const userMsg = {
@@ -2902,15 +3164,8 @@ Looking forward to seeing this conversation develop! 🚀`,
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
           // Prepare workspace content for job board
-          const workspaceData: WorkspaceContent = {
-            type: "job-board",
-            title: "Available Positions",
-            jobs: jobs, // Include job data
-          }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData)
+          const workspaceData: WorkspaceContent = { type: "job-board", title: "Available Positions", jobs: jobs }
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           return true // Command handled
         }
@@ -2948,15 +3203,8 @@ Looking forward to seeing this conversation develop! 🚀`,
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
 
           // Prepare workspace content for "My Jobs"
-          const workspaceData: WorkspaceContent = {
-            type: "job-board",
-            title: "My Jobs",
-            jobs: jobs, // Include job data
-          }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData)
+          const workspaceData: WorkspaceContent = { type: "job-board", title: "My Jobs", jobs: jobs }
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           return true // Command handled
         }
@@ -2983,10 +3231,7 @@ Looking forward to seeing this conversation develop! 🚀`,
 
           // Prepare workspace content for data analytics
           const workspaceData: WorkspaceContent = { type: "analytics", title: "Recruitment Analytics" }
-          onOpenWorkspace(workspaceData) // Open workspace
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData) // Update internal state
+          handleCommandFromUI(workspaceData) // Use the new helper function
 
           return true // Command handled
         }
@@ -3003,6 +3248,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         currentWorkspaceContent,
         onSetJobBoardTab,
         onWorkspaceUpdate,
+        handleCommandFromUI, // Added handleCommandFromUI to dependencies
         // </CHANGE>
       ],
     )
@@ -3062,7 +3308,6 @@ Looking forward to seeing this conversation develop! 🚀`,
       setLocalMessages((prev) => [...prev, userMsg]) // Add user message to local messages
       // </CHANGE>
 
-      console.log("[v0] handleSendMessage: Sending message with agentId:", targetAgentId)
       // Send the message using the useChat hook
       sendMessage(
         {
@@ -3091,15 +3336,11 @@ Looking forward to seeing this conversation develop! 🚀`,
       e.preventDefault() // Prevent default form submission
       if (!inputMessage.trim()) return // Do nothing if input is empty
 
-      console.log("[v0] handleSubmit: Sending message:", inputMessage)
-
       const userMessage = inputMessage
       setInputMessage("") // Clear input immediately
 
       // Handle candidate chat separately
       if (currentChatCandidate) {
-        console.log("[v0] In candidate chat, sending message to candidate:", currentChatCandidate.name)
-
         // Add the hiring manager's message (user's input) to local messages
         const hiringManagerMessage: Message = {
           id: `${Date.now()}-hm`, // Unique ID for hiring manager message
@@ -3196,7 +3437,6 @@ Looking forward to seeing this conversation develop! 🚀`,
             saveCandidateMessage(currentChatCandidate.id, currentChatCandidate.name, "candidate", candidateResponse)
           }
         } catch (error) {
-          console.error("[v0] Error getting candidate response:", error)
           // Add an error message to the chat if the API call fails
           setLocalMessages((prev) => [
             ...prev,
@@ -3222,13 +3462,17 @@ Looking forward to seeing this conversation develop! 🚀`,
         return // Exit handler after processing candidate chat
       }
 
+      const wasReservedCommand = handleCommandOrMessage(userMessage)
+      if (wasReservedCommand) {
+        return
+      }
+      // </CHANGE>
+
       // Check if the message is a command that should be handled locally.
       const wasCommand = await detectAndHandleCommand(userMessage)
       if (wasCommand) {
-        console.log("[v0] Command was handled locally, not sending to AI.")
         return // Command was handled, stop processing.
       }
-      // </CHANGE>
 
       // Store the current agent ID to be used in the AI SDK response processing.
       currentRequestAgentRef.current = activeAgent.id
@@ -3253,7 +3497,6 @@ Looking forward to seeing this conversation develop! 🚀`,
           },
         )
       } catch (error) {
-        console.error("[v0] Error sending message:", error)
         // Add an error message to the chat for the user.
         setLocalMessages((prev) => [
           ...prev,
@@ -3879,4 +4122,3 @@ Looking forward to seeing this conversation develop! 🚀`,
 )
 
 ChatMain.displayName = "ChatMain"
-;("ChatMain")

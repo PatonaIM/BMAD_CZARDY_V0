@@ -111,7 +111,6 @@ export function CandidateChat({ candidate, jobTitle }: CandidateChatProps) {
       }
 
       setMessages((prev) => [...prev, newMsg])
-      console.log("[v0] Message sent:", newMessage)
       setNewMessage("")
 
       setTimeout(

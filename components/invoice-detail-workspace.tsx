@@ -57,12 +57,10 @@ export function InvoiceDetailWorkspace({ invoice, onBack }: InvoiceDetailWorkspa
   }
 
   const handleDownload = () => {
-    console.log("[v0] Downloading invoice:", invoice.invoiceNumber)
     // Download logic would go here
   }
 
   const handlePayNow = () => {
-    console.log("[v0] Processing payment for:", invoice.invoiceNumber)
     // Payment logic would go here
   }
 

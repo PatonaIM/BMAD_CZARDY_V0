@@ -66,7 +66,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           const client = new RealtimeClient()
 
           client.onConnectionReady(() => {
-            console.log("[v0] Voice mode connection ready")
             setIsConnecting(false)
 
             const systemInstructions = buildSystemPrompt(agentId, AI_AGENTS, true)
@@ -111,7 +110,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
             if (message.type === "conversation.item.input_audio_transcription.completed") {
               if (isIntroducingRef.current) {
-                console.log("[v0] Ignoring user input during AI introduction")
                 return
               }
 
@@ -120,18 +118,14 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
               // Ignore empty, very short, or filler-only transcriptions
               if (!trimmedText || trimmedText.length < 3) {
-                console.log("[v0] Ignoring empty or too short transcription:", userText)
                 return
               }
 
               const fillerWords = ["um", "uh", "hmm", "mm", "mhm", "uh-huh", "mm-hmm", "ah", "oh", "er", "erm"]
               const isFillerOnly = fillerWords.includes(trimmedText.toLowerCase())
               if (isFillerOnly) {
-                console.log("[v0] Ignoring filler word transcription:", userText)
                 return
               }
-
-              console.log("[v0] Processing user transcription:", userText)
 
               transcriptBufferRef.current = userText
               setCurrentTranscript(userText)
@@ -149,7 +143,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
             if (message.type === "response.audio_transcript.delta") {
               if (!isSpeaking) {
-                console.log("[v0] AI started speaking")
                 setIsSpeaking(true)
                 setIsListening(false)
               }
@@ -163,7 +156,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               setAiResponse(finalAiText)
 
               if (isIntroducingRef.current) {
-                console.log("[v0] AI introduction completed")
                 isIntroducingRef.current = false
               }
 
@@ -179,24 +171,19 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
             }
 
             if (message.type === "response.done") {
-              console.log("[v0] AI response fully completed (including audio)")
-
               setTimeout(() => {
-                console.log("[v0] Setting isSpeaking to false after response completion")
                 setIsSpeaking(false)
                 setIsListening(true)
               }, 1500) // 1.5 second delay to ensure audio finishes playing
 
               // If there's a pending agent switch, wait a bit for audio to finish playing, then perform the switch
               if (pendingAgentSwitchRef.current) {
-                console.log("[v0] AI finished generating confirmation, waiting for audio playback to complete...")
                 const agentToSwitch = pendingAgentSwitchRef.current
                 pendingAgentSwitchRef.current = null
 
                 // Wait 3 seconds to ensure the audio has finished playing
                 // This accounts for audio buffering, playback delay, and network latency
                 setTimeout(async () => {
-                  console.log("[v0] Audio playback should be complete, now switching to:", agentToSwitch.firstName)
                   await performAgentSwitch(agentToSwitch)
                 }, 3000)
               }
@@ -204,7 +191,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           })
 
           client.onAudioStateChange((isPlaying) => {
-            console.log("[v0] Audio state changed - isPlaying:", isPlaying)
             setIsSpeaking(isPlaying)
             if (!isPlaying) {
               setIsListening(true)
@@ -221,7 +207,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
       initializeVoiceMode()
 
       return () => {
-        console.log("[v0] Voice mode cleanup: disconnecting Realtime API")
         if (clientRef.current) {
           clientRef.current.disconnect()
           clientRef.current = null
@@ -231,8 +216,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
     useEffect(() => {
       if (clientRef.current && !isConnecting) {
-        console.log("[v0] Updating workspace context without reconnecting")
-
         // Build base system prompt
         let systemInstructions = buildSystemPrompt(agentId, AI_AGENTS, true)
 
@@ -254,175 +237,8 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           },
         })
 
-        if (currentWorkspaceContent?.type === "contract" && !isIntroducingRef.current) {
-          if (!givenOverviewsRef.current.has("contract")) {
-            console.log("[v0] Contract workspace opened, triggering AI overview")
-            givenOverviewsRef.current.add("contract")
-
-            clientRef.current.sendMessage({
-              type: "conversation.item.create",
-              item: {
-                type: "message",
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: "Say: 'I've opened the Remote Team as a Service Agreement. What questions can I answer?'",
-                  },
-                ],
-              },
-            })
-
-            clientRef.current.sendMessage({
-              type: "response.create",
-            })
-          }
-        }
-
-        if (currentWorkspaceContent?.type === "billing" && !isIntroducingRef.current) {
-          if (!givenOverviewsRef.current.has("billing")) {
-            console.log("[v0] Billing workspace opened, triggering AI overview")
-            givenOverviewsRef.current.add("billing")
-
-            const billingData = currentWorkspaceContent.billingData
-            let statusNote = ""
-
-            if (billingData) {
-              if (billingData.totalOverdue > 0) {
-                statusNote = ` You have $${billingData.totalOverdue.toFixed(2)} overdue.`
-              } else if (billingData.nextPaymentDue) {
-                statusNote = ` Next payment: $${billingData.nextPaymentDue.amount.toFixed(2)} on ${billingData.nextPaymentDue.dueDate}.`
-              }
-            }
-
-            clientRef.current.sendMessage({
-              type: "conversation.item.create",
-              item: {
-                type: "message",
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: `Say: 'Here's your billing overview.${statusNote} What would you like to know?'`,
-                  },
-                ],
-              },
-            })
-
-            clientRef.current.sendMessage({
-              type: "response.create",
-            })
-          }
-        }
-
-        if (currentWorkspaceContent?.type === "pricing-plans" && !isIntroducingRef.current) {
-          if (!givenOverviewsRef.current.has("pricing-plans")) {
-            console.log("[v0] Pricing workspace opened, triggering AI overview")
-            givenOverviewsRef.current.add("pricing-plans")
-
-            clientRef.current.sendMessage({
-              type: "conversation.item.create",
-              item: {
-                type: "message",
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: "Say: 'Here are the pricing plans. Which one interests you?'",
-                  },
-                ],
-              },
-            })
-
-            clientRef.current.sendMessage({
-              type: "response.create",
-            })
-          }
-        }
-
-        if (currentWorkspaceContent?.type === "browse-candidates" && !isIntroducingRef.current) {
-          console.log("[v0] Browse candidates workspace opened, triggering AI overview")
-
-          if (currentWorkspaceContent.candidates && currentWorkspaceContent.candidates.length > 0) {
-            clientRef.current.sendMessage({
-              type: "conversation.item.create",
-              item: {
-                type: "message",
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: `Say: 'You're browsing ${currentWorkspaceContent.candidates.length} candidates. What would you like to know?'`,
-                  },
-                ],
-              },
-            })
-
-            clientRef.current.sendMessage({
-              type: "response.create",
-            })
-          }
-        }
-
-        if (currentWorkspaceContent?.type === "job-board" && !isIntroducingRef.current) {
-          console.log("[v0] Job board workspace opened, triggering AI overview")
-
-          if (currentWorkspaceContent.jobs && currentWorkspaceContent.jobs.length > 0) {
-            const tabName =
-              currentWorkspaceContent.jobBoardTab === "browse"
-                ? "browsing available jobs"
-                : currentWorkspaceContent.jobBoardTab === "applied"
-                  ? "viewing applied jobs"
-                  : currentWorkspaceContent.jobBoardTab === "invited"
-                    ? "viewing invited jobs"
-                    : currentWorkspaceContent.jobBoardTab === "saved"
-                      ? "viewing saved jobs"
-                      : "viewing jobs"
-
-            clientRef.current.sendMessage({
-              type: "conversation.item.create",
-              item: {
-                type: "message",
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: `Say: 'You're ${tabName}. Here are the ${currentWorkspaceContent.jobs.length} jobs currently displayed. What would you like to know?'`,
-                  },
-                ],
-              },
-            })
-
-            clientRef.current.sendMessage({
-              type: "response.create",
-            })
-          }
-        }
-
-        if (currentWorkspaceContent?.type === "job-view" && !isIntroducingRef.current) {
-          console.log("[v0] Job view workspace opened, triggering AI overview")
-
-          if (currentWorkspaceContent.job) {
-            const j = currentWorkspaceContent.job
-            clientRef.current.sendMessage({
-              type: "conversation.item.create",
-              item: {
-                type: "message",
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: `Say: 'You're viewing the job posting for ${j.title} at ${j.company}. What would you like to know?'`,
-                  },
-                ],
-              },
-            })
-
-            clientRef.current.sendMessage({
-              type: "response.create",
-            })
-          }
-        }
+        // Voice mode should only speak when user explicitly asks questions
+        // No automatic "You are viewing..." or "Here are..." announcements
       }
     }, [currentWorkspaceContent, agentId, isConnecting, userType])
 
@@ -439,7 +255,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
     }, [isAgentDropdownOpen])
 
     const performAgentSwitch = async (agent: AIAgent) => {
-      console.log("[v0] Voice mode: Performing agent switch from", currentAgent.id, "to", agent.id)
       setIsReconnecting(true)
 
       const loadingStartTime = Date.now()
@@ -473,7 +288,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
       // Wait for the remaining time to ensure loading screen shows for at least 2 seconds
       if (remainingTime > 0) {
-        console.log(`[v0] Waiting ${remainingTime}ms more to reach minimum 2-second loading time`)
         await new Promise((resolve) => setTimeout(resolve, remainingTime))
       }
 
@@ -487,14 +301,11 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         return
       }
 
-      console.log("[v0] Voice mode: Manual agent switch from dropdown")
       setIsAgentDropdownOpen(false)
       await performAgentSwitch(agent)
     }
 
     const handleVerbalAgentSwitch = async (agent: AIAgent) => {
-      console.log("[v0] Voice mode: Verbal agent switch requested for:", agent.firstName)
-
       // Store the pending agent switch
       pendingAgentSwitchRef.current = agent
 
@@ -529,13 +340,9 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
       clientRef.current?.sendMessage({
         type: "response.create",
       })
-
-      console.log("[v0] Waiting for AI to finish speaking confirmation before switching...")
     }
 
     const speakResponse = (text: string) => {
-      console.log("[v0] Voice mode: Speaking command response:", text)
-
       if (!clientRef.current) {
         console.warn("[v0] Voice mode: Cannot speak response, client not connected")
         return
@@ -572,7 +379,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
     }
 
     const handleClose = () => {
-      console.log("[v0] Voice mode close button clicked: disconnecting Realtime API")
       if (clientRef.current) {
         clientRef.current.disconnect()
         clientRef.current = null
@@ -664,7 +470,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
         {/* Main Animation Area */}
         <div className="flex-1 flex items-center justify-center">
-          {console.log("[v0] isSpeaking:", isSpeaking, "isUserSpeaking:", isUserSpeaking)}
           {/* Outer sphere with conditional glow */}
           <div className="relative w-64 h-64 flex items-center justify-center">
             {/* Outer sphere with conditional glow */}
@@ -726,11 +531,8 @@ VoiceMode.displayName = "VoiceMode"
 
 function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): string {
   if (!content) {
-    console.log("[v0] Voice mode: No workspace content available")
     return ""
   }
-
-  console.log("[v0] Voice mode: Formatting workspace context for type:", content.type)
 
   let context = "\n\n**CURRENT WORKSPACE CONTEXT:**\n"
 
@@ -750,8 +552,6 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
         if (c.takeHomeChallengeScore) context += `- Challenge Score: ${c.takeHomeChallengeScore}%\n`
         if (c.aiInterviewStatus) context += `- AI Interview: ${c.aiInterviewStatus}\n`
         if (c.aiInterviewScore) context += `- Interview Score: ${c.aiInterviewScore}%\n`
-      } else {
-        console.log("[v0] Voice mode: Candidate profile workspace has no candidate data")
       }
       break
 
@@ -764,8 +564,6 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
             context += `Currently viewing: ${currentCandidate.name} (${currentCandidate.title})\n`
           }
         }
-      } else {
-        console.log("[v0] Voice mode: Browse candidates workspace has no candidates")
       }
       break
 
@@ -798,7 +596,6 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
         context += `You can answer questions about these jobs, such as which has the highest skill match, salary comparisons, or details about specific positions.\n`
       } else {
         context += `The user is viewing the job board, but there are no jobs currently displayed.\n`
-        console.log("[v0] Voice mode: Job board workspace has no jobs data")
       }
       break
 
@@ -852,8 +649,6 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
             context += `${index + 1}. ${qual}\n`
           })
         }
-      } else {
-        console.log("[v0] Voice mode: Job view workspace has no job data")
       }
       break
 
@@ -947,12 +742,9 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
     default:
       if (content.title) {
         context += `The user is viewing: ${content.title}\n`
-      } else {
-        console.log("[v0] Voice mode: Unknown workspace type with no title:", content.type)
       }
   }
 
-  console.log("[v0] Voice mode: Workspace context formatted:", context.length, "characters")
   return context
 }
 

@@ -142,8 +142,6 @@ export default function JobView({
   const statusConfig = getStatusConfig(job.status || "open")
   const skillMatchConfig = job.skillMatch !== undefined ? getSkillMatchConfig(job.skillMatch) : null
 
-  console.log("[v0] JobView rendered with showApplicationStatus:", showApplicationStatus)
-
   const handleEditJobSummary = () => {
     setIsEditingSummary(true)
   }
@@ -174,7 +172,7 @@ export default function JobView({
         editorRef.current.innerHTML = data.summary
       }
     } catch (error) {
-      console.error("[v0] Error generating job summary:", error)
+      console.error("Error generating job summary:", error)
       alert("Failed to generate job summary. Please try again.")
     } finally {
       setIsGeneratingSummary(false)
@@ -184,7 +182,6 @@ export default function JobView({
   const handleSaveJobSummary = () => {
     if (editorRef.current && onSaveJob) {
       const htmlContent = editorRef.current.innerHTML
-      console.log("[v0] Saving job summary HTML:", htmlContent)
       onSaveJob(job.id, { ...job, jobSummary: htmlContent })
     }
     setIsEditingSummary(false)
@@ -211,7 +208,6 @@ export default function JobView({
   }
 
   const handleSaveSkills = () => {
-    console.log("[v0] Saving skills for job:", job.id, editedSkills)
     if (onSaveJob) {
       onSaveJob(job.id, { ...job, qualifications: editedSkills })
     }
@@ -255,8 +251,6 @@ export default function JobView({
   }, [isEditingSummary])
 
   const renderJobSummary = (summary: string) => {
-    console.log("[v0] Rendering job summary HTML:", summary)
-
     let formattedSummary = summary
 
     // Check if the content has bullet characters but no HTML list tags
@@ -295,22 +289,18 @@ export default function JobView({
   }
 
   const handleApplyClick = () => {
-    console.log("[v0] Apply button clicked for job:", job.title)
     if (job.applied && onToggleApplicationView) {
-      console.log("[v0] Job already applied, showing application status")
       setIsTransitioning(true)
       setTimeout(() => {
         onToggleApplicationView(true)
         setIsTransitioning(false)
       }, 300)
     } else if (onApplyForJob) {
-      console.log("[v0] handleApplyForJob called for:", job.title)
       onApplyForJob(job)
     }
   }
 
   const handleBackToDetails = () => {
-    console.log("[v0] Back to details clicked")
     if (onToggleApplicationView) {
       setIsTransitioning(true)
       setTimeout(() => {
@@ -321,7 +311,6 @@ export default function JobView({
   }
 
   const handleStageClick = (stageName: string) => {
-    console.log("[v0] Stage clicked:", stageName)
     if (onSendMessage) {
       onSendMessage(stageName.toLowerCase())
     }
@@ -341,7 +330,6 @@ export default function JobView({
 
   const handleSaveBenefits = () => {
     // In a real app, this would call an API to update the job
-    console.log("[v0] Saving benefits:", editedBenefits)
     if (onSaveJob) {
       onSaveJob(job.id, { ...job, benefits: editedBenefits })
     }
@@ -369,10 +357,8 @@ export default function JobView({
 
   // Added handleHiringManagerChatClick function
   const handleHiringManagerChatClick = () => {
-    console.log("[v0] Hiring manager chat button clicked")
-
     if (!job.hiringManager || !chatMainRef?.current?.introduceHiringManager) {
-      console.error("[v0] Missing hiring manager or introduceHiringManager method")
+      console.error("Missing hiring manager or introduceHiringManager method")
       return
     }
 
@@ -390,13 +376,6 @@ export default function JobView({
     } else if (job.hiringManager === "Lisa Rodriguez") {
       hiringManagerAgentId = "hiring-manager-lisa-rodriguez"
     }
-
-    console.log("[v0] Calling introduceHiringManager with:", {
-      hiringManager: job.hiringManager,
-      position: job.title,
-      company: job.company,
-      agentId: hiringManagerAgentId,
-    })
 
     // Call the introduceHiringManager method to reset chat and introduce the hiring manager
     chatMainRef.current.introduceHiringManager(job.hiringManager, job.title, job.company, hiringManagerAgentId)
@@ -526,11 +505,6 @@ export default function JobView({
                     <div
                       key={candidate.id}
                       onClick={() => {
-                        console.log("[v0] Opening chat with candidate:", candidate.name)
-                        console.log("[v0] job-view.tsx - job object:", job)
-                        console.log("[v0] job-view.tsx - job exists:", !!job)
-                        console.log("[v0] job-view.tsx - job.id:", job?.id)
-                        console.log("[v0] job-view.tsx - job.title:", job?.title)
                         onOpenCandidateChat?.(candidate, job)
                       }}
                       className={`flex items-center gap-4 p-4 hover:bg-muted/50 transition-all cursor-pointer ${
@@ -669,7 +643,7 @@ export default function JobView({
             </div>
 
             <div
-              onClick={() => handleStageClick("AI Skill Assessment")}
+              onClick={() => handleStageClick("AI Interview")}
               className="flex items-start gap-4 p-4 rounded-xl border border-border cursor-pointer hover:bg-accent/70 transition-colors mb-4"
             >
               <div
@@ -684,9 +658,9 @@ export default function JobView({
                 2
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground mb-1">AI Skill Assessment</h3>
+                <h3 className="font-semibold text-foreground mb-1">AI Interview</h3>
                 <p className="text-sm text-muted-foreground">
-                  Objective AI-powered assessment to evaluate your technical skills and job fit
+                  Participate in an AI-powered video interview to showcase your skills and experience
                 </p>
               </div>
               <div className="flex-shrink-0">

@@ -42,21 +42,18 @@ export class RealtimeClient {
       this.audioElement.autoplay = true
 
       this.audioElement.addEventListener("play", () => {
-        console.log("[v0] Audio element started playing")
         if (this.onAudioCallback) {
           this.onAudioCallback(true)
         }
       })
 
       this.audioElement.addEventListener("ended", () => {
-        console.log("[v0] Audio element finished playing (ended event)")
         if (this.onAudioCallback) {
           this.onAudioCallback(false)
         }
       })
 
       this.audioElement.addEventListener("pause", () => {
-        console.log("[v0] Audio element paused, ended:", this.audioElement?.ended)
         // Only set to false if the audio has actually ended, not just paused
         if (this.audioElement && this.audioElement.ended && this.onAudioCallback) {
           this.onAudioCallback(false)
@@ -74,7 +71,6 @@ export class RealtimeClient {
       this.dataChannel = this.peerConnection.createDataChannel("oai-events")
 
       this.dataChannel.onopen = () => {
-        console.log("[v0] Data channel is now open")
         // Trigger connection ready callback only when data channel is actually open
         this.onConnectionReadyCallback?.()
       }
@@ -119,7 +115,6 @@ export class RealtimeClient {
         sdp: answerSdp,
       })
     } catch (error) {
-      console.error("Connection error:", error)
       throw error
     }
   }
@@ -165,22 +160,17 @@ export class RealtimeClient {
   }
 
   disconnect() {
-    console.log("[v0] RealtimeClient disconnect called")
-
     if (this.dataChannel) {
-      console.log("[v0] Closing data channel")
       this.dataChannel.close()
       this.dataChannel = null
     }
 
     if (this.peerConnection) {
-      console.log("[v0] Closing peer connection")
       this.peerConnection.close()
       this.peerConnection = null
     }
 
     if (this.audioElement) {
-      console.log("[v0] Cleaning up audio element")
       this.audioElement.pause()
       this.audioElement.srcObject = null
       this.audioElement = null
@@ -189,7 +179,5 @@ export class RealtimeClient {
     this.onMessageCallback = null
     this.onAudioCallback = null
     this.onConnectionReadyCallback = null
-
-    console.log("[v0] RealtimeClient disconnected successfully")
   }
 }

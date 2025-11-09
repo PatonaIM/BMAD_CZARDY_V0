@@ -139,7 +139,6 @@ export function LibraryContent({ isSidebarOpen }: LibraryContentProps) {
   }
 
   const handleDownload = (item: LibraryItem) => {
-    console.log("[v0] Downloading:", item.name)
     // Download logic would go here
   }
 
