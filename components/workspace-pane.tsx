@@ -456,9 +456,15 @@ export const WorkspacePane = ({
 
     // Simulate mutual match (in real app, check if candidate also swiped right)
     const isMutualMatch = Math.random() > 0.5 // 50% chance for demo
+    console.log("[v0] Match check - isMutualMatch:", isMutualMatch)
+    console.log("[v0] Match check - Math.random() result:", Math.random() > 0.5 ? "match" : "no match")
+
     if (isMutualMatch) {
+      console.log("[v0] IT'S A MATCH! Setting match state for:", candidate.name)
       setMatchedCandidate(candidate)
       setShowMatchSuccess(true)
+      console.log("[v0] Match state set - showMatchSuccess should now be true")
+      console.log("[v0] matchedCandidate set to:", candidate.name)
 
       if (content.type === "browse-candidates" && content.job) {
         setMatchedCandidatesPerJob((prev) => ({
@@ -467,11 +473,13 @@ export const WorkspacePane = ({
         }))
       }
     } else {
+      console.log("[v0] No match this time - sending application invite message")
       if (onSendAIMessage) {
         const message = `Great choice! I've sent an application invite to ${candidate.name}. They'll need to complete all required assessments before you can start chatting with them. I'll let you know once they've completed everything!`
         onSendAIMessage(message, "technical-recruiter")
       }
     }
+    // </CHANGE>
 
     if (content.type === "candidate-profile-view") {
       // If we have a candidates array and current index, show next candidate
@@ -1609,8 +1617,10 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
     }
   }
 
-  // Render MatchSuccess component directly here if showMatchSuccess is true
   if (showMatchSuccess && matchedCandidate) {
+    console.log("[v0] Rendering MatchSuccess screen for:", matchedCandidate.name)
+    console.log("[v0] showMatchSuccess:", showMatchSuccess)
+    console.log("[v0] matchedCandidate:", matchedCandidate)
     return (
       <div className="flex flex-col h-full border-l">
         <MatchSuccess
@@ -1622,6 +1632,7 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
       </div>
     )
   }
+  // </CHANGE>
 
   const handleCandidateSelect = (candidate: CandidateProfile) => {
     if (onOpenWorkspace) {

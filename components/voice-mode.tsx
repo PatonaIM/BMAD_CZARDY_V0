@@ -23,6 +23,7 @@ interface VoiceModeProps {
 
 export interface VoiceModeRef {
   handleVerbalAgentSwitch: (agent: AIAgent) => void
+  speakResponse: (text: string) => void // Added method to speak AI responses for command handling
 }
 
 export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
@@ -411,19 +412,27 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
       // Store the pending agent switch
       pendingAgentSwitchRef.current = agent
 
-      // Create a confirmation message
-      const confirmationText = `Got it. I will now switch to ${agent.firstName}, our ${agent.name} AI Agent.`
+      // Create multiple variations for natural conversation
+      const confirmations = [
+        `Let the user know you're switching them over to ${agent.firstName} now. Keep it brief and natural.`,
+        `Tell the user you're connecting them with ${agent.firstName}. Keep it conversational.`,
+        `Briefly confirm that you're switching them to ${agent.firstName}. Be natural and friendly.`,
+        `Let them know you're getting ${agent.firstName} for them. Keep it short.`,
+      ]
 
-      // Send the confirmation as a response from the current AI
+      // Pick a random confirmation instruction to keep it feeling natural
+      const confirmationInstruction = confirmations[Math.floor(Math.random() * confirmations.length)]
+
+      // Instruct the AI to naturally confirm the agent switch
       clientRef.current?.sendMessage({
         type: "conversation.item.create",
         item: {
           type: "message",
-          role: "assistant",
+          role: "user",
           content: [
             {
-              type: "text",
-              text: confirmationText,
+              type: "input_text",
+              text: confirmationInstruction,
             },
           ],
         },
@@ -438,8 +447,38 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
       console.log("[v0] Waiting for AI to finish speaking confirmation before switching...")
     }
 
+    const speakResponse = (text: string) => {
+      console.log("[v0] Voice mode: Speaking command response:", text)
+
+      if (!clientRef.current) {
+        console.warn("[v0] Voice mode: Cannot speak response, client not connected")
+        return
+      }
+
+      // This ensures the AI actually speaks the response through the Realtime API
+      clientRef.current.sendMessage({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: `${text} Keep it brief and natural.`,
+            },
+          ],
+        },
+      })
+
+      // Trigger the AI to respond
+      clientRef.current.sendMessage({
+        type: "response.create",
+      })
+    }
+
     useImperativeHandle(ref, () => ({
       handleVerbalAgentSwitch,
+      speakResponse, // Expose speakResponse method
     }))
 
     const handlePauseToggle = () => {

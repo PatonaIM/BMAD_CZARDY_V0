@@ -2544,6 +2544,13 @@ Looking forward to seeing this conversation develop! 🚀`,
             onSetJobBoardTab("browse")
           }
 
+          const browseResponses = [
+            `Perfect! I'm opening the job board with ${browseJobs.length} available positions. Let me know if you'd like help finding roles that match your skills.`,
+            `There you go! Showing ${browseJobs.length} open positions for you to explore. I can help you filter or answer questions about any of these jobs.`,
+            `Alright! Here are ${browseJobs.length} available positions. Browse through them and let me know which ones interest you.`,
+            `Opening the job board now with ${browseJobs.length} opportunities. I'm here to help you find the perfect match!`,
+          ]
+
           // Add user and AI messages to chat
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -2555,12 +2562,12 @@ Looking forward to seeing this conversation develop! 🚀`,
           const aiMsg = {
             id: `voice-cmd-ai-${Date.now()}`,
             type: "ai" as const,
-            content: "Opening the job board to browse available positions. You can continue browsing while we chat.",
+            content: browseResponses[Math.floor(Math.random() * browseResponses.length)],
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
+          // </CHANGE>
           return true // Command handled
         }
 
@@ -2598,6 +2605,35 @@ Looking forward to seeing this conversation develop! 🚀`,
             onSetJobBoardTab(tab)
           }
 
+          const jobCount = filteredJobs.length
+          let aiResponse = ""
+
+          if (tab === "applied") {
+            const appliedResponses = [
+              `Perfect! Here are the ${jobCount} ${jobCount === 1 ? "position" : "positions"} you've applied to. I can help you prepare for interviews or follow up on any of these applications.`,
+              `Got it! Showing your ${jobCount} applied ${jobCount === 1 ? "job" : "jobs"}. Let me know if you'd like help tracking your applications or preparing for next steps.`,
+              `There you go! You've applied to ${jobCount} ${jobCount === 1 ? "position" : "positions"}. Want me to help you with interview prep or application follow-ups?`,
+              `Opening your applications now. You have ${jobCount} ${jobCount === 1 ? "position" : "positions"} in progress. How can I help you with these?`,
+            ]
+            aiResponse = appliedResponses[Math.floor(Math.random() * appliedResponses.length)]
+          } else if (tab === "invited") {
+            const invitedResponses = [
+              `Excellent! Here are the ${jobCount} ${jobCount === 1 ? "position" : "positions"} you've been invited to interview for. These are great opportunities! Need help preparing?`,
+              `Perfect! You have ${jobCount} interview ${jobCount === 1 ? "invitation" : "invitations"}. I can help you prepare and make a great impression!`,
+              `There you go! Showing your ${jobCount} invited ${jobCount === 1 ? "position" : "positions"}. Would you like tips for any of these interviews?`,
+              `Opening your invitations now. You've been invited to ${jobCount} ${jobCount === 1 ? "interview" : "interviews"}. Let's get you ready!`,
+            ]
+            aiResponse = invitedResponses[Math.floor(Math.random() * invitedResponses.length)]
+          } else if (tab === "saved") {
+            const savedResponses = [
+              `Great! Here are your ${jobCount} saved ${jobCount === 1 ? "job" : "jobs"}. Would you like help deciding which ones to apply to?`,
+              `Perfect! Showing your ${jobCount} bookmarked ${jobCount === 1 ? "position" : "positions"}. Ready to take the next step with any of these?`,
+              `There you go! You've saved ${jobCount} ${jobCount === 1 ? "job" : "jobs"}. I can help you compare them or start an application.`,
+              `Opening your saved jobs now. You have ${jobCount} ${jobCount === 1 ? "position" : "positions"} marked for later. Want to review them together?`,
+            ]
+            aiResponse = savedResponses[Math.floor(Math.random() * savedResponses.length)]
+          }
+
           // Add user and AI messages
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
@@ -2609,12 +2645,55 @@ Looking forward to seeing this conversation develop! 🚀`,
           const aiMsg = {
             id: `voice-cmd-ai-${Date.now()}`,
             type: "ai" as const,
-            content: `Showing your ${tabName}. You can continue browsing while we chat.`,
+            content: aiResponse,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          if (voiceModeRef.current) {
+            voiceModeRef.current.speakResponse(aiResponse)
+          }
+
           return true // Command handled
+        }
+
+        // Resume command
+        if (command === "resume") {
+          console.log("[v0] Resume command detected")
+
+          // Add user's command message to chat
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          // Add AI confirmation message
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: "Opening your resume for review. I can help you with any questions you might have about it.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Prepare workspace content for resume viewing
+          const workspaceData: WorkspaceContent = {
+            type: "pdf", // Assuming resume is a PDF
+            title: "Candidate Resume",
+            // Placeholder for actual resume file path or data
+            filePath: "/path/to/candidate-resume.pdf",
+          }
+          onOpenWorkspace(workspaceData) // Open workspace
+          setHasOpenedWorkspace(true) // Mark workspace as opened
+          setLastWorkspaceContent(workspaceData) // Store for potential reopening
+          setCurrentWorkspaceContent(workspaceData) // Update internal state for context
+
+          return true // Command was handled
         }
 
         // Hiring Manager specific job status commands
@@ -2945,10 +3024,10 @@ Looking forward to seeing this conversation develop! 🚀`,
           },
         },
         {
-          // Body object passed to the API
+          // Provide additional body data to the API.
           body: {
             agentId: targetAgentId, // This agentId will be merged and used by the backend
-            workspaceContext, // Include current workspace context
+            workspaceContext, // Include the current workspace context
             commandsContext: getCommandsContext(activeAgent), // Include available commands for the agent
           },
         },
