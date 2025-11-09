@@ -62,6 +62,9 @@ import { mockHiringManagerJobs } from "@/lib/mock-hiring-manager-jobs"
 import { JobComparison } from "./job-comparison" // ADDED: import for JobComparison
 import { PricingPlansWorkspace } from "@/components/pricing-plans-workspace"
 import { ContractViewer } from "./contract-viewer" // Added contract viewer import
+import { BillingWorkspace } from "./billing-workspace" // ADDED: import for BillingWorkspace
+import { mockBillingData } from "@/lib/mock-billing-data" // ADDED: import for mockBillingData
+import { InvoiceDetailWorkspace } from "./invoice-detail-workspace" // Added import for InvoiceDetailWorkspace
 
 // Mock getCurrentUser function - replace with actual implementation if needed
 // const getCurrentUser = () => ({
@@ -912,6 +915,87 @@ Visit http://localhost:8000/docs for interactive API documentation.`,
             <p className="text-muted-foreground">Your submission has been sent to the hiring manager</p>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // ADDED: Billing workspace case
+  if (content.type === "billing") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">{content.title || "Billing & Invoices"}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <BillingWorkspace
+          data={content.billingData || mockBillingData}
+          onViewInvoice={(invoice) => {
+            onOpenWorkspace?.({
+              type: "invoice-detail",
+              title: `Invoice ${invoice.invoiceNumber}`,
+              data: { invoice },
+            })
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (content.type === "invoice-detail") {
+    return (
+      <div className="flex flex-col h-full border-l">
+        <div className="flex items-center px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">Invoice Details</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors ml-auto"
+            aria-label="Close workspace"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <InvoiceDetailWorkspace
+          invoice={content.data?.invoice}
+          onBack={() => {
+            onOpenWorkspace?.({
+              type: "billing",
+              title: "Billing & Invoices",
+              billingData: mockBillingData,
+            })
+          }}
+        />
       </div>
     )
   }

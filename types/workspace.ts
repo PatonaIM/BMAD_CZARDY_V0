@@ -24,7 +24,9 @@ export type WorkspaceContentType =
   | "candidate-chat"
   | "hiring-manager-chat"
   | "pricing-plans"
-  | "contract" // Added contract workspace type for viewing service agreements
+  | "contract"
+  | "billing"
+  | "invoice-detail" // Added invoice-detail workspace type
   | null
 
 export interface WorkspaceContent {
@@ -47,6 +49,7 @@ export interface WorkspaceContent {
   sourceView?: "browse-candidates" | "job-view"
   contractData?: ContractData // Added contractData for contract workspace
   highlightSection?: string // Added highlightSection to auto-scroll to specific contract sections
+  billingData?: BillingData
 }
 
 export interface ContractData {
@@ -159,6 +162,49 @@ export interface CandidateProfile {
   matchedJobs?: string[]
   swipedRight?: boolean
   swipedLeft?: boolean
+}
+
+export interface BillingData {
+  invoices: Invoice[]
+  totalOverdue: number
+  nextPaymentDue?: Invoice
+}
+
+export interface Invoice {
+  id: string
+  invoiceNumber: string
+  date: string
+  dueDate: string
+  amount: number
+  status: "paid" | "pending" | "overdue"
+  description: string
+  period: string
+  pdfUrl?: string
+  receiptUrl?: string
+  // Added fields for detailed invoice view
+  contact?: {
+    name: string
+    accountNumber: string
+    address?: string
+  }
+  reference?: string
+  lineItems?: InvoiceLineItem[]
+  subtotal?: number
+  tax?: number
+  taxRate?: string
+  notes?: string
+}
+
+export interface InvoiceLineItem {
+  id: string
+  description: string
+  quantity: number
+  price: number
+  discount: number
+  account: string
+  taxRate: string
+  taxAmount: number
+  amount: number
 }
 
 export interface WorkspacePaneProps {

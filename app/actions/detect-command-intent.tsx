@@ -331,6 +331,49 @@ const RESERVED_COMMANDS = [
       "agreement terms",
     ],
   },
+  {
+    command: "billing",
+    description: "View billing information, invoices, and payment history",
+    keywords: [
+      "billing",
+      "view billing",
+      "show billing",
+      "open billing",
+      "see billing",
+      "billing information",
+      "billing details",
+      "my billing",
+      "billing history",
+      "invoices",
+      "view invoices",
+      "show invoices",
+      "see invoices",
+      "my invoices",
+      "invoice history",
+      "invoice details",
+      "payments",
+      "payment history",
+      "payment details",
+      "my payments",
+      "view payments",
+      "show payments",
+      "receipts",
+      "official receipts",
+      "view receipts",
+      "show receipts",
+      "my receipts",
+      "billing summary",
+      "payment status",
+      "outstanding balance",
+      "overdue invoices",
+      "pending payments",
+      "what do i owe",
+      "how much do i owe",
+      "my balance",
+      "account balance",
+      "unpaid invoices",
+    ],
+  },
   ...AI_AGENTS.map((agent) => ({
     command: `switch to ${agent.firstName.toLowerCase()}`,
     description: `Switch to ${agent.firstName} - ${agent.name}`,
@@ -804,6 +847,48 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "manager subscription",
       ],
     },
+    {
+      command: "billing",
+      variations: [
+        "billing",
+        "view billing",
+        "show billing",
+        "open billing",
+        "see billing",
+        "billing information",
+        "billing details",
+        "my billing",
+        "billing history",
+        "invoices",
+        "view invoices",
+        "show invoices",
+        "see invoices",
+        "my invoices",
+        "invoice history",
+        "invoice details",
+        "payments",
+        "payment history",
+        "payment details",
+        "my payments",
+        "view payments",
+        "show payments",
+        "receipts",
+        "official receipts",
+        "view receipts",
+        "show receipts",
+        "my receipts",
+        "billing summary",
+        "payment status",
+        "outstanding balance",
+        "overdue invoices",
+        "pending payments",
+        "what do i owe",
+        "how much do i owe",
+        "my balance",
+        "account balance",
+        "unpaid invoices",
+      ],
+    },
   ]
 
   // Remove common filler words and phrases
@@ -887,6 +972,12 @@ export async function detectCommandIntent(
     "the agreement",
     "this document",
     "the document",
+    "this invoice",
+    "the invoice",
+    "this bill",
+    "the bill",
+    "this payment",
+    "the payment",
     "where in",
     "what does",
     "explain this",
@@ -904,9 +995,31 @@ export async function detectCommandIntent(
     "clause",
     "term",
     "provision",
+    "line item",
+    "charge",
+    "why is",
+    "what is this",
+    "what are these",
+    "these items",
+    "these charges",
+    "this amount",
+    "this total",
+    "my next",
+    "when is my",
+    "what's my",
+    "how much do i",
   ]
 
   const isAskingAboutCurrentWorkspace = contextualKeywords.some((keyword) => normalizedInput.includes(keyword))
+
+  const workspaceCommandMapping: Record<string, string[]> = {
+    "invoice-detail": ["billing", "pricing", "pricing plans"],
+    billing: ["pricing", "pricing plans"],
+    contract: ["pricing", "pricing plans"],
+    "pricing-plans": ["billing"],
+  }
+
+  const blockedCommands = currentWorkspace ? workspaceCommandMapping[currentWorkspace] || [] : []
 
   if (isAskingAboutCurrentWorkspace && currentWorkspace) {
     console.log("[v0] User is asking about current workspace content, not navigating. Skipping command detection.")
@@ -916,8 +1029,155 @@ export async function detectCommandIntent(
     }
   }
 
+  if (currentWorkspace === "pricing-plans") {
+    const pricingQuestionKeywords = [
+      "premium plan",
+      "enterprise plan",
+      "basic plan",
+      "recruiter plan",
+      "annual plan",
+      "monthly plan",
+      "premium",
+      "enterprise",
+      "basic",
+      "recruiter",
+      "inclusions",
+      "what's included",
+      "plan features",
+      "plan benefits",
+      "features",
+      "benefits",
+      "details about",
+      "explain",
+      "tell me about",
+      "what are the",
+      "how much",
+      "cost",
+      "price",
+      "for the",
+    ]
+
+    const hasNavigationIntent =
+      normalizedInput.includes("show all plans") ||
+      normalizedInput.includes("view all plans") ||
+      normalizedInput.includes("see all plans") ||
+      normalizedInput.includes("back to plans") ||
+      normalizedInput.includes("go to billing") ||
+      normalizedInput.includes("show billing") ||
+      normalizedInput.includes("view billing") ||
+      normalizedInput.includes("switch to")
+
+    const isPricingQuestion = pricingQuestionKeywords.some((keyword) => normalizedInput.includes(keyword))
+
+    if (isPricingQuestion && !hasNavigationIntent) {
+      console.log(
+        "[v0] User is asking about pricing plan details in pricing-plans workspace, not requesting navigation. Skipping command detection.",
+      )
+      return {
+        isCommand: false,
+        confidence: 0,
+      }
+    }
+  }
+
+  if (currentWorkspace === "billing") {
+    const billingQuestionKeywords = [
+      "next payment",
+      "payment due",
+      "due date",
+      "when do i pay",
+      "when is payment",
+      "outstanding",
+      "overdue",
+      "balance",
+      "owe",
+      "unpaid",
+      "paid this year",
+      "total paid",
+      "invoice",
+      "my payment",
+      "my bill",
+      "my balance",
+      "account balance",
+    ]
+
+    const hasNavigationIntent =
+      normalizedInput.includes("show pricing") ||
+      normalizedInput.includes("view pricing") ||
+      normalizedInput.includes("see pricing") ||
+      normalizedInput.includes("pricing plans") ||
+      normalizedInput.includes("subscription") ||
+      normalizedInput.includes("upgrade") ||
+      normalizedInput.includes("change plan") ||
+      normalizedInput.includes("show plans") ||
+      normalizedInput.includes("view plans")
+
+    const isBillingQuestion = billingQuestionKeywords.some((keyword) => normalizedInput.includes(keyword))
+
+    if (isBillingQuestion && !hasNavigationIntent) {
+      console.log(
+        "[v0] User is asking about billing details in billing workspace, not requesting navigation. Skipping command detection.",
+      )
+      return {
+        isCommand: false,
+        confidence: 0,
+      }
+    }
+  }
+
+  if (currentWorkspace === "invoice-detail") {
+    const invoiceContextKeywords = [
+      "price",
+      "cost",
+      "bill",
+      "charge",
+      "fee",
+      "amount",
+      "total",
+      "subtotal",
+      "tax",
+      "gst",
+      "payment",
+      "due",
+      "line item",
+      "description",
+      "quantity",
+      "rate",
+    ]
+
+    const hasInvoiceKeyword = invoiceContextKeywords.some((keyword) => normalizedInput.includes(keyword))
+    const hasNavigationIntent =
+      normalizedInput.includes("show") ||
+      normalizedInput.includes("open") ||
+      normalizedInput.includes("view all") ||
+      normalizedInput.includes("go to") ||
+      normalizedInput.includes("switch to") ||
+      normalizedInput.includes("see all") ||
+      normalizedInput.includes("back to")
+
+    // If they're asking about invoice-related terms without clear navigation intent, don't trigger commands
+    if (hasInvoiceKeyword && !hasNavigationIntent) {
+      console.log(
+        "[v0] User is asking about invoice details in invoice-detail workspace, not requesting navigation. Skipping command detection.",
+      )
+      return {
+        isCommand: false,
+        confidence: 0,
+      }
+    }
+  }
+
   const fuzzyNavMatch = fuzzyMatchNavigationCommand(normalizedInput)
   if (fuzzyNavMatch) {
+    if (blockedCommands.includes(fuzzyNavMatch.command)) {
+      console.log(
+        `[v0] Command "${fuzzyNavMatch.command}" is blocked in workspace "${currentWorkspace}". Treating as contextual question.`,
+      )
+      return {
+        isCommand: false,
+        confidence: 0,
+      }
+    }
     console.log("[v0] Fuzzy navigation match found:", fuzzyNavMatch.command)
     return {
       isCommand: true,
@@ -930,6 +1190,15 @@ export async function detectCommandIntent(
   for (const cmd of RESERVED_COMMANDS) {
     for (const keyword of cmd.keywords) {
       if (normalizedInput.includes(keyword)) {
+        if (blockedCommands.includes(cmd.command)) {
+          console.log(
+            `[v0] Command "${cmd.command}" is blocked in workspace "${currentWorkspace}". Treating as contextual question.`,
+          )
+          return {
+            isCommand: false,
+            confidence: 0,
+          }
+        }
         console.log("[v0] Keyword match found:", keyword, "→", cmd.command)
         return {
           isCommand: true,
@@ -1054,6 +1323,43 @@ export async function detectCommandIntent(
     "explain manager plans",
     "hiring manager subscription",
     "manager subscription",
+    "billing",
+    "view billing",
+    "show billing",
+    "open billing",
+    "see billing",
+    "billing information",
+    "billing details",
+    "my billing",
+    "billing history",
+    "invoices",
+    "view invoices",
+    "show invoices",
+    "see invoices",
+    "my invoices",
+    "invoice history",
+    "invoice details",
+    "payments",
+    "payment history",
+    "payment details",
+    "my payments",
+    "view payments",
+    "show payments",
+    "receipts",
+    "official receipts",
+    "view receipts",
+    "show receipts",
+    "my receipts",
+    "billing summary",
+    "payment status",
+    "outstanding balance",
+    "overdue invoices",
+    "pending payments",
+    "what do i owe",
+    "how much do i owe",
+    "my balance",
+    "account balance",
+    "unpaid invoices",
   ]
 
   for (const pattern of jobRequestPatterns) {

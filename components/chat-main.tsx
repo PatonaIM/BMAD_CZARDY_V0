@@ -506,20 +506,196 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
       }
       break
 
+    // </CHANGE>
+    case "billing":
+      context += `The user is viewing their billing information and invoice history.\n\n`
+      context += `**BILLING & PAYMENT STATUS:**\n`
+      if (content.billingData) {
+        const billing = content.billingData
+        const totalOverdue = billing.totalOverdue ?? 0
+        const totalPaidThisYear = billing.totalPaidThisYear ?? 0
+
+        context += `- Total Overdue Amount: $${totalOverdue.toFixed(2)}\n`
+        context += `- Total Paid This Year: $${totalPaidThisYear.toFixed(2)}\n`
+        if (billing.nextPaymentDue) {
+          const nextAmount = billing.nextPaymentDue.amount ?? 0
+          context += `- Next Payment Due: ${billing.nextPaymentDue.invoiceNumber} - $${nextAmount.toFixed(2)} due on ${billing.nextPaymentDue.dueDate}\n`
+        }
+        context += `- Total Invoices: ${billing.invoices.length}\n\n`
+
+        const paidCount = billing.invoices.filter((i) => i.status === "paid").length
+        const pendingCount = billing.invoices.filter((i) => i.status === "pending").length
+        const overdueCount = billing.invoices.filter((i) => i.status === "overdue").length
+
+        context += `**Invoice Breakdown:**\n`
+        context += `- Paid: ${paidCount} invoices\n`
+        context += `- Pending: ${pendingCount} invoices\n`
+        context += `- Overdue: ${overdueCount} invoices\n\n`
+
+        context += `**All Invoices (Latest First):**\n`
+        billing.invoices.forEach((invoice) => {
+          const invoiceAmount = invoice.amount ?? 0
+          context += `- ${invoice.invoiceNumber} (${invoice.period}):\n`
+          context += `  Amount: $${invoiceAmount.toFixed(2)}\n`
+          context += `  Status: ${invoice.status.toUpperCase()}\n`
+          context += `  Issue Date: ${invoice.date}\n`
+          context += `  Due Date: ${invoice.dueDate}\n`
+          if (invoice.paidDate) {
+            context += `  Paid Date: ${invoice.paidDate}\n`
+          }
+          context += `\n`
+        })
+        context += `You can answer detailed questions about any invoice, payment history, outstanding balances, due dates, and billing trends.\n`
+      }
+      break
+    // </CHANGE>
+    // </CHANGE>
+
+    case "invoice-detail":
+      context += `The user is viewing a detailed invoice.\n\n`
+      if (content.data?.invoice) {
+        const inv = content.data.invoice
+        context += `**INVOICE DETAILS:**\n`
+        context += `- Invoice Number: ${inv.invoiceNumber}\n`
+        context += `- Period: ${inv.period}\n`
+        context += `- Issue Date: ${inv.date}\n`
+        context += `- Due Date: ${inv.dueDate}\n`
+        context += `- Status: ${inv.status.toUpperCase()}\n`
+        context += `- Reference: ${inv.reference || "N/A"}\n\n`
+
+        if (inv.contact) {
+          context += `**BILLING TO:**\n`
+          context += `- Contact: ${inv.contact.name}\n`
+          context += `- Account: ${inv.contact.accountNumber}\n`
+          if (inv.contact.address) {
+            context += `- Address: ${inv.contact.address}\n`
+          }
+          context += `\n`
+        }
+
+        if (inv.lineItems && inv.lineItems.length > 0) {
+          context += `**LINE ITEMS BREAKDOWN:**\n`
+          inv.lineItems.forEach((item, idx) => {
+            context += `\n${idx + 1}. **${item.description}**\n`
+            context += `   - Quantity: ${item.quantity.toFixed(4)}\n`
+            context += `   - Unit Price: $${item.price.toFixed(2)}\n`
+            context += `   - Discount: ${item.discount}%\n`
+            context += `   - Account: ${item.account}\n`
+            context += `   - Tax Rate: ${item.taxRate}\n`
+            context += `   - Tax Amount: $${item.taxAmount.toFixed(2)}\n`
+            context += `   - Line Total: $${item.amount.toFixed(2)}\n`
+          })
+          context += `\n`
+        }
+
+        context += `**FINANCIAL SUMMARY:**\n`
+        context += `- Subtotal: $${(inv.subtotal || 0).toFixed(2)}\n`
+        context += `- ${inv.taxRate || "Tax"}: $${(inv.tax || 0).toFixed(2)}\n`
+        context += `- **Total Amount: $${inv.amount.toFixed(2)}**\n\n`
+
+        context += `You can answer detailed questions about this specific invoice, including:\n`
+        context += `- Explaining line items and what each charge is for\n`
+        context += `- Breaking down the pricing and quantities\n`
+        context += `- Clarifying tax calculations (GST on Income)\n`
+        context += `- Discussing payment status and due dates\n`
+        context += `- Comparing with other invoices if asked\n`
+      }
+      break
+    // </CHANGE>
+    // </CHANGE>
+
     case "pricing-plans":
       context += `The user is viewing the Pricing Plans workspace with detailed pricing information.\n\n`
-      context += `**CANDIDATE PRICING:**\n`
-      context += `- Free Plan: $0/month (basic features, 10 AI interactions/month)\n`
-      context += `- Premium Monthly: $19.99/month (was $29.99, ON SALE)\n`
-      context += `  - Unlimited AI interactions, resume optimization, priority matching, interview prep, mock interviews, learning access, salary insights, direct messaging, application tracking, 2 coaching sessions/month\n`
-      context += `- Premium Annual: $149/year (was $239.88, saves $90.88 = 38% off)\n`
-      context += `  - Same features as Premium Monthly, billed annually\n\n`
-      context += `**HIRING MANAGER PRICING:**\n`
-      context += `- Basic Plan: $300/month (payroll & HR essentials)\n`
-      context += `- Recruiter Plan: 9% of base salary per hire (pay only for successful placements)\n`
-      context += `- Enterprise Plan: $500/month (MOST POPULAR - includes equipment, workspace, priority matching, analytics, dedicated account manager)\n`
-      context += `- Premium Plan: 30% + $300/month (all-in solution with white-glove service, 24/7 support, custom integrations)\n\n`
-      context += `You can answer any questions about pricing, plan features, comparisons, or recommendations based on this information.\n`
+
+      context += `**CANDIDATE PRICING PLANS:**\n\n`
+
+      context += `1. Free Plan - $0/month\n`
+      context += `   Features:\n`
+      context += `   - Basic job search and matching\n`
+      context += `   - Limited AI agent interactions (10/month)\n`
+      context += `   - Resume upload and basic parsing\n`
+      context += `   - Email notifications for new matches\n`
+      context += `   - Access to public job board\n\n`
+
+      context += `2. Premium Monthly - $19.99/month (ON SALE from $29.99)\n`
+      context += `   Features:\n`
+      context += `   - Everything in Free Plan\n`
+      context += `   - Unlimited AI agent interactions\n`
+      context += `   - Advanced resume optimization\n`
+      context += `   - Priority job matching\n`
+      context += `   - Interview preparation tools\n`
+      context += `   - AI Mock Interviews\n`
+      context += `   - Access to Teamified Learning\n`
+      context += `   - Salary insights and negotiation tips\n`
+      context += `   - Direct messaging with recruiters\n`
+      context += `   - Application tracking dashboard\n`
+      context += `   - Career coaching sessions (2/month)\n`
+      context += `   - Early access to new features\n\n`
+
+      context += `3. Premium Annual - $149/year (BEST VALUE - was $239.88)\n`
+      context += `   - Save $90.88 per year (38% discount)\n`
+      context += `   - Everything in Premium Monthly\n`
+      context += `   - Billed annually at $149/year\n\n`
+
+      context += `**HIRING MANAGER PRICING PLANS:**\n\n`
+
+      context += `1. Basic Plan - $300/month\n`
+      context += `   Payroll & HR essentials\n`
+      context += `   Features:\n`
+      context += `   💰 PAYROLL:\n`
+      context += `   - Global payroll & payslips\n`
+      context += `   - Taxes, insurance, and local benefits\n`
+      context += `   👥 HR:\n`
+      context += `   - HR record keeping & reporting\n`
+      context += `   ✨ TEAMIFIED AI:\n`
+      context += `   - Limited Access to Teamified AI Agents\n\n`
+
+      context += `2. Recruiter Plan - 9% of base salary per hire\n`
+      context += `   Full recruitment lifecycle (performance-based pricing)\n`
+      context += `   Features:\n`
+      context += `   🎯 HIRING:\n`
+      context += `   - Full recruitment lifecycle\n`
+      context += `   - Local compliance & onboarding\n`
+      context += `   🤝 MANAGEMENT:\n`
+      context += `   - HR and performance management\n`
+      context += `   - Employment contracts & benefits setup\n`
+      context += `   ✨ TEAMIFIED AI:\n`
+      context += `   - Limited Access to Teamified AI Agents\n\n`
+
+      context += `3. Enterprise Plan - $500/month (MOST POPULAR)\n`
+      context += `   Equipment & workspace\n`
+      context += `   Features:\n`
+      context += `   💻EQUIPMENT:\n`
+      context += `   - Managed laptops and accessories\n`
+      context += `   🏢 WORKSPACE:\n`
+      context += `   - Smart office locations\n`
+      context += `   - Workspace and IT setup\n`
+      context += `   ✨ TEAMIFIED AI:\n`
+      context += `   - Full Access to Teamified AI Agents\n\n`
+
+      context += `4. Premium Plan - 30% + $300/month (ALL-IN SOLUTION)\n`
+      context += `   Complete solution with white-glove service\n`
+      context += `   Features:\n`
+      context += `   🤝 SERVICE:\n`
+      context += `   - Dedicated account management\n`
+      context += `   - Continuous HR & compliance support\n`
+      context += `   🤝 MANAGEMENT:\n`
+      context += `   - Payroll + performance oversight\n`
+      context += `   - Centralized reporting tools\n`
+      context += `   💻 EQUIPMENT:\n`
+      context += `   - Laptop + Office Space\n`
+      context += `   ✨ TEAMIFIED AI:\n`
+      context += `   - Full Access to Teamified AI Agents + Dashboarding & Analytics\n\n`
+
+      context += `**COMPARISON NOTES:**\n`
+      context += `- Candidate Premium Monthly is currently on sale (33% off)\n`
+      context += `- Candidate Premium Annual offers 38% savings compared to monthly\n`
+      context += `- Hiring Manager Enterprise Plan is the most popular option\n`
+      context += `- Hiring Manager Recruiter Plan uses performance-based pricing (only pay for successful hires)\n`
+      context += `- Hiring Manager Premium Plan includes everything for comprehensive support\n\n`
+
+      context += `You can answer detailed questions about specific plan features, pricing comparisons, recommendations based on needs, cost calculations, and which plan would be best for different use cases.\n`
+      // </CHANGE>
       break
 
     case "contract":
@@ -573,6 +749,7 @@ const formatWorkspaceContext = (content: WorkspaceContent | undefined): string =
         context += "Contract data is not available."
       }
       break
+
     // </CHANGE>
     // </CHANGE>
 
@@ -2048,6 +2225,10 @@ Looking forward to seeing this conversation develop! 🚀`,
       async (text: string): Promise<boolean> => {
         console.log("[v0] detectAndHandleCommand called with:", text)
 
+        console.log("[v0] Current workspace content state:", currentWorkspaceContent)
+        console.log("[v0] Current workspace type:", currentWorkspaceContent?.type)
+        // </CHANGE>
+
         const currentWorkspaceType = currentWorkspaceContent?.type
         const intentResult = await detectCommandIntent(text, currentWorkspaceType)
         // </CHANGE>
@@ -2103,13 +2284,69 @@ Looking forward to seeing this conversation develop! 🚀`,
 
           return true // Command was handled
         }
-        // </CHANGE>
+
+        // Billing Command
+        if (command === "billing") {
+          console.log("[v0] Billing command detected")
+
+          // Add user's command message to chat
+          const userMsg = {
+            id: `voice-cmd-user-${Date.now()}`,
+            type: "user" as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+
+          // Dynamically import billing data
+          const { mockBillingData } = await import("@/lib/mock-billing-data")
+
+          // Add AI confirmation message with billing details
+          const overdueAmount = mockBillingData.totalOverdue
+          const nextPayment = mockBillingData.nextPaymentDue
+          const totalInvoices = mockBillingData.invoices.length
+
+          let billingMessage = "Here are your latest billing details. "
+
+          if (overdueAmount > 0) {
+            billingMessage += `You have $${overdueAmount.toFixed(2)} in overdue payments. `
+          }
+
+          if (nextPayment) {
+            billingMessage += `Your next payment of $${nextPayment.amount.toFixed(2)} is due on ${nextPayment.dueDate}. `
+          }
+
+          billingMessage += `You have ${totalInvoices} invoices in total. Do you have any questions about your billing or specific invoices?`
+
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: billingMessage,
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Prepare workspace content for billing viewing
+          const workspaceData: WorkspaceContent = {
+            type: "billing",
+            title: "Billing & Invoices",
+            billingData: mockBillingData,
+          }
+          onOpenWorkspace(workspaceData) // Open workspace
+          setHasOpenedWorkspace(true) // Mark workspace as opened
+          setLastWorkspaceContent(workspaceData) // Store for potential reopening
+          setCurrentWorkspaceContent(workspaceData) // Update internal state for context
+
+          return true // Command was handled
+        }
         // </CHANGE>
 
         // Pricing Command
         if (command === "pricing" || command === "pricing plans") {
           console.log("[v0] Pricing command detected")
 
+          // Add user's command message to chat
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
@@ -2117,107 +2354,30 @@ Looking forward to seeing this conversation develop! 🚀`,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
-          setLocalMessages((prev) => [...prev, userMsg])
 
-          // Prepare workspace content for pricing plans
+          // Add AI confirmation message
+          const aiMsg = {
+            id: `voice-cmd-ai-${Date.now()}`,
+            type: "ai" as const,
+            content: "Here are our pricing plans. I can help you choose the right plan based on your needs.",
+            timestamp: new Date().toISOString(),
+            agentId: activeAgent.id,
+          }
+          setLocalMessages((prev) => [...prev, userMsg, aiMsg])
+
+          // Prepare workspace content for pricing plans viewing
           const workspaceData: WorkspaceContent = {
             type: "pricing-plans",
             title: "Pricing Plans",
+            planType: activeAgent.id.includes("candidate") ? "candidate" : "hiring-manager",
           }
-          onOpenWorkspace(workspaceData)
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData)
-
-          if (isVoiceMode && voiceModeRef.current) {
-            console.log("[v0] Voice mode active, workspace context will update automatically")
-            // The AI will naturally provide an overview based on the updated context
-          }
+          onOpenWorkspace(workspaceData) // Open workspace
+          setHasOpenedWorkspace(true) // Mark workspace as opened
+          setLastWorkspaceContent(workspaceData) // Store for potential reopening
+          setCurrentWorkspaceContent(workspaceData) // Update internal state for context
 
           return true // Command was handled
         }
-
-        if (command === "candidate plans") {
-          console.log("[v0] Candidate plans command detected")
-
-          const userMsg = {
-            id: `voice-cmd-user-${Date.now()}`,
-            type: "user" as const,
-            content: text,
-            timestamp: new Date().toISOString(),
-            agentId: activeAgent.id,
-          }
-          setLocalMessages((prev) => [...prev, userMsg])
-
-          const workspaceData: WorkspaceContent = {
-            type: "pricing-plans",
-            title: "Pricing Plans",
-            planType: "candidate",
-          }
-
-          // If workspace is already open, update it
-          if (currentWorkspaceContent?.type === "pricing-plans") {
-            console.log("[v0] Pricing workspace already open, updating to candidate view")
-            setCurrentWorkspaceContent(workspaceData)
-            if (onWorkspaceUpdate) {
-              onWorkspaceUpdate(workspaceData)
-            }
-          } else {
-            // Otherwise, open it
-            onOpenWorkspace(workspaceData)
-          }
-
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-
-          if (isVoiceMode && voiceModeRef.current) {
-            console.log("[v0] Voice mode active, will explain candidate plans")
-          }
-
-          return true
-        }
-
-        if (command === "hiring manager plans") {
-          console.log("[v0] Hiring manager plans command detected")
-
-          const userMsg = {
-            id: `voice-cmd-user-${Date.now()}`,
-            type: "user" as const,
-            content: text,
-            timestamp: new Date().toISOString(),
-            agentId: activeAgent.id,
-          }
-          setLocalMessages((prev) => [...prev, userMsg])
-
-          const workspaceData: WorkspaceContent = {
-            type: "pricing-plans",
-            title: "Pricing Plans",
-            planType: "hiring-manager",
-          }
-
-          // If workspace is already open, update it
-          if (currentWorkspaceContent?.type === "pricing-plans") {
-            console.log("[v0] Pricing workspace already open, updating to hiring manager view")
-            setCurrentWorkspaceContent(workspaceData)
-            if (onWorkspaceUpdate) {
-              onWorkspaceUpdate(workspaceData)
-            }
-          } else {
-            // Otherwise, open it
-            onOpenWorkspace(workspaceData)
-          }
-
-          setHasOpenedWorkspace(true)
-          setLastWorkspaceContent(workspaceData)
-
-          if (isVoiceMode && voiceModeRef.current) {
-            console.log("[v0] Voice mode active, will explain hiring manager plans")
-          }
-
-          return true
-        }
-        // </CHANGE>
-        // </CHANGE>
 
         // Compare Jobs Command
         if (command === "compare jobs") {
@@ -2536,7 +2696,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           onOpenWorkspace(workspaceData) // Open workspace
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData) // Update internal state
+          setCurrentWorkspaceContent(workspaceData)
 
           // Add user and AI messages
           const userMsg = {
@@ -2599,7 +2759,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           onOpenWorkspace(workspaceData) // Open workspace
           setHasOpenedWorkspace(true)
           setLastWorkspaceContent(workspaceData)
-          setCurrentWorkspaceContent(workspaceData) // Update internal state
+          setCurrentWorkspaceContent(workspaceData)
 
           return true // Command handled
         }

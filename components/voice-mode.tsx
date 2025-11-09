@@ -276,6 +276,43 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           })
         }
 
+        if (currentWorkspaceContent?.type === "billing" && !isIntroducingRef.current) {
+          console.log("[v0] Billing workspace opened, triggering AI overview")
+
+          const billingData = currentWorkspaceContent.billingData
+          let overdueMessage = ""
+          let nextPaymentMessage = ""
+
+          if (billingData) {
+            if (billingData.totalOverdue > 0) {
+              overdueMessage = ` You have $${billingData.totalOverdue.toFixed(2)} in overdue payments that need attention.`
+            }
+            if (billingData.nextPaymentDue) {
+              nextPaymentMessage = ` Your next payment of $${billingData.nextPaymentDue.amount.toFixed(2)} is due on ${billingData.nextPaymentDue.dueDate}.`
+            }
+          }
+
+          // Add a conversation item telling the AI to mention the billing details
+          clientRef.current.sendMessage({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: `The billing workspace just opened showing the user's invoices and payment history.${overdueMessage}${nextPaymentMessage} Briefly mention the billing details and ask if they have any questions about their invoices or payments. Keep it conversational and helpful.`,
+                },
+              ],
+            },
+          })
+
+          // Trigger the AI to respond
+          clientRef.current.sendMessage({
+            type: "response.create",
+          })
+        }
+
         if (currentWorkspaceContent?.type === "pricing-plans" && !isIntroducingRef.current) {
           console.log("[v0] Pricing workspace opened, triggering AI overview")
 
@@ -695,71 +732,38 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
       }
       break
 
-    case "pricing-plans":
-      context += `The user is viewing the Pricing Plans workspace. You have FULL ACCESS to detailed pricing information and should confidently explain and recommend plans.\n\n`
+    case "billing":
+      context += `The user is viewing their Billing & Invoices workspace.\n\n`
 
-      context += `**CANDIDATE PRICING PLANS:**\n\n`
-      context += `1. FREE PLAN - $0/month:\n`
-      context += `   - Basic job search features\n`
-      context += `   - Limited to 10 AI interactions per month\n`
-      context += `   - Good for casual job seekers\n\n`
+      if (content.billingData) {
+        const billing = content.billingData
 
-      context += `2. PREMIUM MONTHLY - $19.99/month (SAVE $10 - Was $29.99!):\n`
-      context += `   - UNLIMITED AI interactions for interview prep and career guidance\n`
-      context += `   - AI-powered resume optimization\n`
-      context += `   - Priority job matching algorithm\n`
-      context += `   - Comprehensive interview preparation tools\n`
-      context += `   - Mock interviews with AI feedback\n`
-      context += `   - Access to learning resources and courses\n`
-      context += `   - Real-time salary insights and negotiation tips\n`
-      context += `   - Direct messaging with hiring managers\n`
-      context += `   - Application tracking and analytics\n`
-      context += `   - 2 one-on-one coaching sessions per month\n`
-      context += `   - BEST for active job seekers who want maximum support\n\n`
+        context += `**BILLING SUMMARY:**\n`
+        context += `- Total Overdue: $${(billing.totalOverdue || 0).toFixed(2)}\n`
+        context += `- Total Paid This Year: $${(billing.totalPaidThisYear || 0).toFixed(2)}\n`
 
-      context += `3. PREMIUM ANNUAL - $149/year (SAVE $90.88 = 38% OFF!):\n`
-      context += `   - All Premium Monthly features included\n`
-      context += `   - Pays for itself in just 7.5 months vs monthly plan\n`
-      context += `   - Best value for serious job seekers\n`
-      context += `   - Billed once annually at $149\n\n`
+        if (billing.nextPaymentDue) {
+          context += `- Next Payment Due: $${billing.nextPaymentDue.amount.toFixed(2)} on ${billing.nextPaymentDue.dueDate}\n`
+        }
 
-      context += `**HIRING MANAGER / ENTERPRISE PRICING:**\n\n`
-      context += `1. BASIC PLAN - $300/month:\n`
-      context += `   - Payroll & HR essentials\n`
-      context += `   - Basic recruitment tools\n`
-      context += `   - Good for small teams with occasional hiring needs\n\n`
+        context += `\n**INVOICES (${billing.invoices.length} total):**\n\n`
 
-      context += `2. RECRUITER PLAN - 9% of base salary per hire:\n`
-      context += `   - Pay ONLY for successful placements\n`
-      context += `   - No upfront costs or monthly fees\n`
-      context += `   - Full recruitment support\n`
-      context += `   - Risk-free hiring model\n`
-      context += `   - Perfect for companies with specific hiring needs\n\n`
+        billing.invoices.forEach((invoice, index) => {
+          context += `${index + 1}. Invoice ${invoice.invoiceNumber}\n`
+          context += `   - Date: ${invoice.date}\n`
+          context += `   - Amount: $${invoice.amount.toFixed(2)}\n`
+          context += `   - Status: ${invoice.status}\n`
+          context += `   - Due Date: ${invoice.dueDate}\n`
+          if (invoice.description) {
+            context += `   - Description: ${invoice.description}\n`
+          }
+          context += `\n`
+        })
 
-      context += `3. ENTERPRISE PLAN - $500/month (MOST POPULAR!):\n`
-      context += `   - Equipment & workspace provisioning\n`
-      context += `   - Priority candidate matching with AI\n`
-      context += `   - Advanced analytics and reporting dashboard\n`
-      context += `   - Dedicated account manager for personalized support\n`
-      context += `   - Unlimited job postings\n`
-      context += `   - ATS integration\n`
-      context += `   - BEST for growing companies with ongoing hiring needs\n\n`
-
-      context += `4. PREMIUM PLAN - 30% of salary + $300/month:\n`
-      context += `   - All-in white-glove recruitment solution\n`
-      context += `   - 24/7 priority support\n`
-      context += `   - Custom API integrations\n`
-      context += `   - Dedicated recruitment team\n`
-      context += `   - Employer branding support\n`
-      context += `   - For enterprises with high-volume or specialized hiring\n\n`
-
-      context += `**YOUR ROLE WHEN DISCUSSING PRICING:**\n`
-      context += `- Be enthusiastic and confident about the value we provide\n`
-      context += `- For candidates: Emphasize how Premium plans accelerate job search success and provide competitive advantages\n`
-      context += `- For hiring managers: Highlight ROI, time savings, and quality of hire improvements\n`
-      context += `- Recommend plans based on the user's stated needs and hiring/job search urgency\n`
-      context += `- Explain that upgrades can happen anytime and provide immediate access to all features\n`
-      context += `- Keep responses concise but compelling - focus on outcomes and benefits, not just features\n\n`
+        context += `\nYou can answer questions about specific invoices, payment history, due dates, and help the user understand their billing details.\n`
+      } else {
+        context += "Billing data is not available.\n"
+      }
       break
 
     case "contract":
