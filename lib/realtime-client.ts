@@ -7,6 +7,7 @@ export class RealtimeClient {
   private onMessageCallback: ((message: any) => void) | null = null
   private onAudioCallback: ((isPlaying: boolean) => void) | null = null
   private onConnectionReadyCallback: (() => void) | null = null
+  private audioStream: MediaStream | null = null
 
   async connect(agentId?: string) {
     try {
@@ -86,6 +87,7 @@ export class RealtimeClient {
 
       // Add microphone audio track
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      this.audioStream = stream
       stream.getTracks().forEach((track) => {
         this.peerConnection?.addTrack(track, stream)
       })
@@ -122,6 +124,22 @@ export class RealtimeClient {
   sendMessage(message: any) {
     if (this.dataChannel && this.dataChannel.readyState === "open") {
       this.dataChannel.send(JSON.stringify(message))
+    }
+  }
+
+  muteAudioInput() {
+    if (this.audioStream) {
+      this.audioStream.getAudioTracks().forEach((track) => {
+        track.enabled = false
+      })
+    }
+  }
+
+  unmuteAudioInput() {
+    if (this.audioStream) {
+      this.audioStream.getAudioTracks().forEach((track) => {
+        track.enabled = true
+      })
     }
   }
 
@@ -174,6 +192,11 @@ export class RealtimeClient {
       this.audioElement.pause()
       this.audioElement.srcObject = null
       this.audioElement = null
+    }
+
+    if (this.audioStream) {
+      this.audioStream.getTracks().forEach((track) => track.stop())
+      this.audioStream = null
     }
 
     this.onMessageCallback = null

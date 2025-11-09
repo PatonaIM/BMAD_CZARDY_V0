@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react"
-import { X, Pause, Play } from "lucide-react"
+import { X, Camera, Mic, MicOff } from "lucide-react"
 import { RealtimeClient } from "@/lib/realtime-client"
 import type { WorkspaceContent } from "@/types/workspace"
 import type { AIAgent } from "@/types/agents"
 import { AI_AGENTS } from "@/types/agents"
 import { buildSystemPrompt } from "@/config/agent-prompts"
+import { DraggableVideoFeed } from "./draggable-video-feed"
 
 interface VoiceModeProps {
   onClose: () => void
@@ -18,12 +19,14 @@ interface VoiceModeProps {
   allAgents: AIAgent[]
   currentAgent: AIAgent
   onAgentChange: (agent: AIAgent) => void
-  userType: string // Added userType prop
+  userType: string
+  isWorkspaceOpen?: boolean
 }
 
 export interface VoiceModeRef {
   handleVerbalAgentSwitch: (agent: AIAgent) => void
-  speakResponse: (text: string) => void // Added method to speak AI responses for command handling
+  speakResponse: (text: string) => void
+  activateAIInterview: () => void
 }
 
 export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
@@ -38,7 +41,8 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
       allAgents,
       currentAgent,
       onAgentChange,
-      userType, // Added userType prop
+      userType,
+      isWorkspaceOpen = false,
     },
     ref,
   ) => {
@@ -46,19 +50,22 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
     const [isListening, setIsListening] = useState(false)
     const [isUserSpeaking, setIsUserSpeaking] = useState(false)
     const [isSpeaking, setIsSpeaking] = useState(false)
-    const [isPaused, setIsPaused] = useState(false)
+    const [isMuted, setIsMuted] = useState(false)
+    const [isCameraOn, setIsCameraOn] = useState(false)
     const [currentTranscript, setCurrentTranscript] = useState("")
     const [aiResponse, setAiResponse] = useState("")
     const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false)
     const [isReconnecting, setIsReconnecting] = useState(false)
+    const [isAIInterviewMode, setIsAIInterviewMode] = useState(false)
     const clientRef = useRef<RealtimeClient | null>(null)
     const transcriptBufferRef = useRef<string>("")
     const aiResponseBufferRef = useRef<string>("")
     const hasRequestedIntroRef = useRef(false)
-    const isIntroducingRef = useRef(false) // Added ref to track if introduction is in progress
-    const pendingAgentSwitchRef = useRef<AIAgent | null>(null) // Added ref to track pending agent switch after confirmation speech completes
+    const isIntroducingRef = useRef(false)
+    const pendingAgentSwitchRef = useRef<AIAgent | null>(null)
     const agentDropdownRef = useRef<HTMLDivElement>(null)
-    const givenOverviewsRef = useRef<Set<string>>(new Set()) // Added ref to track which workspace overviews have been given in this session
+    const givenOverviewsRef = useRef<Set<string>>(new Set())
+    const audioStreamRef = useRef<MediaStream | null>(null)
 
     useEffect(() => {
       const initializeVoiceMode = async () => {
@@ -75,9 +82,9 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               session: {
                 turn_detection: {
                   type: "server_vad",
-                  threshold: 0.7, // Higher threshold = less sensitive (default is 0.5)
+                  threshold: 0.7,
                   prefix_padding_ms: 300,
-                  silence_duration_ms: 800, // Longer silence required to detect speech end (default is 500ms)
+                  silence_duration_ms: 800,
                 },
                 input_audio_transcription: { model: "whisper-1" },
                 instructions: systemInstructions,
@@ -116,7 +123,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               const userText = message.transcript
               const trimmedText = userText.trim()
 
-              // Ignore empty, very short, or filler-only transcriptions
               if (!trimmedText || trimmedText.length < 3) {
                 return
               }
@@ -134,7 +140,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               if (onCommandDetected) {
                 const isCommand = await onCommandDetected(userText)
                 if (isCommand) {
-                  // Command was handled, clear the transcript buffer so it doesn't get saved to chat
                   transcriptBufferRef.current = ""
                   setCurrentTranscript("")
                 }
@@ -159,7 +164,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
                 isIntroducingRef.current = false
               }
 
-              // Save to chat (only if there's content to save)
               if (transcriptBufferRef.current || finalAiText) {
                 onTranscriptionUpdate(transcriptBufferRef.current, finalAiText)
               }
@@ -174,15 +178,12 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               setTimeout(() => {
                 setIsSpeaking(false)
                 setIsListening(true)
-              }, 1500) // 1.5 second delay to ensure audio finishes playing
+              }, 1500)
 
-              // If there's a pending agent switch, wait a bit for audio to finish playing, then perform the switch
               if (pendingAgentSwitchRef.current) {
                 const agentToSwitch = pendingAgentSwitchRef.current
                 pendingAgentSwitchRef.current = null
 
-                // Wait 3 seconds to ensure the audio has finished playing
-                // This accounts for audio buffering, playback delay, and network latency
                 setTimeout(async () => {
                   await performAgentSwitch(agentToSwitch)
                 }, 3000)
@@ -198,6 +199,10 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               setIsListening(false)
             }
           })
+
+          if (client.audioStream) {
+            audioStreamRef.current = client.audioStream
+          }
         } catch (error) {
           console.error("[VoiceMode] Initialization error:", error)
           setIsConnecting(false)
@@ -211,15 +216,17 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
           clientRef.current.disconnect()
           clientRef.current = null
         }
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach((track) => track.stop())
+          audioStreamRef.current = null
+        }
       }
-    }, [agentId]) // Only agentId in dependencies to prevent reconnection on workspace changes
+    }, [agentId])
 
     useEffect(() => {
       if (clientRef.current && !isConnecting) {
-        // Build base system prompt
         let systemInstructions = buildSystemPrompt(agentId, AI_AGENTS, true)
 
-        // Add workspace context if available
         const workspaceContext = formatWorkspaceContextForVoice(currentWorkspaceContent)
         if (workspaceContext && workspaceContext.trim().length > 0) {
           systemInstructions += workspaceContext
@@ -236,9 +243,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
             instructions: systemInstructions,
           },
         })
-
-        // Voice mode should only speak when user explicitly asks questions
-        // No automatic "You are viewing..." or "Here are..." announcements
       }
     }, [currentWorkspaceContent, agentId, isConnecting, userType])
 
@@ -258,15 +262,13 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
       setIsReconnecting(true)
 
       const loadingStartTime = Date.now()
-      const minimumLoadingTime = 2000 // 2 seconds
+      const minimumLoadingTime = 2000
 
-      // Disconnect current client
       if (clientRef.current) {
         clientRef.current.disconnect()
         clientRef.current = null
       }
 
-      // Reset state
       hasRequestedIntroRef.current = false
       isIntroducingRef.current = false
       setCurrentTranscript("")
@@ -277,21 +279,17 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
       setIsUserSpeaking(false)
       setIsSpeaking(false)
 
-      // Update agent in parent component
       onAgentChange(agent)
 
-      // Wait a bit for the agent change to propagate
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       const elapsedTime = Date.now() - loadingStartTime
       const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime)
 
-      // Wait for the remaining time to ensure loading screen shows for at least 2 seconds
       if (remainingTime > 0) {
         await new Promise((resolve) => setTimeout(resolve, remainingTime))
       }
 
-      // The useEffect will handle reconnection with the new agent
       setIsReconnecting(false)
     }
 
@@ -306,10 +304,8 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
     }
 
     const handleVerbalAgentSwitch = async (agent: AIAgent) => {
-      // Store the pending agent switch
       pendingAgentSwitchRef.current = agent
 
-      // Create multiple variations for natural conversation
       const confirmations = [
         `Let the user know you're switching them over to ${agent.firstName} now. Keep it brief and natural.`,
         `Tell the user you're connecting them with ${agent.firstName}. Keep it conversational.`,
@@ -317,10 +313,8 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         `Let them know you're getting ${agent.firstName} for them. Keep it short.`,
       ]
 
-      // Pick a random confirmation instruction to keep it feeling natural
       const confirmationInstruction = confirmations[Math.floor(Math.random() * confirmations.length)]
 
-      // Instruct the AI to naturally confirm the agent switch
       clientRef.current?.sendMessage({
         type: "conversation.item.create",
         item: {
@@ -335,8 +329,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         },
       })
 
-      // Trigger the AI to speak the confirmation
-      // The agent switch will happen automatically when response.done is received
       clientRef.current?.sendMessage({
         type: "response.create",
       })
@@ -348,7 +340,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         return
       }
 
-      // This ensures the AI actually speaks the response through the Realtime API
       clientRef.current.sendMessage({
         type: "conversation.item.create",
         item: {
@@ -363,25 +354,94 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
         },
       })
 
-      // Trigger the AI to respond
       clientRef.current.sendMessage({
         type: "response.create",
       })
     }
 
+    const activateAIInterview = () => {
+      console.log("[v0] ===== ACTIVATING AI INTERVIEW MODE =====")
+
+      setIsAIInterviewMode(true)
+      console.log("[v0] isAIInterviewMode set to true")
+      console.log("[v0] Component should now render DraggableVideoFeed")
+
+      const interviewPrompt = `
+You are now conducting an AI interview assessment.
+
+Your role is to:
+1. Welcome the candidate to the AI interview
+2. Ask 3-5 relevant technical questions to assess their general programming and problem-solving skills
+3. Ask follow-up questions based on their responses
+4. Keep each question clear and focused
+5. Be encouraging and professional throughout
+
+Start by welcoming them and asking the first question. Keep your tone conversational and supportive.
+`
+
+      if (clientRef.current) {
+        console.log("[v0] Updating session instructions for AI interview")
+        clientRef.current.updateSessionInstructions(interviewPrompt)
+
+        console.log("[v0] Sending interview start message to AI")
+        clientRef.current.sendMessage({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: "Start the interview now.",
+              },
+            ],
+          },
+        })
+
+        clientRef.current.sendMessage({
+          type: "response.create",
+        })
+      }
+    }
+
     useImperativeHandle(ref, () => ({
       handleVerbalAgentSwitch,
-      speakResponse, // Expose speakResponse method
+      speakResponse,
+      activateAIInterview,
     }))
 
-    const handlePauseToggle = () => {
-      setIsPaused(!isPaused)
+    const handleMicToggle = () => {
+      const newMutedState = !isMuted
+      setIsMuted(newMutedState)
+
+      if (clientRef.current) {
+        if (newMutedState) {
+          clientRef.current.muteAudioInput()
+        } else {
+          clientRef.current.unmuteAudioInput()
+        }
+      }
+    }
+
+    const handleCameraToggle = () => {
+      const newCameraState = !isCameraOn
+      setIsCameraOn(newCameraState)
+
+      if (newCameraState) {
+        setIsAIInterviewMode(true)
+      } else {
+        setIsAIInterviewMode(false)
+      }
     }
 
     const handleClose = () => {
       if (clientRef.current) {
         clientRef.current.disconnect()
         clientRef.current = null
+      }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop())
+        audioStreamRef.current = null
       }
       onClose()
     }
@@ -409,70 +469,84 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
 
     return (
       <div className="relative w-full h-full bg-black flex flex-col items-center justify-center">
-        {/* Header */}
-        <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-between">
+        <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-between z-10">
           <div className="text-white">
             <p className="text-lg font-semibold">{agentName.split(" - ")[0]}</p>
             <p className="text-sm opacity-60">{agentName.split(" - ")[1]} AI Agent</p>
           </div>
-          <div className="relative" ref={agentDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
-              className="p-2 rounded-lg hover:bg-white/10 transition-all group"
-              aria-label="Select AI Agent"
-              title={currentAgent.name}
-            >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
-                style={{ backgroundColor: currentAgent.color }}
+
+          {!isAIInterviewMode && (
+            <div className="relative" ref={agentDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-all group"
+                aria-label="Select AI Agent"
+                title={currentAgent.name}
               >
-                <span className="text-xl">{currentAgent.icon}</span>
-              </div>
-            </button>
-            {isAgentDropdownOpen && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-                <div className="p-3 border-b border-border bg-muted">
-                  <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
+                  style={{ backgroundColor: currentAgent.color }}
+                >
+                  <span className="text-xl">{currentAgent.icon}</span>
                 </div>
-                <div className="max-h-96 overflow-y-auto">
-                  {allAgents.map((agent) => (
-                    <button
-                      key={agent.id}
-                      type="button"
-                      onClick={() => handleAgentChange(agent)}
-                      className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${currentAgent.id === agent.id ? "bg-accent/50" : ""}`}
-                    >
-                      <div
-                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-                        style={{ backgroundColor: agent.color }}
+              </button>
+              {isAgentDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+                  <div className="p-3 border-b border-border bg-muted">
+                    <h3 className="text-sm font-semibold text-foreground">Select AI Agent</h3>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {allAgents.map((agent) => (
+                      <button
+                        key={agent.id}
+                        type="button"
+                        onClick={() => handleAgentChange(agent)}
+                        className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-accent transition-colors text-left ${currentAgent.id === agent.id ? "bg-accent/50" : ""}`}
                       >
-                        <span className="text-xl">{agent.icon}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
-                          {currentAgent.id === agent.id && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
-                              Active
-                            </span>
-                          )}
+                        <div
+                          className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                          style={{ backgroundColor: agent.color }}
+                        >
+                          <span className="text-xl">{agent.icon}</span>
                         </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
-                      </div>
-                    </button>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                            {currentAgent.id === agent.id && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#A16AE8] to-[#8096FD] text-white">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{agent.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Main Animation Area */}
+        {isAIInterviewMode && (
+          <DraggableVideoFeed
+            isWorkspaceOpen={isWorkspaceOpen}
+            onClose={() => {
+              console.log("[v0] DraggableVideoFeed onClose called")
+              setIsAIInterviewMode(false)
+              setIsCameraOn(false)
+              if (clientRef.current && !isConnecting) {
+                const systemInstructions = buildSystemPrompt(agentId, AI_AGENTS, true)
+                clientRef.current.updateSessionInstructions(systemInstructions)
+              }
+            }}
+          />
+        )}
+
         <div className="flex-1 flex items-center justify-center">
-          {/* Outer sphere with conditional glow */}
           <div className="relative w-64 h-64 flex items-center justify-center">
-            {/* Outer sphere with conditional glow */}
             <div
               className={`absolute w-64 h-64 rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30 overflow-hidden transition-all duration-300`}
               style={{
@@ -481,7 +555,6 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
                   : "none",
               }}
             >
-              {/* Smoke particles inside sphere */}
               <div className="absolute inset-0">
                 {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
                   <div
@@ -500,20 +573,31 @@ export const VoiceMode = forwardRef<VoiceModeRef, VoiceModeProps>(
               </div>
             </div>
 
-            {/* Center indicator */}
             <div className="relative z-10 w-4 h-4 rounded-full bg-white/80" />
           </div>
         </div>
 
-        {/* Bottom Controls */}
-        <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 flex items-center gap-6">
+        <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 flex items-center gap-4">
           <button
-            onClick={handlePauseToggle}
-            className="w-14 h-14 rounded-full border-2 border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
-            aria-label={isPaused ? "Resume" : "Pause"}
+            onClick={handleCameraToggle}
+            className={`w-14 h-14 rounded-full border-2 flex items-center justify-center transition-colors ${
+              isCameraOn ? "bg-blue-500 border-blue-400 hover:bg-blue-600" : "border-white/30 hover:bg-white/10"
+            }`}
+            aria-label={isCameraOn ? "Turn camera off" : "Turn camera on"}
           >
-            {isPaused ? <Play className="w-6 h-6 text-white" /> : <Pause className="w-6 h-6 text-white" />}
+            <Camera className="w-6 h-6 text-white" />
           </button>
+
+          <button
+            onClick={handleMicToggle}
+            className={`w-14 h-14 rounded-full border-2 flex items-center justify-center transition-colors ${
+              isMuted ? "bg-red-500 border-red-400 hover:bg-red-600" : "border-white/30 hover:bg-white/10"
+            }`}
+            aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
+          >
+            {isMuted ? <MicOff className="w-6 h-6 text-white" /> : <Mic className="w-6 h-6 text-white" />}
+          </button>
+
           <button
             onClick={handleClose}
             className="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors"
@@ -613,7 +697,6 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
         if (j.applied) context += `- Status: Already applied\n`
         if (j.saved) context += `- Status: Saved\n`
 
-        // Add detailed job information for follow-up questions
         if (j.aboutClient) {
           context += `\n**About the Client:**\n${j.aboutClient}\n`
         }
@@ -749,7 +832,6 @@ function formatWorkspaceContextForVoice(content: WorkspaceContent | undefined): 
 }
 
 function getAgentSystemPrompt(agentId: string, workspaceContent?: WorkspaceContent, userType?: string): string {
-  // Build base prompt using centralized config (with intro instruction for voice mode)
   let systemMessage = buildSystemPrompt(agentId, AI_AGENTS, true)
 
   const workspaceContext = formatWorkspaceContextForVoice(workspaceContent)

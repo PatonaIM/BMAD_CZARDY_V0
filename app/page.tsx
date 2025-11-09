@@ -163,11 +163,17 @@ export default function ChatPage() {
   const handleViewJob = (job: JobListing | HiringManagerJob) => {
     const user = getCurrentUser()
 
-    setWorkspaceContent({
-      type: "job-view",
+    const newWorkspaceContent = {
+      type: "job-view" as const,
       job,
       title: job.title,
-    })
+    }
+
+    console.log("[v0] === SETTING WORKSPACE CONTENT TO JOB VIEW ===")
+    console.log("[v0] Job:", job)
+    console.log("[v0] New workspace content:", newWorkspaceContent)
+
+    setWorkspaceContent(newWorkspaceContent)
 
     // The job view will open without an automatic AI message
   }

@@ -44,6 +44,7 @@ interface JobViewProps {
   onOpenCandidateChat?: (candidate: CandidateProfile, job?: JobListing) => void
   onSendAIMessage?: (message: string, agentId?: string) => void
   chatMainRef?: React.RefObject<any>
+  onActivateAIInterview?: (jobTitle: string, requiredSkills: string[]) => void
 }
 
 const getStatusConfig = (status: JobStatus) => {
@@ -125,6 +126,7 @@ export default function JobView({
   onOpenCandidateChat,
   onSendAIMessage,
   chatMainRef, // Added chatMainRef parameter
+  onActivateAIInterview,
 }: JobViewProps) {
   const [isEditingSummary, setIsEditingSummary] = useState(false)
   const [isEditingSkills, setIsEditingSkills] = useState(false)
@@ -311,7 +313,10 @@ export default function JobView({
   }
 
   const handleStageClick = (stageName: string) => {
-    if (onSendMessage) {
+    if (stageName.toLowerCase().includes("ai interview") && onActivateAIInterview) {
+      const requiredSkills = job.qualifications || job.requirements || []
+      onActivateAIInterview(job.title, requiredSkills)
+    } else if (onSendMessage) {
       onSendMessage(stageName.toLowerCase())
     }
   }

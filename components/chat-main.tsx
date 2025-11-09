@@ -29,7 +29,6 @@ import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import { getCandidateConversation, saveCandidateMessage } from "@/lib/mock-conversations"
 import { VoiceMode, type VoiceModeRef } from "./voice-mode" // Changed import to include type VoiceModeRef
-import { detectCommandIntent } from "@/app/actions/detect-command-intent"
 
 // Import mock data
 import { mockJobListings, mockHiringManagerJobs } from "@/lib/mock-data"
@@ -93,6 +92,7 @@ type JobListing = {
   posted?: string // Added for job view context
   applicationStage?: string // Added for job view context
   // </CHANGE>
+  qualifications?: string[] // Added for AI Interview command
 }
 
 // Define CandidateProfile type for clarity
@@ -168,6 +168,7 @@ export interface ChatMainProps {
   onSetJobBoardTab?: (tab: "applied" | "invited" | "saved" | "browse") => void
   userType?: "candidate" | "hiring_manager" // Added userType
   onWorkspaceUpdate?: (content: WorkspaceContent) => void // Added for voice mode integration
+  onWorkspaceChange?: (content: WorkspaceContent) => void // Added for voice mode integration
 }
 
 const welcomeQuestions = [
@@ -182,7 +183,7 @@ const loremParagraphs = [
   "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
   "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
   "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-  "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
+  "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudanim.",
   "Totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
   "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores.",
   "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.",
@@ -207,7 +208,7 @@ const generateLargeResponse = () => {
 
 Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
 
-At vero eos et accusamus et iusto odio dignissim ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.
+At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.
 
 ## Conclusion
 
@@ -888,6 +889,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
       onSetJobBoardTab,
       userType, // Added userType
       onWorkspaceUpdate, // Added for voice mode integration
+      onWorkspaceChange, // Added for voice mode integration
     },
     ref,
   ) => {
@@ -928,6 +930,30 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
     const [workspaceType, setWorkspaceType] = useState<WorkspaceContent["type"] | null>(null)
     const [currentWorkspaceContent, setCurrentWorkspaceContent] = useState<WorkspaceContent | null>(null) // Added internal state for workspace content
 
+    // ** WORKSPACE CONTENT SYNC EFFECT **
+    useEffect(() => {
+      console.log("[v0] === WORKSPACE CONTENT SYNC EFFECT ===")
+      console.log("[v0] External workspace content:", externalWorkspaceContent)
+      console.log("[v0] Current internal workspace content:", currentWorkspaceContent)
+
+      if (externalWorkspaceContent) {
+        const externalJson = JSON.stringify(externalWorkspaceContent)
+        const currentJson = JSON.stringify(currentWorkspaceContent)
+
+        // Only update if the content is actually different
+        if (externalJson !== currentJson) {
+          console.log("[v0] Updating internal workspace content")
+          setCurrentWorkspaceContent(externalWorkspaceContent)
+        } else {
+          console.log("[v0] Workspace content unchanged, skipping update")
+        }
+      } else {
+        // Don't clear workspace content when external becomes null
+        // This preserves the workspace state during re-renders
+        console.log("[v0] External workspace is null, preserving internal state")
+      }
+    }, [externalWorkspaceContent]) // Removed currentWorkspaceContent from deps to prevent loops
+
     const handleCommandFromUI = useCallback(
       (workspaceData: WorkspaceContent, skipAIConfirmation?: boolean) => {
         onOpenWorkspace(workspaceData)
@@ -935,7 +961,7 @@ export const ChatMain = forwardRef<ChatMainRef, ChatMainProps>(
         setLastWorkspaceContent(workspaceData)
         setCurrentWorkspaceContent(workspaceData)
 
-        // Only send AI confirmation if explicitly not skipped
+        // Only send confirmation message if explicitly not skipped
         if (!skipAIConfirmation) {
           // Send confirmation message logic here if needed
           // For example, adding a message to localMessages that indicates the workspace was opened.
@@ -968,17 +994,6 @@ Simply type any command or ask your questions naturally!`
     const workspaceContext = useMemo(() => {
       return formatWorkspaceContext(currentWorkspaceContent)
     }, [currentWorkspaceContent])
-    // </CHANGE>
-
-    useEffect(() => {
-      if (externalWorkspaceContent) {
-        // Sync external workspace content
-        setCurrentWorkspaceContent(externalWorkspaceContent)
-      } else {
-        // Clear internal state if external content is null
-        setCurrentWorkspaceContent(null)
-      }
-    }, [externalWorkspaceContent])
     // </CHANGE>
 
     // useEffect to update isCentered based on localMessages length
@@ -1034,34 +1049,6 @@ Simply type any command or ask your questions naturally!`
     const handleCommandOrMessage = useCallback(
       (text: string): boolean => {
         const lowerText = text.toLowerCase().trim()
-
-        // Helper function to generate short response
-        const generateShortResponse = () => {
-          return "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-        }
-
-        // Helper function to generate large text response
-        const generateLargeResponse = () => {
-          return `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
-
-At vero eos et accusamus et iusto odio dignissim ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.
-
-## Conclusion
-
-In summary, these fundamental principles provide a comprehensive framework for understanding the essential concepts discussed above. The interconnected nature of these ideas demonstrates their significance in practical applications.`
-        }
-
-        // Helper function to generate bullet text response
-        const generateBulletResponse = () => {
-          return `• Lorem ipsum dolor sit amet, consectetur adipiscing elit
-• Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
-• Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-• Duis aute irure dolor in reprehenderit in voluptate velit
-• Excepteur sint occaecat cupidatat non proident sunt in culpa`
-        }
-        // </CHANGE>
 
         // 1. Text - simple text response
         if (lowerText === "text") {
@@ -1494,84 +1481,6 @@ I'm opening the coding environment for you now. Good luck!`,
       },
       [activeAgent.id, currentWorkspaceContent, onWorkspaceUpdate],
     )
-    // </CHANGE>
-
-    useEffect(() => {
-      if (aiMessages.length === 0) {
-        return
-      }
-
-      const latestAiMessage = aiMessages[aiMessages.length - 1]
-
-      if (!latestAiMessage || latestAiMessage.role !== "assistant") {
-        return
-      }
-
-      // Only process if contract workspace is open and has contract data
-      if (!currentWorkspaceContent || currentWorkspaceContent.type !== "contract") {
-        return
-      }
-
-      if (!currentWorkspaceContent.contractData) {
-        return
-      }
-
-      // Parse for section references - more flexible patterns
-      // Matches: [Section IV.B], [Section IV], Section IV.B, Section IV, etc.
-      const sectionReferenceRegex = /\[?Section\s+([IVXLCDM]+)(?:\.([A-Z]))?\]?/gi
-      const matches = [...(latestAiMessage.content?.matchAll(sectionReferenceRegex) || [])]
-
-      if (matches.length > 0) {
-        // Use the first reference found
-        const firstMatch = matches[0]
-        const romanNumeral = firstMatch[1] // e.g., "IV"
-        const subsectionLetter = firstMatch[2] // e.g., "B" (optional)
-
-        // Convert Roman numeral to Arabic
-        const arabicNumber = romanToArabic(romanNumeral)
-
-        if (arabicNumber > 0) {
-          // Find the matching section in contract data
-          const contract = currentWorkspaceContent.contractData
-          const targetSection = contract.sections.find((section) => {
-            const sectionIdParts = section.id.split("-")
-            // Assumes section ID format is like "section-1", "section-4", etc.
-            return sectionIdParts[1] === arabicNumber.toString()
-          })
-
-          if (targetSection) {
-            let targetId = targetSection.id // Default to main section ID
-
-            // If there's a subsection letter, try to find it
-            if (subsectionLetter && targetSection.subsections) {
-              // Find subsection by matching the letter (case-insensitive)
-              const targetSubsection = targetSection.subsections.find((sub) => {
-                const subIdParts = sub.id.split("-")
-                // Assumes subsection ID format is like "section-4-a", "section-4-b", etc.
-                return subIdParts[2]?.toLowerCase() === subsectionLetter.toLowerCase()
-              })
-
-              if (targetSubsection) {
-                targetId = targetSubsection.id
-              }
-            }
-
-            // Update workspace with highlight
-            const updatedWorkspace: WorkspaceContent = {
-              ...currentWorkspaceContent,
-              highlightSection: targetId,
-            }
-
-            setCurrentWorkspaceContent(updatedWorkspace) // Update local state
-
-            // Trigger update in parent component if necessary
-            if (onWorkspaceUpdate) {
-              onWorkspaceUpdate(updatedWorkspace)
-            }
-          }
-        }
-      }
-    }, [aiMessages, currentWorkspaceContent, onWorkspaceUpdate])
     // </CHANGE>
 
     useEffect(() => {
@@ -2158,7 +2067,7 @@ ${loremParagraphs[1]}`
 
 **Location:** ${job.location} | **Type:** ${job.type} | **Salary:** ${job.salary}
 
-**Your Skill Match:** ${job.skillMatch}% - This is ${skillMatchText === "excellent match" ? "an" : "a"} **${skillMatchText}** for your profile! ${job.skillMatch >= 80 ? "🎯" : job.skillMatch >= 60 ? "✨" : "💡"}
+**Your Skill Match:** ${job.skillMatch}% - This is ${skillMatchText === "excellent match" ? "an" : "a"} **${skillMatchText}** for your profile! 🎯 ${job.skillMatch >= 80 ? "🎯" : job.skillMatch >= 60 ? "✨" : "💡"}
 
 ### Quick Summary
 
@@ -2584,18 +2493,55 @@ Looking forward to seeing this conversation develop! 🚀`,
 
     // Detect and handle commands that should open specific workspaces or trigger actions.
     const detectAndHandleCommand = useCallback(
-      async (text: string): Promise<boolean> => {
-        const currentWorkspaceType = currentWorkspaceContent?.type
-        const intentResult = await detectCommandIntent(text, currentWorkspaceType)
+      async (transcription: string) => {
+        console.log("[v0] ===== DETECTING COMMAND =====")
+        console.log("[v0] Transcription:", transcription)
+        console.log("[v0] External workspace content:", externalWorkspaceContent)
+        console.log("[v0] Current workspace content (internal):", currentWorkspaceContent)
 
-        // If it's not recognized as a command, return false to let the AI handle it.
-        if (!intentResult.isCommand) {
+        if (
+          /\b(ai|artificial intelligence)\b/i.test(transcription) &&
+          /\b(interview|assessment|test|evaluation)\b/i.test(transcription)
+        ) {
+          console.log("[v0] ===== AI INTERVIEWS COMMAND DETECTED =====")
+
+          // Close workspace
+          if (onWorkspaceChange) {
+            console.log("[v0] Closing workspace")
+            onWorkspaceChange({ type: null })
+          }
+
+          // Activate AI interview in voice mode (no job context needed)
+          if (voiceModeRef.current) {
+            console.log("[v0] Activating AI interview mode")
+            voiceModeRef.current.activateAIInterview()
+          }
+
+          // Send confirmation message
+          const confirmationMessage: Message = {
+            id: `ai-interview-start-${Date.now()}`,
+            type: "ai",
+            content: `Starting your AI interview session now. Please enable your camera when ready. I'll be asking you some general technical questions to assess your skills.`,
+            agentId: activeAgent.id,
+            timestamp: new Date().toISOString(),
+          }
+          setLocalMessages((prev) => [...prev, confirmationMessage])
+
+          return true
+        }
+        // </CHANGE>
+
+        const { detectCommandIntent } = await import("@/app/actions/detect-command-intent")
+        const { command, intent } = await detectCommandIntent(transcription, userType || "candidate")
+
+        console.log("[v0] Detected command:", command)
+        console.log("[v0] Detected intent:", intent)
+
+        if (!command) {
+          console.log("[v0] No command detected, returning false")
           return false
         }
-
-        const command = intentResult.command! // Extract the command name
-
-        // Handle specific commands:
+        // </CHANGE>
 
         // Contract Command
         if (command === "contract") {
@@ -2603,10 +2549,13 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
+
+          // Dynamically import contract data
+          const { TEAMIFIED_CONTRACT } = await import("@/lib/contract-data")
 
           // Add AI confirmation message
           const aiMsg = {
@@ -2618,9 +2567,6 @@ Looking forward to seeing this conversation develop! 🚀`,
             agentId: activeAgent.id,
           }
           setLocalMessages((prev) => [...prev, userMsg, aiMsg])
-
-          // Dynamically import contract data
-          const { TEAMIFIED_CONTRACT } = await import("@/lib/contract-data")
 
           // Prepare workspace content for contract viewing
           const workspaceData: WorkspaceContent = {
@@ -2639,7 +2585,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -2693,7 +2639,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             const userMsg = {
               id: `voice-cmd-user-${Date.now()}`,
               type: "user" as const,
-              content: text,
+              content: transcription,
               timestamp: new Date().toISOString(),
               agentId: activeAgent.id,
             }
@@ -2721,7 +2667,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -2773,7 +2719,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -2802,13 +2748,13 @@ Looking forward to seeing this conversation develop! 🚀`,
         // </CHANGE>
 
         // View Job Command
-        if (command === "view job" && intentResult.jobTitle) {
+        if (command === "view job" && intent.jobTitle) {
           const user = getCurrentUser()
           // Use mock data
           const jobList = user?.role === "hiring_manager" ? mockHiringManagerJobs : mockJobListings
 
           // Attempt to find a matching job using fuzzy matching based on the title provided by intent detection
-          const normalizedSearchTitle = intentResult.jobTitle.toLowerCase().trim()
+          const normalizedSearchTitle = intent.jobTitle.toLowerCase().trim()
           const matchedJob = jobList.find((job) => {
             const normalizedJobTitle = job.title.toLowerCase()
             // Check for exact or partial matches
@@ -2836,7 +2782,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             const userMsg = {
               id: `voice-cmd-user-${Date.now()}`,
               type: "user" as const,
-              content: text,
+              content: transcription,
               timestamp: new Date().toISOString(),
               agentId: activeAgent.id,
             }
@@ -2879,11 +2825,11 @@ Looking forward to seeing this conversation develop! 🚀`,
             `Opening the job board now with ${browseJobs.length} opportunities. I'm here to help you find the perfect match!`,
           ]
 
-          // Add user and AI messages to chat
+          // Add user and AI messages
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -2928,7 +2874,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             onSetJobBoardTab(tab)
           }
 
-          if (text && text.trim()) {
+          if (transcription && transcription.trim()) {
             const jobCount = filteredJobs.length
             let aiResponse = ""
 
@@ -2937,7 +2883,7 @@ Looking forward to seeing this conversation develop! 🚀`,
                 `Perfect! Here are the ${jobCount} ${jobCount === 1 ? "position" : "positions"} you've applied to. I can help you prepare for interviews or follow up on any of these applications.`,
                 `Got it! Showing your ${jobCount} applied ${jobCount === 1 ? "job" : "jobs"}. Let me know if you'd like help tracking your applications or preparing for next steps.`,
                 `There you go! You've applied to ${jobCount} ${jobCount === 1 ? "position" : "positions"}. Want me to help you with interview prep or application follow-ups?`,
-                `Opening your applications now. You have ${jobCount} ${jobCount === 1 ? "position" : "positions"} in progress. How can I help you with these?`,
+                `Opening your applications now. You have ${jobCount} ${jobCount === 1 ? "position" : "interviews"} in progress. How can I help you with these?`,
               ]
               aiResponse = appliedResponses[Math.floor(Math.random() * appliedResponses.length)]
             } else if (tab === "invited") {
@@ -2962,7 +2908,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             const userMsg = {
               id: `voice-cmd-user-${Date.now()}`,
               type: "user" as const,
-              content: text,
+              content: transcription,
               timestamp: new Date().toISOString(),
               agentId: activeAgent.id,
             }
@@ -2989,7 +2935,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -3043,14 +2989,14 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
           const aiMsg = {
             id: `voice-cmd-ai-${Date.now()}`,
             type: "ai" as const,
-            content: `Showing your ${statusLabel}. You can continue browsing while we chat.`,
+            content: "Showing your draft jobs. You can continue browsing while we chat.",
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -3077,7 +3023,7 @@ Looking forward to seeing this conversation develop! 🚀`,
             const userMsg = {
               id: `cmd-user-${Date.now()}`,
               type: "user" as const,
-              content: text,
+              content: transcription,
               timestamp: new Date().toISOString(),
               agentId: activeAgent.id,
             }
@@ -3114,7 +3060,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -3156,7 +3102,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -3195,7 +3141,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -3222,7 +3168,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           const userMsg = {
             id: `voice-cmd-user-${Date.now()}`,
             type: "user" as const,
-            content: text,
+            content: transcription,
             timestamp: new Date().toISOString(),
             agentId: activeAgent.id,
           }
@@ -3239,16 +3185,17 @@ Looking forward to seeing this conversation develop! 🚀`,
         return false
       },
       [
-        activeAgent,
-        isVoiceMode,
-        voiceModeRef,
-        handleAgentChange,
-        onOpenWorkspace,
+        externalWorkspaceContent,
         currentWorkspaceContent,
-        onSetJobBoardTab,
-        onWorkspaceUpdate,
+        activeAgent.id,
+        setLocalMessages,
+        voiceModeRef,
+        onOpenWorkspace,
+        setHasOpenedWorkspace,
+        setLastWorkspaceContent,
+        setCurrentWorkspaceContent,
         handleCommandFromUI, // Added handleCommandFromUI to dependencies
-        // </CHANGE>
+        onWorkspaceChange, // Added onWorkspaceChange to dependencies
       ],
     )
 
@@ -3313,7 +3260,7 @@ Looking forward to seeing this conversation develop! 🚀`,
           text: content,
           // Pass the current agent ID in experimental_extra for AI SDK v5+
           experimental_extra: {
-            agentId: activeAgent.id, // Ensure current agent context is passed
+            agentId: activeAgent.id, // Ensure agent context is passed
           },
         },
         {
@@ -3481,7 +3428,7 @@ Looking forward to seeing this conversation develop! 🚀`,
         await sendMessage(
           {
             text: userMessage,
-            // Pass experimental_extra for AI SDK v5+ compatibility
+            // Pass the current agent ID in experimental_extra for AI SDK v5+
             experimental_extra: {
               agentId: activeAgent.id, // Ensure agent context is passed
             },
@@ -3602,17 +3549,17 @@ Looking forward to seeing this conversation develop! 🚀`,
         {isVoiceMode ? (
           <VoiceMode
             ref={voiceModeRef}
-            onClose={handleVoiceModeToggle} // Callback to close voice mode
-            onTranscriptionUpdate={handleTranscriptionUpdate} // Callback for transcription updates
-            onCommandDetected={detectAndHandleCommand} // Callback for command detection
-            agentName={`${activeAgent.firstName} - ${activeAgent.name}`} // Current agent's name
-            agentId={activeAgent.id} // Current agent's ID
-            currentWorkspaceContent={currentWorkspaceContent} // Current workspace content
-            allAgents={AI_AGENTS} // List of all available agents
-            currentAgent={activeAgent} // Currently active agent
-            onAgentChange={handleVoiceModeAgentChange} // Callback for agent changes in voice mode
-            userType={userType} // Pass user type
-            // </CHANGE>
+            onClose={handleVoiceModeToggle}
+            onTranscriptionUpdate={handleTranscriptionUpdate}
+            onCommandDetected={detectAndHandleCommand}
+            agentName={`${activeAgent.firstName} - ${activeAgent.name}`}
+            agentId={activeAgent.id}
+            currentWorkspaceContent={currentWorkspaceContent}
+            allAgents={AI_AGENTS}
+            currentAgent={activeAgent}
+            onAgentChange={handleVoiceModeAgentChange}
+            userType={userType}
+            isWorkspaceOpen={currentWorkspaceContent?.type !== null}
           />
         ) : (
           // Render standard chat interface if not in voice mode

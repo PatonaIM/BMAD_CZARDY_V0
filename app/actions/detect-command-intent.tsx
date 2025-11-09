@@ -374,6 +374,26 @@ const RESERVED_COMMANDS = [
       "unpaid invoices",
     ],
   },
+  {
+    command: "ai interviews",
+    description: "Start AI interview mode for the current job",
+    keywords: [
+      "ai interviews",
+      "ai interview",
+      "start ai interview",
+      "begin ai interview",
+      "start interview",
+      "begin interview",
+      "interview mode",
+      "activate interview",
+      "start the interview",
+      "begin the interview",
+      "let's do the interview",
+      "let's start the interview",
+      "i want to do the interview",
+      "i want to start the interview",
+    ],
+  },
   ...AI_AGENTS.map((agent) => ({
     command: `switch to ${agent.firstName.toLowerCase()}`,
     description: `Switch to ${agent.firstName} - ${agent.name}`,
@@ -871,6 +891,25 @@ function fuzzyMatchNavigationCommand(input: string): { command: string; confiden
         "unpaid invoices",
       ],
     },
+    {
+      command: "ai interviews",
+      variations: [
+        "ai interviews",
+        "ai interview",
+        "start ai interview",
+        "begin ai interview",
+        "start interview",
+        "begin interview",
+        "interview mode",
+        "activate interview",
+        "start the interview",
+        "begin the interview",
+        "let's do the interview",
+        "let's start the interview",
+        "i want to do the interview",
+        "i want to start the interview",
+      ],
+    },
   ]
 
   // Remove common filler words and phrases
@@ -934,6 +973,25 @@ export async function detectCommandIntent(
     return {
       isCommand: false,
       confidence: 0,
+    }
+  }
+
+  // Check for AI interview triggers first (high priority when in job view)
+  const aiInterviewPatterns = [
+    /\b(?:ai|interview|take|do|start|begin|conduct)\b.*\b(?:ai|interview|assessment|test)\b/i,
+    /\b(?:i want to|i'd like to|can i|let me|let's)\b.*\b(?:interview|test|assessment)\b/i,
+    /\b(?:conduct|start|begin|do|take)\b.*\b(?:interview|assessment)\b/i,
+  ]
+
+  const hasAIInterviewKeywords = aiInterviewPatterns.some((pattern) => pattern.test(normalizedInput))
+
+  // If user is in job-view and mentions interview/AI/test, prioritize AI interview command
+  if (currentWorkspace === "job-view" && hasAIInterviewKeywords) {
+    console.log("[v0] AI interview trigger detected in job view:", normalizedInput)
+    return {
+      isCommand: true,
+      command: "ai interviews",
+      confidence: 0.95,
     }
   }
 
@@ -1228,6 +1286,20 @@ export async function detectCommandIntent(
     "my balance",
     "account balance",
     "unpaid invoices",
+    "ai interviews",
+    "ai interview",
+    "start ai interview",
+    "begin ai interview",
+    "start interview",
+    "begin interview",
+    "interview mode",
+    "activate interview",
+    "start the interview",
+    "begin the interview",
+    "let's do the interview",
+    "let's start the interview",
+    "i want to do the interview",
+    "i want to start the interview",
   ]
 
   for (const pattern of jobRequestPatterns) {
